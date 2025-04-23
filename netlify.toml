@@ -1,0 +1,7 @@
+[build]
+  publish = "."
+  functions = "functions"
+
+# A configuração de timeout deve ser um objeto, conforme exigido pelo Netlify
+[functions.timeout]
+  default = 30  # aumenta timeout padrão de 10s para 30s
