@@ -147,9 +147,9 @@ body {
   font-weight: bold;
 }
 .card-body {
-  position: relative;
+  position: relative; /* para posicionar o ícone */
   padding: 1rem;
-  padding-right: clamp(4rem, 12%, 8rem); /* espaço dinâmico para o ícone */
+  padding-right: 4rem; /* espaço para o ícone */
   flex: 1;
 }
 .card-body p {
@@ -162,18 +162,18 @@ body {
 }
 .card-body a:hover { text-decoration: underline; }
 
-/* Ícone à direita responsivo */
+/* Ícone à direita */
 .card-icon-right {
   position: absolute;
-  top: 50%;
-  right: clamp(1rem, 4%, 2rem);
-  width: clamp(48px, 10%, 96px);
-  transform: translateY(-50%);
+  top: 1rem;    /* ajuste vertical conforme seu layout */
+  right: 1rem;  /* distância da borda direita do card-body */
+  width: 48px;  /* tamanho desejado */
+  height: 48px; /* idem */
 }
 .card-icon-right img {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* ========== Product Header Overlay ======= */
@@ -305,6 +305,7 @@ body {
 #modal-list li { list-style: none; }
 
 /* ===== Responsividade ===== */
+
 /* Mobile (até 767px) */
 @media (max-width: 767px) {
   .search-panel {
