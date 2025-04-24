@@ -127,7 +127,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // — Função principal de busca —
-  btnSearch.addEventListener('click', async () => {
+  btnSearch.addEventListener('click', async (e) => { e.preventDefault();
     const barcode = barcodeInput.value.trim();
     if (!barcode) {
       alert('Digite um código de barras válido.');
