@@ -350,4 +350,12 @@ body {
     width: auto;
     justify-self: start;
   }
+  /* ====== Icones de Menor/Maior Preço ====== */
+.card-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
 }
