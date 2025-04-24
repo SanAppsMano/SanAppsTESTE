@@ -1,7 +1,7 @@
 /* app.js */
 
 // Configuração da URL da API no Google Apps Script
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxf9YoD14eydIBvMe-wPIDRt0_LGzwyEwoKmCch2HiHbJxPBRkS38B-fAIs8xulew-P/exec';
+typename API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxf9YoD14eydIBvMe-wPIDRt0_LGzwyEwoKmCch2HiHbJxPBRkS38B-fAIs8xulew-P/exec';
 
 // Garante que todo o DOM esteja carregado antes de associar eventos
 window.addEventListener('DOMContentLoaded', () => {
@@ -12,6 +12,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const summaryContainer = document.getElementById('summary');
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
+
+  // Garante que o botão não dispare submit de formulário
+  btnSearch.type = 'button';
 
   // — Histórico —
   const historyListEl   = document.getElementById('history-list');
@@ -60,7 +63,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHistory();
 
   // — Seleção de raio de busca —
-  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
+  let selectedRadius = document.querySelector('.radius-btn.active')?.dataset.value || '15';
   radiusButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       radiusButtons.forEach(b => b.classList.remove('active'));
@@ -127,7 +130,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // — Função principal de busca —
-  btnSearch.addEventListener('click', async (e) => { e.preventDefault();
+  btnSearch.addEventListener('click', async (e) => {
+    e.preventDefault();
+    console.log('Search clicked, endpoint:', API_ENDPOINT);
     const barcode = barcodeInput.value.trim();
     if (!barcode) {
       alert('Digite um código de barras válido.');
@@ -158,15 +163,21 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
+    // Garante valor numérico de raio
+    const raioNum = Number(selectedRadius) || 15;
     let data;
     try {
+      console.log('Fetching data with payload:', { codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 });
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: barcode, latitude: Number(latitude), longitude: Number(longitude), raio: Number(selectedRadius), dias: 3 })
+        body: JSON.stringify({ codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 })
       });
+      console.log('Response status:', res.status);
       data = await res.json();
-    } catch {
+      console.log('Response data:', data);
+    } catch (err) {
+      console.error('Fetch error:', err);
       loading.classList.remove('active');
       alert('Erro ao buscar preços. Tente novamente mais tarde.');
       return;
@@ -178,7 +189,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const dados = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
     if (!dados.length) {
-      resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${selectedRadius} km</strong>.</p>`;
+      resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${raioNum} km</strong>.</p>`;
       return;
     }
 
@@ -214,13 +225,4 @@ window.addEventListener('DOMContentLoaded', () => {
     sortedAll.forEach((e, idx) => {
       const li    = document.createElement('li');
       const card  = document.createElement('div'); card.className = 'card';
-      const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const iconSrcModal = (idx === 0) ? 'public/images/ai-sim.png' : (idx === sortedAll.length - 1 ? 'public/images/eita.png' : '');
-      card.innerHTML = `
-        <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
-        <div class="card-body">
-          <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
-          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} /
+      const mapL  = `https://www.google.com/maps/search/?api=1&query=${
