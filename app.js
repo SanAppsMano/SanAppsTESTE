@@ -12,33 +12,28 @@ window.addEventListener('DOMContentLoaded', () => {
   const summaryContainer = document.getElementById('summary');
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
+  const historyListEl    = document.getElementById('history-list');
+  const clearHistoryBtn  = document.getElementById('clear-history');
 
-  // Garante que o botão não dispare submit de formulário
+  // Evita submit de form
   btnSearch.type = 'button';
 
-  // — Histórico —
-  const historyListEl   = document.getElementById('history-list');
-  const clearHistoryBtn = document.getElementById('clear-history');
-  let historyArr        = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let currentResults = [];
+  let selectedRadius = document.querySelector('.radius-btn.active')?.dataset.value || '15';
 
-  // Persiste histórico em localStorage
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
   }
 
-  // Variável para cache de resultados atuais
-  let currentResults = [];
-
-  // — Renderiza histórico —
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li  = document.createElement('li');
+      const li = document.createElement('li');
       li.className = 'history-item';
       const btn = document.createElement('button');
       btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
-
       if (item.image) {
         const img = document.createElement('img');
         img.src = item.image;
@@ -60,10 +55,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  renderHistory();
-
-  // — Seleção de raio de busca —
-  let selectedRadius = document.querySelector('.radius-btn.active')?.dataset.value || '15';
   radiusButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       radiusButtons.forEach(b => b.classList.remove('active'));
@@ -72,29 +63,23 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // — Função para renderizar cards (menor e maior preço) —
   function renderCards(dados) {
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
-
     [menor, maior].forEach((e, i) => {
-      const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
-      const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const altText  = i === 0 ? 'Ai sim' : 'Eita';
-      const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const when     = e.dthEmissaoUltimaVenda
-        ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
-        : '—';
-
+      const label = i === 0 ? 'Menor preço' : 'Maior preço';
+      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <div class="card-header">${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+        <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          <div class="card-icon-right"><img src="${iconSrc}" alt="${altText}"></div>
+          <div class="card-icon-right"><img src="${icon}" alt=""></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p style="font-size:0.95rem;">
@@ -107,163 +92,103 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // — Renderiza o resumo + cards a partir do cache —
   function loadFromCache(item) {
-    if (!item.dados || !Array.isArray(item.dados)) {
+    if (!item.dados?.length) {
       alert('Sem dados em cache para este produto. Faça a busca primeiro.');
       return;
     }
     currentResults = item.dados;
     barcodeInput.value = item.code;
-    const { name: productName, image: productImg, dados } = item;
-
     summaryContainer.innerHTML = `
       <div class="product-header">
         <div class="product-image-wrapper">
-          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-          <div class="product-name-overlay">${productName}</div>
+          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
+          <div class="product-name-overlay">${item.name}</div>
         </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+        <p><strong>${item.dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
     `;
-    renderCards(dados);
+    renderCards(item.dados);
   }
 
-  // — Função principal de busca —
-  btnSearch.addEventListener('click', async (e) => {
+  btnSearch.addEventListener('click', async e => {
     e.preventDefault();
-    console.log('Search clicked, endpoint:', API_ENDPOINT);
-    const barcode = barcodeInput.value.trim();
-    if (!barcode) {
-      alert('Digite um código de barras válido.');
-      return;
-    }
+    const code = barcodeInput.value.trim();
+    if (!code) return alert('Digite um código de barras válido.');
     btnSearch.textContent = 'Atualizar Preço';
-    btnSearch.classList.add('btn-update-font');
-
     loading.classList.add('active');
-    resultContainer.innerHTML  = '';
+    resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
 
-    const locType = document.querySelector('input[name="loc"]:checked').value;
     let latitude, longitude;
+    const locType = document.querySelector('input[name="loc"]:checked').value;
     if (locType === 'gps') {
       try {
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej)
-        );
-        latitude  = pos.coords.latitude;
-        longitude = pos.coords.longitude;
+        const pos = await new Promise((r, j) => navigator.geolocation.getCurrentPosition(r, j));
+        ({ latitude, longitude } = pos.coords);
       } catch {
         loading.classList.remove('active');
-        alert('Não foi possível obter sua localização.');
-        return;
+        return alert('Não foi possível obter sua localização.');
       }
     } else {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-        // Garante valor numérico de raio
     const raioNum = Number(selectedRadius) || 15;
-    let data;
     try {
-      // Monta URL com query params para evitar preflight CORS
       const url = new URL(API_ENDPOINT);
-      url.searchParams.set('codigoDeBarras', barcode);
+      url.searchParams.set('codigoDeBarras', code);
       url.searchParams.set('latitude', latitude);
       url.searchParams.set('longitude', longitude);
       url.searchParams.set('raio', raioNum);
       url.searchParams.set('dias', 3);
-      console.log('Fetching via GET URL:', url.toString());
-      const res = await fetch(url.toString());
-      console.log('Response status:', res.status);
-      data = await res.json();
-      console.log('Response data:', data);
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data?.length && !data?.dados?.length) {
+        resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${raioNum} km</strong>.</p>`;
+      } else {
+        const dados = data.dados || data;
+        summaryContainer.innerHTML = `<p><strong>${dados.length}</strong> estabelecimento(s) encontrado(s).</p>`;
+        historyArr.unshift({ code, name: data.dscProduto || dados[0].dscProduto, image: dados[0].codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${dados[0].codGetin}` : '', dados });
+        saveHistory(); renderHistory(); renderCards(dados);
+      }
     } catch (err) {
-      console.error('Fetch error:', err);
-      loading.classList.remove('active');
+      console.error(err);
       alert('Erro ao buscar preços. Tente novamente mais tarde.');
-      return;
-    }('Fetching data with payload:', { codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 });
-      const res = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 })
-      });
-      console.log('Response status:', res.status);
-      data = await res.json();
-      console.log('Response data:', data);
-    } catch (err) {
-      console.error('Fetch error:', err);
+    } finally {
       loading.classList.remove('active');
-      alert('Erro ao buscar preços. Tente novamente mais tarde.');
-      return;
+      btnSearch.textContent = 'Pesquisar';
     }
-
-    loading.classList.remove('active');
-    btnSearch.textContent = 'Pesquisar';
-    btnSearch.classList.remove('btn-update-font');
-
-    const dados = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
-    if (!dados.length) {
-      resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${raioNum} km</strong>.</p>`;
-      return;
-    }
-
-    currentResults = dados;
-    const primeiro    = dados[0];
-    const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
-    const productImg  = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
-
-    summaryContainer.innerHTML = `
-      <div class="product-header">
-        <div class="product-image-wrapper">
-          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-        </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) encontrado(s).</p>
-      </div>
-    `;
-    historyArr.unshift({ code: barcode, name: productName, image: productImg, dados });
-    saveHistory();
-    renderHistory();
-    renderCards(dados);
   });
 
-  // — Funcionalidade do Modal de Lista Ordenada —
   const openModalBtn  = document.getElementById('open-modal');
   const closeModalBtn = document.getElementById('close-modal');
   const modal         = document.getElementById('modal');
   const modalList     = document.getElementById('modal-list');
 
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) { alert('Não há resultados para exibir. Faça uma busca primeiro.'); return; }
+    if (!currentResults.length) return alert('Não há resultados para exibir.');
     modalList.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    sortedAll.forEach((e, idx) => {
-      const li    = document.createElement('li');
-      const card  = document.createElement('div'); card.className = 'card';
-      const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const iconSrcModal = (idx === 0)
-        ? 'public/images/ai-sim.png'
-        : (idx === sortedAll.length - 1 ? 'public/images/eita.png' : '');
-      card.innerHTML = `
-        <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
-        <div class="card-body">
-          <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
-          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-          <p><strong>Quando:</strong> ${when}</p>
-          <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
-        </div>
-      `;
-      li.appendChild(card);
-      modalList.appendChild(li);
+    currentResults.sort((a,b)=>a.valMinimoVendido-b.valMinimoVendido).forEach((e,idx) => {
+      const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const icon = idx===0?'public/images/ai-sim.png':(idx===currentResults.length-1?'public/images/eita.png':'');
+      const mapL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      modalList.innerHTML += `
+        <li><div class="card">
+          <div class="card-header">${e.nomFantasia||e.nomRazaoSocial||'—'}</div>
+          <div class="card-body">
+            <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+            ${icon?`<div class="card-icon-right"><img src="${icon}"></div>`:''}
+            <p><strong>Bairro/Município:</strong> ${e.nomBairro||'—'} / ${e.nomMunicipio||'—'}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank">Ver no mapa</a> | <a href="${dirL}" target="_blank">Como chegar</a></p>
+          </div>
+        </div></li>`;
     });
     modal.classList.add('active');
   });
 
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+  closeModalBtn.addEventListener('click',()=>modal.classList.remove('active'));
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('active');});
 });
