@@ -225,4 +225,28 @@ window.addEventListener('DOMContentLoaded', () => {
     sortedAll.forEach((e, idx) => {
       const li    = document.createElement('li');
       const card  = document.createElement('div'); card.className = 'card';
-      const mapL  = `https://www.google.com/maps/search/?api=1&query=${
+      const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const iconSrcModal = (idx === 0)
+        ? 'public/images/ai-sim.png'
+        : (idx === sortedAll.length - 1 ? 'public/images/eita.png' : '');
+      card.innerHTML = `
+        <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+        <div class="card-body">
+          <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
+          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+          <p><strong>Quando:</strong> ${when}</p>
+          <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+        </div>
+      `;
+      li.appendChild(card);
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+});
