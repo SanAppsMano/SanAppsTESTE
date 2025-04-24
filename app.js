@@ -1,7 +1,7 @@
 /* app.js */
 
 // Configuração da URL da API no Google Apps Script
-typename API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxf9YoD14eydIBvMe-wPIDRt0_LGzwyEwoKmCch2HiHbJxPBRkS38B-fAIs8xulew-P/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxf9YoD14eydIBvMe-wPIDRt0_LGzwyEwoKmCch2HiHbJxPBRkS38B-fAIs8xulew-P/exec';
 
 // Garante que todo o DOM esteja carregado antes de associar eventos
 window.addEventListener('DOMContentLoaded', () => {
