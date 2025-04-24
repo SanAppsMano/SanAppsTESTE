@@ -148,6 +148,8 @@ body {
 .card-body {
   padding: 1rem;
   flex: 1;
+  position: relative;
+  padding-right: 4rem;
 }
 .card-body p {
   margin-bottom: 0.5rem;
@@ -158,6 +160,20 @@ body {
   font-weight: bold;
 }
 .card-body a:hover { text-decoration: underline; }
+
+/* Icone posicionado à direita no card-body */
+.card-icon-right {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 48px;
+  height: 48px;
+}
+.card-icon-right img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
 /* ========== Product Header Overlay ======= */
 .product-header {
@@ -288,11 +304,10 @@ body {
 #modal-list li { list-style: none; }
 
 /* ===== Responsividade ===== */
-/* Mobile (até 767px) */
 @media (max-width: 767px) {
   .search-panel {
     padding: 1rem;
-    margin: 0 auto 1rem auto; /* removed negative overlap */
+    margin: 0 auto 1rem auto;
   }
   .controls {
     display: flex;
@@ -315,8 +330,6 @@ body {
     width: 100%;
   }
 }
-
-/* Desktop (a partir de 768px) */
 @media (min-width: 768px) {
   .search-panel {
     padding: 2rem;
@@ -350,14 +363,4 @@ body {
     width: auto;
     justify-self: start;
   }
-  /* ====== Icones de Menor/Maior Preço ====== */
-/* Tamanho maior para o ícone ao lado do preço */
-.card-icon-price {
-  width: 32px;
-  height: 32px;
-  margin-right: 0.5rem;
-  vertical-align: middle;
-}
-
-
 }
