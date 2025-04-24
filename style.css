@@ -1,3 +1,5 @@
+/* style.css */
+
 /* ========== Variáveis ========== */
 :root {
   --color-primary: #005aaf;
@@ -68,7 +70,6 @@ body {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: var(--radius);
-  opacity: 1;
 }
 .radius-control {
   display: flex;
@@ -146,10 +147,10 @@ body {
   font-weight: bold;
 }
 .card-body {
-  padding: 1rem;
-  flex: 1;
   position: relative;
-  padding-right: 4rem;
+  padding: 1rem;
+  padding-right: clamp(4rem, 12%, 8rem); /* espaço dinâmico para o ícone */
+  flex: 1;
 }
 .card-body p {
   margin-bottom: 0.5rem;
@@ -161,18 +162,18 @@ body {
 }
 .card-body a:hover { text-decoration: underline; }
 
-/* Icone posicionado à direita no card-body */
+/* Ícone à direita responsivo */
 .card-icon-right {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 48px;
-  height: 48px;
+  top: 50%;
+  right: clamp(1rem, 4%, 2rem);
+  width: clamp(48px, 10%, 96px);
+  transform: translateY(-50%);
 }
 .card-icon-right img {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
+  display: block;
 }
 
 /* ========== Product Header Overlay ======= */
@@ -202,7 +203,7 @@ body {
   text-align: center;
 }
 
-/* ========== History Panel ========== */
+/* ========== History Panel ==========
 .history-panel {
   background: var(--color-white);
   padding: 1.5rem;
@@ -304,6 +305,7 @@ body {
 #modal-list li { list-style: none; }
 
 /* ===== Responsividade ===== */
+/* Mobile (até 767px) */
 @media (max-width: 767px) {
   .search-panel {
     padding: 1rem;
@@ -330,6 +332,8 @@ body {
     width: 100%;
   }
 }
+
+/* Desktop (a partir de 768px) */
 @media (min-width: 768px) {
   .search-panel {
     padding: 2rem;
