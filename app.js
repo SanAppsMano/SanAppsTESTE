@@ -163,11 +163,28 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    // Garante valor numérico de raio
+        // Garante valor numérico de raio
     const raioNum = Number(selectedRadius) || 15;
     let data;
     try {
-      console.log('Fetching data with payload:', { codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 });
+      // Monta URL com query params para evitar preflight CORS
+      const url = new URL(API_ENDPOINT);
+      url.searchParams.set('codigoDeBarras', barcode);
+      url.searchParams.set('latitude', latitude);
+      url.searchParams.set('longitude', longitude);
+      url.searchParams.set('raio', raioNum);
+      url.searchParams.set('dias', 3);
+      console.log('Fetching via GET URL:', url.toString());
+      const res = await fetch(url.toString());
+      console.log('Response status:', res.status);
+      data = await res.json();
+      console.log('Response data:', data);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      loading.classList.remove('active');
+      alert('Erro ao buscar preços. Tente novamente mais tarde.');
+      return;
+    }('Fetching data with payload:', { codigoDeBarras: barcode, latitude, longitude, raio: raioNum, dias: 3 });
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
