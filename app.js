@@ -12,7 +12,6 @@ const historyListEl    = document.getElementById("history-list");
 const clearHistoryBtn  = document.getElementById("clear-history");
 let historyArr         = JSON.parse(localStorage.getItem("searchHistory") || "[]");
 
-// Persiste histórico em localStorage
 function saveHistory() {
   localStorage.setItem("searchHistory", JSON.stringify(historyArr));
 }
@@ -24,7 +23,44 @@ const modal            = document.getElementById("modal");
 const modalList        = document.getElementById("modal-list");
 let currentResults     = [];
 
-// Renderiza o resumo + cards a partir do cache
+function renderCards(dados) {
+  resultContainer.innerHTML = "";
+  const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+  const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+
+  [menor, maior].forEach((e, i) => {
+    const priceLab = i === 0 ? "Menor preço" : "Maior preço";
+    const iconSrc  = i === 0
+      ? 'images/ai-sim.png'
+      : 'images/eita.png';
+    const altText  = i === 0 ? 'Ai sim' : 'Eita';
+    const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+    const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+    const when     = e.dthEmissaoUltimaVenda
+      ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
+      : "—";
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="card-header">${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+      <div class="card-body">
+        <p>
+          <img src="${iconSrc}" alt="${altText}" class="card-icon-price">
+          <strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}
+        </p>
+        <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+        <p><strong>Quando:</strong> ${when}</p>
+        <p style="font-size: 0.95rem;">
+          <a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+          <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+        </p>
+      </div>
+    `;
+    resultContainer.appendChild(card);
+  });
+}
+
 function loadFromCache(item) {
   if (!item.dados || !Array.isArray(item.dados)) {
     alert("Sem dados em cache para este produto. Faça a busca primeiro.");
@@ -46,44 +82,9 @@ function loadFromCache(item) {
     </div>
   `;
 
-  resultContainer.innerHTML = "";
-  const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-  const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
-
-  [menor, maior].forEach((e, i) => {
-    const priceLab = i === 0 ? "Menor preço" : "Maior preço";
-    const iconSrc  = i === 0
-      ? 'public/images/ai-sim.png'
-      : 'public/images/eita.png';
-    const altText  = i === 0 ? 'Ai sim' : 'Eita';
-    const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-    const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-    const when     = e.dthEmissaoUltimaVenda
-      ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
-      : "—";
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-header">
-        <img src="${iconSrc}" alt="${altText}" class="card-icon">
-        ${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}
-      </div>
-      <div class="card-body">
-        <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-        <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-        <p><strong>Quando:</strong> ${when}</p>
-        <p style="font-size: 0.95rem;">
-          <a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-          <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-        </p>
-      </div>
-    `;
-    resultContainer.appendChild(card);
-  });
+  renderCards(dados);
 }
 
-// Desenha lista horizontal do histórico
 function renderHistory() {
   historyListEl.innerHTML = "";
   historyArr.forEach(item => {
@@ -108,7 +109,6 @@ function renderHistory() {
   });
 }
 
-// Limpa histórico
 clearHistoryBtn.addEventListener("click", () => {
   if (confirm("Deseja limpar o histórico de buscas?")) {
     historyArr = [];
@@ -117,10 +117,8 @@ clearHistoryBtn.addEventListener("click", () => {
   }
 });
 
-// Renderiza histórico ao iniciar
 renderHistory();
 
-// — Seleção de raio de busca —
 let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 radiusButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -130,7 +128,6 @@ radiusButtons.forEach(btn => {
   });
 });
 
-// — Função principal de busca —
 btnSearch.addEventListener("click", async () => {
   const barcode = barcodeInput.value.trim();
   if (!barcode) {
@@ -217,43 +214,10 @@ btnSearch.addEventListener("click", async () => {
   saveHistory();
   renderHistory();
 
-  const sorted2 = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-  const [minItem, maxItem] = [sorted2[0], sorted2[sorted2.length - 1]];
-
-  [minItem, maxItem].forEach((e, i) => {
-    const priceLab = i === 0 ? "Menor preço" : "Maior preço";
-    const iconSrc  = i === 0
-      ? 'public/images/ai-sim.png'
-      : 'public/images/eita.png';
-    const altText  = i === 0 ? 'Ai sim' : 'Eita';
-    const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-    const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-    const when     = e.dthEmissaoUltimaVenda
-      ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
-      : "—";
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-header">
-        <img src="${iconSrc}" alt="${altText}" class="card-icon">
-        ${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}
-      </div>
-      <div class="card-body">
-        <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-        <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-        <p><strong>Quando:</strong> ${when}</p>
-        <p style="font-size: 0.95rem;">
-          <a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-          <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-        </p>
-      </div>
-    `;
-    resultContainer.appendChild(card);
-  });
+  renderCards(dados);
 });
 
-// — Funcionalidade do Modal —
+// — Modal de lista ordenada —
 openModalBtn.addEventListener('click', () => {
   if (!currentResults.length) {
     alert('Não há resultados para exibir. Faça uma busca primeiro.');
@@ -275,7 +239,12 @@ openModalBtn.addEventListener('click', () => {
     card.innerHTML = `
       <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
       <div class="card-body">
-        <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+        <p>
+          <img src="${e.valMinimoVendido === sortedAll[0].valMinimoVendido ? 'images/ai-sim.png' : 'images/eita.png'}"
+               alt=""
+               class="card-icon-price">
+          <strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}
+        </p>
         <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
         <p><strong>Quando:</strong> ${when}</p>
         <p style="font-size: 0.95rem;">
