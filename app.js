@@ -74,7 +74,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     [menor, maior].forEach((e, i) => {
       const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
-      const iconSrc  = i === 0 ? 'images/ai-sim.png' : 'images/eita.png';
+      // Usa caminho correto para imagens no Git
+      const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const altText  = i === 0 ? 'Ai sim' : 'Eita';
       const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
@@ -188,53 +189,43 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="product-header">
         <div class="product-image-wrapper">
           <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-          <div class="product-name-overlay">${productName}</div>
         </div>
         <p><strong>${dados.length}</strong> estabelecimento(s) encontrado(s).</p>
       </div>
     `;
-
     historyArr.unshift({ code: barcode, name: productName, image: productImg, dados });
     saveHistory();
     renderHistory();
-
     renderCards(dados);
   });
 
-  // — Modal de lista ordenada —
+  // — Funcionalidade do Modal de Lista Ordenada —
   const openModalBtn  = document.getElementById('open-modal');
   const closeModalBtn = document.getElementById('close-modal');
   const modal         = document.getElementById('modal');
   const modalList     = document.getElementById('modal-list');
 
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) {
-      alert('Não há resultados para exibir. Faça uma busca primeiro.');
-      return;
-    }
+    if (!currentResults.length) { alert('Não há resultados para exibir. Faça uma busca primeiro.'); return; }
     modalList.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     sortedAll.forEach((e, idx) => {
       const li    = document.createElement('li');
-      const card  = document.createElement('div');
-      card.className = 'card';
+      const card  = document.createElement('div'); card.className = 'card';
       const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const isExtremes = idx === 0 || idx === sortedAll.length - 1;
-      const iconSrcModal = idx === 0 ? 'images/ai-sim.png' : (idx === sortedAll.length - 1 ? 'images/eita.png' : '');
-
+      const iconSrcModal = (idx === 0) ? 'public/images/ai-sim.png' : (idx === sortedAll.length - 1 ? 'public/images/eita.png' : '');
       card.innerHTML = `
         <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          ${isExtremes ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
+          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
         </div>
       `;
-
       li.appendChild(card);
       modalList.appendChild(li);
     });
