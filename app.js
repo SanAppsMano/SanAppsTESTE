@@ -43,6 +43,11 @@ function handlePrices(resp) {
 
 // Função para disparar JSONP
 function buscarJSONP(code, latitude, longitude, raio = 15, dias = 3) {
+  // Remove previous callback script if exists
+  const existing = document.getElementById('jsonpScript');
+  if (existing) existing.remove();
+
+  // Gera URL com callback
   const url = new URL(API_ENDPOINT);
   url.searchParams.set('codigoDeBarras', code);
   url.searchParams.set('latitude', latitude);
@@ -50,10 +55,22 @@ function buscarJSONP(code, latitude, longitude, raio = 15, dias = 3) {
   url.searchParams.set('raio', raio);
   url.searchParams.set('dias', dias);
   url.searchParams.set('callback', 'handlePrices');
+  console.log('JSONP request URL:', url.toString());
 
-  // Injeta script JSONP
+  // Cria e injeta o script JSONP
   const script = document.createElement('script');
+  script.id = 'jsonpScript';
   script.src = url.toString();
+  script.async = true;
+  script.onload = () => console.log('JSONP script carregado com sucesso');
+  script.onerror = () => {
+    console.error('Falha ao carregar JSONP script:', url.toString());
+    const loading = document.getElementById('loading');
+    const btnSearch = document.getElementById('btn-search');
+    loading.classList.remove('active');
+    btnSearch.textContent = 'Pesquisar';
+    alert('Erro de carregamento dos dados (JSONP). Tente novamente.');
+  };
   document.body.appendChild(script);
 }
 
