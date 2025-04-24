@@ -1,4 +1,5 @@
 /* app.js */
+
 // — Referências ao DOM —
 const btnSearch        = document.getElementById("btn-search");
 const barcodeInput     = document.getElementById("barcode");
@@ -12,17 +13,12 @@ const historyListEl    = document.getElementById("history-list");
 const clearHistoryBtn  = document.getElementById("clear-history");
 let historyArr         = JSON.parse(localStorage.getItem("searchHistory") || "[]");
 
+// Persiste histórico em localStorage
 function saveHistory() {
   localStorage.setItem("searchHistory", JSON.stringify(historyArr));
 }
 
-// — Modal de lista ordenada —
-const openModalBtn     = document.getElementById("open-modal");
-const closeModalBtn    = document.getElementById("close-modal");
-const modal            = document.getElementById("modal");
-const modalList        = document.getElementById("modal-list");
-let currentResults     = [];
-
+// — Função para renderizar cards (menor e maior preço) —
 function renderCards(dados) {
   resultContainer.innerHTML = "";
   const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
@@ -45,10 +41,10 @@ function renderCards(dados) {
     card.innerHTML = `
       <div class="card-header">${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
       <div class="card-body">
-        <p>
-          <img src="${iconSrc}" alt="${altText}" class="card-icon-price">
-          <strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}
-        </p>
+        <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+        <div class="card-icon-right">
+          <img src="${iconSrc}" alt="${altText}">
+        </div>
         <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
         <p><strong>Quando:</strong> ${when}</p>
         <p style="font-size: 0.95rem;">
@@ -56,18 +52,21 @@ function renderCards(dados) {
           <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
         </p>
       </div>
-    `;
+    \`; 
     resultContainer.appendChild(card);
   });
 }
 
+// — Renderiza o resumo + cards a partir do cache —
 function loadFromCache(item) {
   if (!item.dados || !Array.isArray(item.dados)) {
     alert("Sem dados em cache para este produto. Faça a busca primeiro.");
     return;
   }
 
+  // Atualiza currentResults
   currentResults = item.dados;
+  // Preenche o campo de código de barras
   barcodeInput.value = item.code;
 
   const { name: productName, image: productImg, dados } = item;
@@ -82,9 +81,11 @@ function loadFromCache(item) {
     </div>
   `;
 
+  // Renderiza cards
   renderCards(dados);
 }
 
+// — Desenha lista horizontal do histórico —
 function renderHistory() {
   historyListEl.innerHTML = "";
   historyArr.forEach(item => {
@@ -109,6 +110,7 @@ function renderHistory() {
   });
 }
 
+// Limpa histórico
 clearHistoryBtn.addEventListener("click", () => {
   if (confirm("Deseja limpar o histórico de buscas?")) {
     historyArr = [];
@@ -117,8 +119,10 @@ clearHistoryBtn.addEventListener("click", () => {
   }
 });
 
+// Renderiza histórico ao iniciar
 renderHistory();
 
+// — Seleção de raio de busca —
 let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 radiusButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -128,6 +132,10 @@ radiusButtons.forEach(btn => {
   });
 });
 
+// Variável para cache de resultados atuais
+let currentResults = [];
+
+// — Função principal de busca —
 btnSearch.addEventListener("click", async () => {
   const barcode = barcodeInput.value.trim();
   if (!barcode) {
@@ -142,6 +150,7 @@ btnSearch.addEventListener("click", async () => {
   resultContainer.innerHTML  = "";
   summaryContainer.innerHTML = "";
 
+  // Localização
   const locType = document.querySelector('input[name="loc"]:checked').value;
   let latitude, longitude;
   if (locType === 'gps') {
@@ -160,6 +169,7 @@ btnSearch.addEventListener("click", async () => {
     [latitude, longitude] = document.getElementById("city").value.split(",").map(Number);
   }
 
+  // Chamada à Netlify Function
   let data;
   try {
     const res = await fetch('/.netlify/functions/search', {
@@ -192,8 +202,8 @@ btnSearch.addEventListener("click", async () => {
     return;
   }
 
+  // Atualiza cache e histórico
   currentResults = dados;
-
   const primeiro    = dados[0];
   const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
   const productImg  = primeiro.codGetin
@@ -214,10 +224,16 @@ btnSearch.addEventListener("click", async () => {
   saveHistory();
   renderHistory();
 
+  // Renderiza cards com ícones à direita
   renderCards(dados);
 });
 
-// — Modal de lista ordenada —
+// — Funcionalidade do Modal de Lista Ordenada —
+const openModalBtn = document.getElementById("open-modal");
+const closeModalBtn = document.getElementById("close-modal");
+const modal = document.getElementById("modal");
+const modalList = document.getElementById("modal-list");
+
 openModalBtn.addEventListener('click', () => {
   if (!currentResults.length) {
     alert('Não há resultados para exibir. Faça uma busca primeiro.');
@@ -225,7 +241,7 @@ openModalBtn.addEventListener('click', () => {
   }
   modalList.innerHTML = '';
   const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-  sortedAll.forEach(e => {
+  sortedAll.forEach((e, idx) => {
     const li = document.createElement('li');
     const card = document.createElement('div');
     card.className = 'card';
@@ -236,26 +252,30 @@ openModalBtn.addEventListener('click', () => {
       ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
       : '—';
 
+    // Determina ícone conforme posição na lista ordenada
+    const iconSrcModal = (idx === 0)
+      ? 'images/ai-sim.png'
+      : (idx === sortedAll.length - 1)
+        ? 'images/eita.png'
+        : '';
+
     card.innerHTML = `
       <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
       <div class="card-body">
-        <p>
-          <img src="${e.valMinimoVendido === sortedAll[0].valMinimoVendido ? 'images/ai-sim.png' : 'images/eita.png'}"
-               alt=""
-               class="card-icon-price">
-          <strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}
-        </p>
+        <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+        ${
+ iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''
+ }
         <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
         <p><strong>Quando:</strong> ${when}</p>
-        <p style="font-size: 0.95rem;">
-          <a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-          <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-        </p>
+        <p style="font-size: 0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
       </div>
     `;
+
     li.appendChild(card);
     modalList.appendChild(li);
   });
+
   modal.classList.add('active');
 });
 
