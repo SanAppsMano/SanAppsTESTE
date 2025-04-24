@@ -1,5 +1,8 @@
 /* app.js */
 
+// Configuração da URL da API no Google Apps Script
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxf9YoD14eydIBvMe-wPIDRt0_LGzwyEwoKmCch2HiHbJxPBRkS38B-fAIs8xulew-P/exec';
+
 // Garante que todo o DOM esteja carregado antes de associar eventos
 window.addEventListener('DOMContentLoaded', () => {
   // — Referências ao DOM —
@@ -74,7 +77,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     [menor, maior].forEach((e, i) => {
       const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
-      // Usa caminho correto para imagens no Git
       const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const altText  = i === 0 ? 'Ai sim' : 'Eita';
       const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
@@ -158,7 +160,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let data;
     try {
-      const res = await fetch('/.netlify/functions/search', {
+      const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ codigoDeBarras: barcode, latitude: Number(latitude), longitude: Number(longitude), raio: Number(selectedRadius), dias: 3 })
@@ -221,17 +223,4 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="card-body">
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
           ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
-          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-          <p><strong>Quando:</strong> ${when}</p>
-          <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
-        </div>
-      `;
-      li.appendChild(card);
-      modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
-
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
-});
+          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} /
