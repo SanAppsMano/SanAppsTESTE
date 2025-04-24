@@ -351,11 +351,13 @@ body {
     justify-self: start;
   }
   /* ====== Icones de Menor/Maior Preço ====== */
-.card-icon {
-  width: 24px;
-  height: 24px;
+/* Tamanho maior para o ícone ao lado do preço */
+.card-icon-price {
+  width: 32px;
+  height: 32px;
   margin-right: 0.5rem;
   vertical-align: middle;
 }
+
 
 }
