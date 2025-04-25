@@ -1,6 +1,6 @@
-// app.js - final version with proper closure
+// app.js - fully closed and functional script
 
-// Função para fetch com timeout
+// Fetch com timeout para abortar requisições longas
 function fetchWithTimeout(resource, options = {}, timeout = 60000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -9,25 +9,27 @@ function fetchWithTimeout(resource, options = {}, timeout = 60000) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Elementos DOM
-  const btnSearch = document.getElementById('btn-search');
-  const barcodeInput = document.getElementById('barcode');
-  const resultContainer = document.getElementById('result');
+  // Elementos do DOM
+  const btnSearch        = document.getElementById('btn-search');
+  const barcodeInput     = document.getElementById('barcode');
+  const resultContainer  = document.getElementById('result');
   const summaryContainer = document.getElementById('summary');
-  const errorMessageDiv = document.getElementById('error-message');
-  const loading = document.getElementById('loading');
-  const radiusButtons = document.querySelectorAll('.radius-btn');
-  const historyListEl = document.getElementById('history-list');
-  const clearHistoryBtn = document.getElementById('clear-history');
-  const openModalBtn = document.getElementById('open-modal');
-  const closeModalBtn = document.getElementById('close-modal');
-  const modal = document.getElementById('modal');
-  const modalList = document.getElementById('modal-list');
+  const errorMessageDiv  = document.getElementById('error-message');
+  const loading          = document.getElementById('loading');
+  const radiusButtons    = document.querySelectorAll('.radius-btn');
+  const historyListEl    = document.getElementById('history-list');
+  const clearHistoryBtn  = document.getElementById('clear-history');
+  const openModalBtn     = document.getElementById('open-modal');
+  const closeModalBtn    = document.getElementById('close-modal');
+  const modal            = document.getElementById('modal');
+  const modalList        = document.getElementById('modal-list');
 
-  let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
-  let currentResults = [];
+  // Estado
+  let historyArr      = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let selectedRadius  = document.querySelector('.radius-btn.active').dataset.value;
+  let currentResults  = [];
 
+  // Histórico
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
   }
@@ -57,12 +59,14 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   renderHistory();
 
+  // Seleção de raio
   radiusButtons.forEach(btn => btn.addEventListener('click', () => {
     radiusButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedRadius = btn.dataset.value;
   }));
 
+  // Limpa resultados e mensagens
   function clearResults() {
     resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
@@ -70,6 +74,7 @@ window.addEventListener('DOMContentLoaded', () => {
     currentResults = [];
   }
 
+  // Renderiza cards com menor e maior preço
   function renderCards(dados) {
     if (!Array.isArray(dados) || dados.length === 0) return;
     resultContainer.innerHTML = '';
@@ -97,6 +102,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Carrega do cache
   function loadFromCache(item) {
     if (!item.dados || !Array.isArray(item.dados) || item.dados.length === 0) {
       errorMessageDiv.textContent = 'Sem dados em cache para este produto.';
@@ -108,6 +114,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(item.dados);
   }
 
+  // Evento Pesquisar
   btnSearch.addEventListener('click', async e => {
     e.preventDefault();
     const code = barcodeInput.value.trim();
@@ -116,7 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loading.classList.add('active');
     btnSearch.textContent = 'Iniciando busca...';
 
-    // Obter localização
+    // Obter geolocalização
     const locType = document.querySelector('input[name="loc"]:checked').value;
     let latitude, longitude;
     if (locType === 'gps') {
@@ -130,6 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
+    // Chamada à função em background
     try {
       const res = await fetchWithTimeout(
         '/.netlify/functions/search-background',
@@ -143,15 +151,25 @@ window.addEventListener('DOMContentLoaded', () => {
       else { errorMessageDiv.textContent = json.error || 'Erro ao iniciar busca.'; }
     } catch (err) {
       loading.classList.remove('active'); btnSearch.textContent = 'Pesquisar';
-      if (err.name === 'AbortError') { errorMessageDiv.textContent = 'Tempo de resposta excedido. Tente novamente mais tarde.'; }
+      if (err.name === 'AbortError') { errorMessageDiv.textContent = 'Tempo de resposta excedido. Tente mais tarde.'; }
       else { errorMessageDiv.textContent = 'Sem resposta do servidor. Tente mais tarde.'; }
     }
   });
 
+  // Modal de lista ordenada
   openModalBtn.addEventListener('click', () => {
     if (!currentResults.length) { errorMessageDiv.textContent = 'Faça uma busca antes de ver a lista.'; return; }
-    modalList.innerHTML = ''; currentResults.forEach((e, idx) => {
-      const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const icon = idx === 0 ? 'public/images/ai-sim.png' : (idx === currentResults.length - 1 ? 'public/images/eita.png' : '');
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${
+    modalList.innerHTML = '';
+    currentResults
+      .sort((a, b) => a.valMinimoVendido - b.valMinimoVendido)
+      .forEach((e, idx) => {
+        const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+        const icon = idx === 0 ? 'public/images/ai-sim.png' : (idx === currentResults.length - 1 ? 'public/images/eita.png' : '');
+        const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+        const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+        const li = document.createElement('li');
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+          <div class="card-body">
+            <p><strong>Preço:</strong> R$ ${
