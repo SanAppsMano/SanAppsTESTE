@@ -1,6 +1,6 @@
-// app.js - Ajustado para search-background.js e timeout de 1 minuto
+// app.js - Ajusted to call search-background.js and wait up to 1 minute
 
-// Função para fetch com timeout
+// Utility: fetch with client-side timeout
 function fetchWithTimeout(resource, options = {}, timeout = 60000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -9,7 +9,7 @@ function fetchWithTimeout(resource, options = {}, timeout = 60000) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Elementos do DOM
+  // DOM Elements
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const resultContainer  = document.getElementById('result');
@@ -24,12 +24,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const modal            = document.getElementById('modal');
   const modalList        = document.getElementById('modal-list');
 
-  // Estado inicial
+  // State
   let historyArr     = JSON.parse(localStorage.getItem('searchHistory') || '[]');
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
   let currentResults = [];
 
-  // Histórico
+  // Save and render history
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
   }
@@ -61,16 +61,14 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   renderHistory();
 
-  // Seleção de raio
-  radiusButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      radiusButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedRadius = btn.dataset.value;
-    });
-  });
+  // Radius selection
+  radiusButtons.forEach(btn => btn.addEventListener('click', () => {
+    radiusButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRadius = btn.dataset.value;
+  }));
 
-  // Limpa resultados e mensagens
+  // Clear UI results/messages
   function clearResults() {
     resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
@@ -78,20 +76,20 @@ window.addEventListener('DOMContentLoaded', () => {
     currentResults = [];
   }
 
-  // Renderiza cards de menor e maior preço
+  // Render two cards: min and max price
   function renderCards(dados) {
     if (!Array.isArray(dados) || dados.length === 0) return;
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     const extremes = [sorted[0], sorted[sorted.length - 1]];
-
     extremes.forEach((e, i) => {
       const label = i === 0 ? 'Menor preço' : 'Maior preço';
       const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
       const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const card = document.createElement('div'); card.className = 'card';
+      const card = document.createElement('div');
+      card.className = 'card';
       card.innerHTML = `
         <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
@@ -106,7 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Carrega do histórico
+  // Load from cache item
   function loadFromCache(item) {
     if (!item.dados || !Array.isArray(item.dados) || item.dados.length === 0) {
       errorMessageDiv.textContent = 'Sem dados em cache para este produto.';
@@ -118,7 +116,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(item.dados);
   }
 
-  // Evento Pesquisar -> chama search-background
+  // Search button -> call background function
   btnSearch.addEventListener('click', async e => {
     e.preventDefault();
     const code = barcodeInput.value.trim();
@@ -127,7 +125,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loading.classList.add('active');
     btnSearch.textContent = 'Iniciando busca...';
 
-    // Geolocalização
+    // Geolocation
     const locType = document.querySelector('input[name="loc"]:checked').value;
     let latitude, longitude;
     if (locType === 'gps') {
@@ -141,7 +139,7 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    // Chama background function Netlify
+    // Fetch background function (Netlify)
     try {
       const res = await fetchWithTimeout(
         '/.netlify/functions/search-background',
@@ -169,18 +167,15 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Modal de lista ordenada
+  // Modal ordered list
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) {
-      errorMessageDiv.textContent = 'Faça uma busca antes de ver a lista.';
-      return;
-    }
+    if (!currentResults.length) { errorMessageDiv.textContent = 'Faça uma busca antes de ver a lista.'; return; }
     modalList.innerHTML = '';
     currentResults
       .sort((a, b) => a.valMinimoVendido - b.valMinimoVendido)
-      .forEach((e, idx) => {
+      .forEach(e => {
         const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-        const icon = idx === 0 ? 'public/images/ai-sim.png' : (idx === currentResults.length - 1 ? 'public/images/eita.png' : '');
+        const icon = ''; // optional icons if needed
         const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
         const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
         const li = document.createElement('li');
@@ -189,6 +184,19 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
           <div class="card-body">
             <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-            ${icon ? `<div class="card-icon-right"><img src="${icon}" alt=""></div>` : ''}
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-            <p><strong>Quando:</strong> ${
+            <p><strong>Quando:</strong> ${when}</p>
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank">Ver no mapa</a> | <a href="${dirURL}" target="_blank">Como chegar</a></p>
+          </div>
+        `;
+        li.appendChild(card);
+        modalList.appendChild(li);
+      });
+    modal.classList.add('active');
+  });
+
+  // Close modal
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+
+});
