@@ -1,12 +1,8 @@
-// functions/search.js
+// functions/search-background.js
 
-exports.handler = async (event) => {
-  // Log the incoming event for debugging
-  console.log("Received event:", JSON.stringify(event));
-
+exports.handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
-    console.log("Preflight request, returning CORS headers");
     return {
       statusCode: 204,
       headers: {
@@ -18,7 +14,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    console.log("Parsing request body");
+    // Parse request body
     const {
       codigoDeBarras,
       latitude,
@@ -26,7 +22,6 @@ exports.handler = async (event) => {
       dias = 3,
       raio = 15
     } = JSON.parse(event.body);
-    console.log("Parsed values:", { codigoDeBarras, latitude, longitude, dias, raio });
 
     // Validate required params
     if (
@@ -34,7 +29,6 @@ exports.handler = async (event) => {
       typeof latitude !== "number" ||
       typeof longitude !== "number"
     ) {
-      console.warn("Invalid parameters");
       return {
         statusCode: 400,
         headers: { "Access-Control-Allow-Origin": "*" },
@@ -42,43 +36,37 @@ exports.handler = async (event) => {
       };
     }
 
-    const apiUrl = "http://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras";
-    console.log("Calling external API at:", apiUrl);
+    // Log for debugging
+    console.log("Background job: iniciando busca para", codigoDeBarras);
 
+    // Call external API (may take > 10s)
+    const apiUrl = "https://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras";
     const resp = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "AppToken": process.env.APP_TOKEN,
       },
-      body: JSON.stringify({
-        codigoDeBarras,
-        dias,
-        latitude,
-        longitude,
-        raio,
-      }),
+      body: JSON.stringify({ codigoDeBarras, dias, latitude, longitude, raio }),
     });
 
-    console.log("External API response status:", resp.status, resp.statusText);
-
     const data = await resp.json();
-    console.log("External API returned data:", JSON.stringify(data).slice(0, 500) + "...");
+    console.log("Background job: dados recebidos", JSON.stringify(data).slice(0, 200));
 
-    const statusCode = resp.ok ? 200 : resp.status;
-    console.log("Returning status code:", statusCode);
+    // TODO: Persistir 'data' em banco, cache ou storage para consulta posterior.
 
+    // Retorna imediatamente ao cliente
     return {
-      statusCode,
+      statusCode: 202,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ message: "Busca iniciada em background" }),
     };
 
   } catch (err) {
-    console.error("Error in handler:", err);
+    console.error("Erro no handler de background:", err);
     return {
       statusCode: 500,
       headers: {
