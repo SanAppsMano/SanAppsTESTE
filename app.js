@@ -1,7 +1,7 @@
 // app.js
 
 // Função para fetch com timeout
-function fetchWithTimeout(resource, options = {}, timeout = 10000) {
+function fetchWithTimeout(resource, options = {}, timeout = 60000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   return fetch(resource, { ...options, signal: controller.signal })
