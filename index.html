@@ -44,8 +44,8 @@
           </select>
         </div>
         <div class="radius-control">
-          <button class="radius-btn" data-value="5">5 km</button>
-          <button class="radius-btn active" data-value="15">15 km</button>
+          <button class="radius-btn" data-value="5" type="button">5 km</button>
+          <button class="radius-btn active" data-value="15" type="button">15 km</button>
         </div>
         <div class="barcode-wrap">
           <input
@@ -55,13 +55,13 @@
             pattern="[0-9]*"
             placeholder="Código de barras"
           />
-          <button id="btn-search" class="btn-primary">
+          <button id="btn-search" class="btn-primary" type="button">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
         <!-- Botão de ver lista ordenada -->
-        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
+        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista" type="button">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
         </button>
@@ -90,7 +90,7 @@
     <section class="history-panel">
       <h2>Buscas Recentes</h2>
       <ul id="history-list" class="history-list"></ul>
-      <button id="clear-history" class="btn-secondary">Limpar histórico</button>
+      <button id="clear-history" class="btn-secondary" type="button">Limpar histórico</button>
     </section>
   </main>
 
