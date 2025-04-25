@@ -210,4 +210,16 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Quando:</strong> ${when}</p>
             <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank">Ver no mapa</a> | <a href="${dirL}" target="_blank">Como chegar</a></p>
           </div>
-]}
+          </div>
+        </div>
+        `;
+        li.appendChild(card);
+        modalList.appendChild(li);
+      });
+      modal.classList.add('active');
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+
+});
