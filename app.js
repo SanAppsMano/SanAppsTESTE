@@ -74,7 +74,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     [menor, maior].forEach((e, i) => {
       const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
-      // Usa caminho correto para imagens no Git
       const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const altText  = i === 0 ? 'Ai sim' : 'Eita';
       const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
@@ -124,29 +123,23 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // — Função principal de busca —
+  // — Função principal de busca em background —
   btnSearch.addEventListener('click', async () => {
     const barcode = barcodeInput.value.trim();
     if (!barcode) {
       alert('Digite um código de barras válido.');
       return;
     }
-    btnSearch.textContent = 'Atualizar Preço';
-    btnSearch.classList.add('btn-update-font');
-
+    btnSearch.textContent = 'Iniciando busca...';
     loading.classList.add('active');
-    resultContainer.innerHTML  = '';
-    summaryContainer.innerHTML = '';
-
+    clearResults();
+    
     const locType = document.querySelector('input[name="loc"]:checked').value;
     let latitude, longitude;
     if (locType === 'gps') {
       try {
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej)
-        );
-        latitude  = pos.coords.latitude;
-        longitude = pos.coords.longitude;
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        ({ latitude, longitude } = pos.coords);
       } catch {
         loading.classList.remove('active');
         alert('Não foi possível obter sua localização.');
@@ -156,48 +149,33 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    let data;
     try {
-      const res = await fetch('/.netlify/functions/search', {
+      const res = await fetch('/.netlify/functions/search-background', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: barcode, latitude: Number(latitude), longitude: Number(longitude), raio: Number(selectedRadius), dias: 3 })
+        body: JSON.stringify({ codigoDeBarras: barcode, latitude, longitude, raio: Number(selectedRadius), dias: 3 })
       });
-      data = await res.json();
-    } catch {
+      const json = await res.json();
       loading.classList.remove('active');
-      alert('Erro ao buscar preços. Tente novamente mais tarde.');
-      return;
+      btnSearch.textContent = 'Pesquisar';
+
+      if (res.status === 202) {
+        alert(json.message || 'Busca iniciada em background.');
+      } else {
+        alert(json.error || 'Erro ao iniciar busca.');
+      }
+    } catch (err) {
+      loading.classList.remove('active');
+      btnSearch.textContent = 'Pesquisar';
+      alert('Erro ao acionar busca em background.');
     }
-
-    loading.classList.remove('active');
-    btnSearch.textContent = 'Pesquisar';
-    btnSearch.classList.remove('btn-update-font');
-
-    const dados = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
-    if (!dados.length) {
-      resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${selectedRadius} km</strong>.</p>`;
-      return;
-    }
-
-    currentResults = dados;
-    const primeiro    = dados[0];
-    const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
-    const productImg  = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
-
-    summaryContainer.innerHTML = `
-      <div class="product-header">
-        <div class="product-image-wrapper">
-          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-        </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) encontrado(s).</p>
-      </div>
-    `;
-    historyArr.unshift({ code: barcode, name: productName, image: productImg, dados });
-    saveHistory();
-    renderHistory();
-    renderCards(dados);
   });
+
+  // Limpa resultados atuais
+  function clearResults() {
+    resultContainer.innerHTML = '';
+    summaryContainer.innerHTML = '';
+  }
 
   // — Funcionalidade do Modal de Lista Ordenada —
   const openModalBtn  = document.getElementById('open-modal');
