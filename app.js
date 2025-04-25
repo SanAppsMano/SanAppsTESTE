@@ -1,4 +1,4 @@
-// app.js
+// app.js - Ajustado para search-background.js e timeout de 1 minuto
 
 // Função para fetch com timeout
 function fetchWithTimeout(resource, options = {}, timeout = 60000) {
@@ -43,10 +43,7 @@ window.addEventListener('DOMContentLoaded', () => {
       btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = item.name;
-        btn.appendChild(img);
+        const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
       } else {
         btn.textContent = item.name;
       }
@@ -83,15 +80,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Renderiza cards de menor e maior preço
   function renderCards(dados) {
-    resultContainer.innerHTML = '';
     if (!Array.isArray(dados) || dados.length === 0) return;
+    resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     const extremes = [sorted[0], sorted[sorted.length - 1]];
 
-    extremes.forEach((e, index) => {
-      const label = index === 0 ? 'Menor preço' : 'Maior preço';
+    extremes.forEach((e, i) => {
+      const label = i === 0 ? 'Menor preço' : 'Maior preço';
       const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const icon  = index === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const card = document.createElement('div'); card.className = 'card';
@@ -121,7 +118,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(item.dados);
   }
 
-  // Evento Pesquisar
+  // Evento Pesquisar -> chama search-background
   btnSearch.addEventListener('click', async e => {
     e.preventDefault();
     const code = barcodeInput.value.trim();
@@ -144,7 +141,7 @@ window.addEventListener('DOMContentLoaded', () => {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    // Chamada à função em background
+    // Chama background function Netlify
     try {
       const res = await fetchWithTimeout(
         '/.netlify/functions/search-background',
@@ -192,18 +189,6 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
           <div class="card-body">
             <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-            ` + (icon ? `<div class="card-icon-right"><img src="${icon}" alt=""></div>` : '') + `
+            ${icon ? `<div class="card-icon-right"><img src="${icon}" alt=""></div>` : ''}
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-            <p><strong>Quando:</strong> ${when}</p>
-            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank">Ver no mapa</a> | <a href="${dirURL}" target="_blank">Como chegar</a></p>
-          </div>
-        `;
-        li.appendChild(card);
-        modalList.appendChild(li);
-      });
-    modal.classList.add('active');
-  });
-
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
-});
+            <p><strong>Quando:</strong> ${
