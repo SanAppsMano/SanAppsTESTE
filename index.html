@@ -1,101 +1,113 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ConsultaPreço AL</title>
+// app.js - fully closed and functional script
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JSBLQWKYX9"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}  
-    gtag('js', new Date());
-    gtag('config', 'G-JSBLQWKYX9');
-  </script>
+// Fetch com timeout para abortar requisições longas
+function fetchWithTimeout(resource, options = {}, timeout = 60000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(resource, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(id));
+}
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="container">
-      <h1 class="brand">
-        <i class="fas fa-tags"></i>
-        ConsultaPreço <span class="highlight">AL</span>
-      </h1>
-    </div>
-  </header>
+window.addEventListener('DOMContentLoaded', () => {
+  // Elementos do DOM
+  const btnSearch        = document.getElementById('btn-search');
+  const barcodeInput     = document.getElementById('barcode');
+  const resultContainer  = document.getElementById('result');
+  const summaryContainer = document.getElementById('summary');
+  const errorMessageDiv  = document.getElementById('error-message');
+  const loading          = document.getElementById('loading');
+  const radiusButtons    = document.querySelectorAll('.radius-btn');
+  const historyListEl    = document.getElementById('history-list');
+  const clearHistoryBtn  = document.getElementById('clear-history');
+  const openModalBtn     = document.getElementById('open-modal');
+  const closeModalBtn    = document.getElementById('close-modal');
+  const modal            = document.getElementById('modal');
+  const modalList        = document.getElementById('modal-list');
 
-  <main class="container">
-    <!-- Busca -->
-    <section class="search-panel">
-      <div class="controls">
-        <div class="location-choice">
-          <label><input type="radio" name="loc" value="city" checked> Município</label>
-          <label><input type="radio" name="loc" value="gps"> GPS</label>
-        </div>
-        <div id="city-block">
-          <select id="city" class="select-field">
-            <option value="-9.6432331,-35.7190686">Maceió</option>
-            <option value="-9.751419,-36.659076">Arapiraca</option>
-            <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
-          </select>
-        </div>
-        <div class="radius-control">
-          <button class="radius-btn" data-value="5" type="button">5 km</button>
-          <button class="radius-btn active" data-value="15" type="button">15 km</button>
-        </div>
-        <div class="barcode-wrap">
-          <input
-            id="barcode"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            placeholder="Código de barras"
-          />
-          <button id="btn-search" class="btn-primary" type="button">
-            <i class="fas fa-search"></i>
-            <span class="btn-text">Pesquisar</span>
-          </button>
-        </div>
-        <!-- Botão de ver lista ordenada -->
-        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista" type="button">
-          <i class="fas fa-list"></i>
-          <span class="btn-text">Ver Lista Ordenada</span>
-        </button>
-      </div>
-      <div id="loading" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-2x"></i>
-      </div>
-    </section>
+  // Estado
+  let historyArr      = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let selectedRadius  = document.querySelector('.radius-btn.active').dataset.value;
+  let currentResults  = [];
 
-    <!-- Resultado -->
-    <section>
-      <!-- Mensagem de erro -->
-      <div id="error-message" class="error-message"></div>
-      <div id="summary"></div>
-      <div id="result" class="cards"></div>
+  // Histórico
+  function saveHistory() {
+    localStorage.setItem('searchHistory', JSON.stringify(historyArr));
+  }
 
-      <!-- Modal para lista ordenada -->
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <span class="close" id="close-modal">&times;</span>
-          <h2>Lista de Preços</h2>
-          <ol id="modal-list"></ol>
-        </div>
-      </div>
-    </section>
+  function renderHistory() {
+    historyListEl.innerHTML = '';
+    historyArr.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'history-item';
+      const btn = document.createElement('button');
+      btn.title = item.name;
+      btn.addEventListener('click', () => loadFromCache(item));
+      if (item.image) {
+        const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
+      } else btn.textContent = item.name;
+      li.appendChild(btn);
+      historyListEl.appendChild(li);
+    });
+  }
 
-    <!-- Histórico -->
-    <section class="history-panel">
-      <h2>Buscas Recentes</h2>
-      <ul id="history-list" class="history-list"></ul>
-      <button id="clear-history" class="btn-secondary" type="button">Limpar histórico</button>
-    </section>
-  </main>
+  clearHistoryBtn.addEventListener('click', () => {
+    if (confirm('Deseja limpar o histórico de buscas?')) {
+      historyArr = [];
+      saveHistory();
+      renderHistory();
+    }
+  });
+  renderHistory();
 
-  <script src="app.js" defer></script>
-</body>
-</html>
+  // Seleção de raio
+  radiusButtons.forEach(btn => btn.addEventListener('click', () => {
+    radiusButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRadius = btn.dataset.value;
+  }));
+
+  // Limpa resultados e mensagens
+  function clearResults() {
+    resultContainer.innerHTML = '';
+    summaryContainer.innerHTML = '';
+    errorMessageDiv.textContent = '';
+    currentResults = [];
+  }
+
+  // Renderiza cards com menor e maior preço
+  function renderCards(dados) {
+    if (!Array.isArray(dados) || dados.length === 0) return;
+    resultContainer.innerHTML = '';
+    const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    const [min, max] = [sorted[0], sorted[sorted.length - 1]];
+
+    [min, max].forEach((e, i) => {
+      const label = i === 0 ? 'Menor preço' : 'Maior preço';
+      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const card = document.createElement('div'); card.className = 'card';
+      card.innerHTML = `
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+          <div class="card-body">
+            <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+            ${icon ? `<div class="card-icon-right"><img src="${icon}" alt="">` : ''}
+            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p style="font-size:0.95rem;">
+              <a href="${mapURL}" target="_blank">Ver no mapa</a> |
+              <a href="${dirURL}" target="_blank">Como chegar</a>
+            </p>
+          </div>
+        `;
+        li.appendChild(card);
+        modalList.appendChild(li);
+      });
+      modal.classList.add('active');
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+
+});
