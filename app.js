@@ -1,49 +1,43 @@
-// app.js - Ajusted to call search-background.js and wait up to 1 minute
+/* app.js */
 
-// Utility: fetch with client-side timeout
-function fetchWithTimeout(resource, options = {}, timeout = 60000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  return fetch(resource, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(id));
-}
-
+// Garante que todo o DOM esteja carregado antes de associar eventos
 window.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
+  // — Referências ao DOM —
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const resultContainer  = document.getElementById('result');
   const summaryContainer = document.getElementById('summary');
-  const errorMessageDiv  = document.getElementById('error-message');
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
-  const historyListEl    = document.getElementById('history-list');
-  const clearHistoryBtn  = document.getElementById('clear-history');
-  const openModalBtn     = document.getElementById('open-modal');
-  const closeModalBtn    = document.getElementById('close-modal');
-  const modal            = document.getElementById('modal');
-  const modalList        = document.getElementById('modal-list');
 
-  // State
-  let historyArr     = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
-  let currentResults = [];
+  // — Histórico —
+  const historyListEl   = document.getElementById('history-list');
+  const clearHistoryBtn = document.getElementById('clear-history');
+  let historyArr        = JSON.parse(localStorage.getItem('searchHistory') || '[]');
 
-  // Save and render history
+  // Persiste histórico em localStorage
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
   }
 
+  // Variável para cache de resultados atuais
+  let currentResults = [];
+
+  // — Renderiza histórico —
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li = document.createElement('li');
+      const li  = document.createElement('li');
       li.className = 'history-item';
       const btn = document.createElement('button');
       btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
+
       if (item.image) {
-        const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.alt = item.name;
+        btn.appendChild(img);
       } else {
         btn.textContent = item.name;
       }
@@ -59,144 +53,185 @@ window.addEventListener('DOMContentLoaded', () => {
       renderHistory();
     }
   });
+
   renderHistory();
 
-  // Radius selection
-  radiusButtons.forEach(btn => btn.addEventListener('click', () => {
-    radiusButtons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedRadius = btn.dataset.value;
-  }));
+  // — Seleção de raio de busca —
+  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
+  radiusButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      radiusButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRadius = btn.dataset.value;
+    });
+  });
 
-  // Clear UI results/messages
-  function clearResults() {
-    resultContainer.innerHTML = '';
-    summaryContainer.innerHTML = '';
-    errorMessageDiv.textContent = '';
-    currentResults = [];
-  }
-
-  // Render two cards: min and max price
+  // — Função para renderizar cards (menor e maior preço) —
   function renderCards(dados) {
-    if (!Array.isArray(dados) || dados.length === 0) return;
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    const extremes = [sorted[0], sorted[sorted.length - 1]];
-    extremes.forEach((e, i) => {
-      const label = i === 0 ? 'Menor preço' : 'Maior preço';
-      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+
+    [menor, maior].forEach((e, i) => {
+      const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
+      // Usa caminho correto para imagens no Git
+      const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const altText  = i === 0 ? 'Ai sim' : 'Eita';
+      const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const when     = e.dthEmissaoUltimaVenda
+        ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
+        : '—';
+
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+        <div class="card-header">${priceLab} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          <div class="card-icon-right"><img src="${icon}" alt=""></div>
+          <div class="card-icon-right"><img src="${iconSrc}" alt="${altText}"></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
-          <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank">Ver no mapa</a> | <a href="${dirURL}" target="_blank">Como chegar</a></p>
+          <p style="font-size:0.95rem;">
+            <a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+            <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+          </p>
         </div>
       `;
       resultContainer.appendChild(card);
     });
   }
 
-  // Load from cache item
+  // — Renderiza o resumo + cards a partir do cache —
   function loadFromCache(item) {
-    if (!item.dados || !Array.isArray(item.dados) || item.dados.length === 0) {
-      errorMessageDiv.textContent = 'Sem dados em cache para este produto.';
+    if (!item.dados || !Array.isArray(item.dados)) {
+      alert('Sem dados em cache para este produto. Faça a busca primeiro.');
       return;
     }
+    currentResults = item.dados;
     barcodeInput.value = item.code;
-    summaryContainer.innerHTML = `<p><strong>${item.dados.length}</strong> estabelecimento(s) no histórico.</p>`;
-    clearResults();
-    renderCards(item.dados);
+    const { name: productName, image: productImg, dados } = item;
+
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+          <div class="product-name-overlay">${productName}</div>
+        </div>
+        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+      </div>
+    `;
+    renderCards(dados);
   }
 
-  // Search button -> call background function
-  btnSearch.addEventListener('click', async e => {
-    e.preventDefault();
-    const code = barcodeInput.value.trim();
-    if (!code) { errorMessageDiv.textContent = 'Digite um código de barras válido.'; return; }
-    clearResults();
-    loading.classList.add('active');
-    btnSearch.textContent = 'Iniciando busca...';
+  // — Função principal de busca —
+  btnSearch.addEventListener('click', async () => {
+    const barcode = barcodeInput.value.trim();
+    if (!barcode) {
+      alert('Digite um código de barras válido.');
+      return;
+    }
+    btnSearch.textContent = 'Atualizar Preço';
+    btnSearch.classList.add('btn-update-font');
 
-    // Geolocation
+    loading.classList.add('active');
+    resultContainer.innerHTML  = '';
+    summaryContainer.innerHTML = '';
+
     const locType = document.querySelector('input[name="loc"]:checked').value;
     let latitude, longitude;
     if (locType === 'gps') {
       try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        ({ latitude, longitude } = pos.coords);
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej)
+        );
+        latitude  = pos.coords.latitude;
+        longitude = pos.coords.longitude;
       } catch {
-        loading.classList.remove('active'); btnSearch.textContent = 'Pesquisar'; errorMessageDiv.textContent = 'Não foi possível obter sua localização.'; return;
+        loading.classList.remove('active');
+        alert('Não foi possível obter sua localização.');
+        return;
       }
     } else {
       [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    // Fetch background function (Netlify)
+    let data;
     try {
-      const res = await fetchWithTimeout(
-        '/.netlify/functions/search-background',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ codigoDeBarras: code, latitude, longitude, raio: Number(selectedRadius), dias: 3 })
-        },
-        60000
-      );
-      const json = await res.json();
-      loading.classList.remove('active'); btnSearch.textContent = 'Pesquisar';
-      if (res.status === 202) {
-        errorMessageDiv.textContent = json.message || 'Busca iniciada em background.';
-      } else {
-        errorMessageDiv.textContent = json.error || 'Erro ao iniciar busca.';
-      }
-    } catch (err) {
-      loading.classList.remove('active'); btnSearch.textContent = 'Pesquisar';
-      if (err.name === 'AbortError') {
-        errorMessageDiv.textContent = 'Tempo de resposta excedido. Tente mais tarde.';
-      } else {
-        errorMessageDiv.textContent = 'Sem resposta do servidor. Tente mais tarde.';
-      }
+      const res = await fetch('/.netlify/functions/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigoDeBarras: barcode, latitude: Number(latitude), longitude: Number(longitude), raio: Number(selectedRadius), dias: 3 })
+      });
+      data = await res.json();
+    } catch {
+      loading.classList.remove('active');
+      alert('Erro ao buscar preços. Tente novamente mais tarde.');
+      return;
     }
+
+    loading.classList.remove('active');
+    btnSearch.textContent = 'Pesquisar';
+    btnSearch.classList.remove('btn-update-font');
+
+    const dados = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
+    if (!dados.length) {
+      resultContainer.innerHTML = `<p>Nenhum estabelecimento encontrado em até <strong>${selectedRadius} km</strong>.</p>`;
+      return;
+    }
+
+    currentResults = dados;
+    const primeiro    = dados[0];
+    const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
+    const productImg  = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
+
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+        </div>
+        <p><strong>${dados.length}</strong> estabelecimento(s) encontrado(s).</p>
+      </div>
+    `;
+    historyArr.unshift({ code: barcode, name: productName, image: productImg, dados });
+    saveHistory();
+    renderHistory();
+    renderCards(dados);
   });
 
-  // Modal ordered list
+  // — Funcionalidade do Modal de Lista Ordenada —
+  const openModalBtn  = document.getElementById('open-modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  const modal         = document.getElementById('modal');
+  const modalList     = document.getElementById('modal-list');
+
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) { errorMessageDiv.textContent = 'Faça uma busca antes de ver a lista.'; return; }
+    if (!currentResults.length) { alert('Não há resultados para exibir. Faça uma busca primeiro.'); return; }
     modalList.innerHTML = '';
-    currentResults
-      .sort((a, b) => a.valMinimoVendido - b.valMinimoVendido)
-      .forEach(e => {
-        const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-        const icon = ''; // optional icons if needed
-        const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-        const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-        const li = document.createElement('li');
-        const card = document.createElement('div'); card.className = 'card';
-        card.innerHTML = `
-          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
-          <div class="card-body">
-            <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-            <p><strong>Quando:</strong> ${when}</p>
-            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank">Ver no mapa</a> | <a href="${dirURL}" target="_blank">Como chegar</a></p>
-          </div>
-        `;
-        li.appendChild(card);
-        modalList.appendChild(li);
-      });
+    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    sortedAll.forEach((e, idx) => {
+      const li    = document.createElement('li');
+      const card  = document.createElement('div'); card.className = 'card';
+      const mapL  = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirL  = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const when  = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const iconSrcModal = (idx === 0) ? 'public/images/ai-sim.png' : (idx === sortedAll.length - 1 ? 'public/images/eita.png' : '');
+      card.innerHTML = `
+        <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+        <div class="card-body">
+          <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
+          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+          <p><strong>Quando:</strong> ${when}</p>
+          <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+        </div>
+      `;
+      li.appendChild(card);
+      modalList.appendChild(li);
+    });
     modal.classList.add('active');
   });
 
-  // Close modal
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
-
 });
