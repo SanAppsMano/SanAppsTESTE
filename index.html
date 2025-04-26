@@ -37,6 +37,18 @@
     .share-icon:hover {
       color: #0056b3;
     }
+    /* Discreet click label under icon */
+    #share-label {
+      position: absolute;
+      top: calc(100% + 0.2rem);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #007bff;
+      opacity: 0.8;
+      pointer-events: none;
+      user-select: none;
+    }
     /* Tooltip instruction for first-time users */
     #share-tooltip {
       position: absolute;
@@ -116,6 +128,7 @@
         <button id="share-icon" class="share-icon" aria-label="Compartilhar aplicativo">
           <i class="fas fa-qrcode"></i>
         </button>
+        <span id="share-label">Clique</span>
         <div id="share-tooltip">Toque no ícone para compartilhar este app</div>
       </div>
     </div>
@@ -221,9 +234,9 @@
       });
 
       // Abertura/fechamento do modal
-      shareIcon.addEventListener('click', () => shareModal.classList.add('show'));
+      shareIcon.addEventListener('click', () => shareModal.classList.add('show'));  
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));  
+      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
     });
   </script>
 </body>
