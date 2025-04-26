@@ -46,9 +46,8 @@
     .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; color: #333; border: none; font-size: 1.25rem; cursor: pointer; }
     .close-btn:hover { color: #000; }
 
-    /* Layout adjustments */
-    .search-panel .controls { /* existing styles... */ }
-    /* ... other styles unchanged ... */
+    /* Additional styles */
+    .radius-control button.active { background-color: #005bbb; color: #fff; }
   </style>
 </head>
 <body>
@@ -56,7 +55,8 @@
     <div class="container">
       <h1 class="brand">
         <i class="fas fa-tags"></i>
-        ConsultaPreço <span class="highlight">AL</span>
+        <span>ConsultaPreço</span>
+        <span class="highlight">AL</span>
       </h1>
       <div id="share-container">
         <button id="share-icon" class="share-icon" aria-label="Compartilhar">
@@ -71,7 +71,35 @@
   <main class="container">
     <!-- Busca -->
     <section class="search-panel">
-      <!-- ... controls as before ... -->
+      <div class="controls">
+        <div class="location-choice">
+          <label><input type="radio" name="loc" value="city" checked> Município</label>
+          <label><input type="radio" name="loc" value="gps"> GPS</label>
+        </div>
+        <div id="city-block">
+          <select id="city" class="select-field">
+            <option value="-9.6432331,-35.7190686">Maceió</option>
+            <option value="-9.751419,-36.659076">Arapiraca</option>
+            <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
+          </select>
+        </div>
+        <div class="radius-control">
+          <button class="radius-btn" data-value="5">5 km</button>
+          <button class="radius-btn active" data-value="15">15 km</button>
+        </div>
+        <div class="barcode-wrap">
+          <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
+          <button id="btn-search" class="btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Pesquisar</span>
+          </button>
+        </div>
+        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada">
+          <i class="fas fa-list"></i>
+          <span class="btn-text">Lista Ordenada</span>
+        </button>
+      </div>
+      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
     </section>
 
     <!-- Resultado -->
@@ -90,7 +118,9 @@
 
     <!-- Histórico -->
     <section class="history-panel">
-      <!-- ... history ... -->
+      <h2>Buscas Recentes</h2>
+      <ul id="history-list" class="history-list"></ul>
+      <button id="clear-history" class="btn-secondary">Limpar histórico</button>
     </section>
   </main>
 
@@ -129,12 +159,12 @@
       // Open/close share modal
       shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
 
       // Open/close list modal
       openList.addEventListener('click', () => listModal.classList.add('show'));
       closeList.addEventListener('click', () => listModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && listModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && listModal.classList.remove('show'));
     });
   </script>
 </body>
