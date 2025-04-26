@@ -251,79 +251,92 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   
     // faz a busca por descrição e preenche a lista
-    document.getElementById('btn-desc-search').addEventListener('click', async () => {
-      const termo = descInput.value.trim();
-      if (!termo) {
-        alert('Informe a descrição do produto!');
-        return;
-      }
-  
-      descList.innerHTML = '';
-      loading.classList.add('active');
-  
-      // mesma lógica de localização do btnSearch:
-      let latitude, longitude;
-      const locType = document.querySelector('input[name="loc"]:checked').value;
-      if (locType === 'gps') {
-        try {
-          const pos = await new Promise((res, rej) =>
-            navigator.geolocation.getCurrentPosition(res, rej)
-          );
-          latitude  = pos.coords.latitude;
-          longitude = pos.coords.longitude;
-        } catch {
-          loading.classList.remove('active');
-          alert('Não foi possível obter sua localização.');
-          return;
-        }
-      } else {
-        [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
-      }
-  
-      // chama a mesma função de busca, trocando apenas o corpo
-      try {
-        const res = await fetch('/.netlify/functions/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            descricao: termo,
-            latitude: Number(latitude),
-            longitude: Number(longitude),
-            raio: Number(selectedRadius),
-            dias: 3
-          })
-        });
-        const data = await res.json();
-        const lista = Array.isArray(data) ? data : data.conteudo || [];
-  
-        loading.classList.remove('active');
-  
-        if (!lista.length) {
-          descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-          return;
-        }
-  
-        // monta cada <li> com imagem, GTIN e nome
-        lista.forEach(entry => {
-          const li = document.createElement('li');
-          li.innerHTML = `
-            <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}" 
-                 onerror="this.src='https://via.placeholder.com/40';" />
-            <strong>${entry.codGetin}</strong> – ${entry.dscProduto}
-          `;
-          li.addEventListener('click', () => {
-            // ao clicar, fecha modal e preenche o código de barras
-            document.getElementById('barcode').value = entry.codGetin;
-            descModal.classList.remove('active');
-          });
-          descList.appendChild(li);
-        });
-      } catch (e) {
-        loading.classList.remove('active');
-        alert('Erro na busca: ' + e.message);
-      }
+    // … logo antes você já tem definidas essas constantes:
+const APP_TOKEN = 'e679e13f8bd7e315e865d2fbc7dda23a6b5a6b2d';
+const API_URL   = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+// latitude, longitude e selectedRadius também já existem no seu código
+
+document.getElementById('btn-desc-search').addEventListener('click', async () => {
+  const termo = descInput.value.trim();
+  if (!termo) return alert('Informe a descrição do produto!');
+  descList.innerHTML = '';
+  loading.classList.add('active');
+
+  // calcula latitude/longitude igual ao btn-search original…
+  let latitude, longitude;
+  const locType = document.querySelector('input[name="loc"]:checked').value;
+  if (locType === 'gps') {
+    try {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej)
+      );
+      latitude  = pos.coords.latitude;
+      longitude = pos.coords.longitude;
+    } catch {
+      loading.classList.remove('active');
+      alert('Não foi possível obter sua localização.');
+      return;
+    }
+  } else {
+    [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
+  }
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'AppToken': APP_TOKEN
+      },
+      body: JSON.stringify({
+        produto: {
+          descricao: termo.toUpperCase()
+        },
+        estabelecimento: {
+          geolocalizacao: {
+            latitude: latitude,
+            longitude: longitude,
+            raio: Number(selectedRadius)
+          }
+        },
+        dias: 3,
+        pagina: 1,
+        registrosPorPagina: 50
+      })
     });
-  
+    const json = await res.json();
+    loading.classList.remove('active');
+    const lista = Array.isArray(json.conteudo) ? json.conteudo : [];
+
+    if (lista.length === 0) {
+      descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+      return;
+    }
+
+    lista.forEach(entry => {
+      const li = document.createElement('li');
+      const img = entry.codGetin
+        ? `<img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}" 
+                 onerror="this.src='https://via.placeholder.com/40';" />`
+        : '';
+      li.innerHTML = `${img}
+        <strong>${entry.codGetin || '-'}</strong>
+        – ${entry.dscProduto || entry.produto?.descricao || '—'}
+        <small>R$ ${entry.valUnitarioUltimaVenda?.toFixed(2) || entry.valUltimaVenda?.toFixed(2) || '--'}</small>
+      `;
+      li.addEventListener('click', () => {
+        document.getElementById('barcode').value = entry.codGetin;
+        descModal.classList.remove('active');
+        barcodeInput.focus();
+      });
+      descList.appendChild(li);
+    });
+  } catch (e) {
+    loading.classList.remove('active');
+    alert('Erro na busca: ' + e.message);
+  }
+});
+
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
 });
