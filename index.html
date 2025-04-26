@@ -1,79 +1,59 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ConsultaPreço AL</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ConsultaPreço AL</title>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JSBLQWKYX9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
+    function gtag(){dataLayer.push(arguments);}  
     gtag('js', new Date());
     gtag('config', 'G-JSBLQWKYX9');
   </script>
 
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.css">
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    /* Topbar */
-    .topbar .container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #005bbb;
-      padding: 0.1rem 1rem;
-    }
-    .brand { display: flex; align-items: center; color: #fff; margin: 0; font-size: 1.25rem; }
-    .brand .highlight { color: #ff7f00; margin-left: 0.25rem; }
-
-    /* Share icon container */
-    #share-container { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .share-icon { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0.25rem; }
+    /* QR Share Tooltip */
+    #share-container { position: fixed; top: 1rem; right: 1rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 1000; }
+    .share-icon { background: none; border: none; font-size: 1.5rem; color: #005bbb; padding: 0.25rem; }
     .share-icon:hover { color: #ff7f00; }
-    #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #ff7f00; pointer-events: none; }
+    #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #005bbb; pointer-events: none; }
     #share-tooltip { position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     #share-tooltip.show { opacity: 1; }
 
-    /* Modal overlay common */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
+    /* Share Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 999; }
     .modal-overlay.show { display: flex; }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; text-align: center; max-width: 90vw; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
     .modal-content #qrcode { margin: 1rem auto; }
-
-    /* Close button positioned top-right */
     .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; color: #333; border: none; font-size: 1.25rem; cursor: pointer; }
     .close-btn:hover { color: #000; }
-
-    /* Active radius style */
-    .radius-control button.active { background-color: #005bbb; color: #fff; }
-
-    /* Força alinhamento igual ao dos cards principais dentro do modal */
-    #list-modal .card {
-      text-align: left;
-    }
   </style>
 </head>
 <body>
+  <!-- Topbar -->
   <header class="topbar">
     <div class="container">
       <h1 class="brand">
         <i class="fas fa-tags"></i>
-        <span>ConsultaPreço</span>
-        <span class="highlight">AL</span>
+        ConsultaPreço <span class="highlight">AL</span>
       </h1>
-      <div id="share-container">
-        <button id="share-icon" class="share-icon" aria-label="Compartilhar">
-          <i class="fas fa-qrcode"></i>
-        </button>
-        <span id="share-label">Clique</span>
-        <div id="share-tooltip">Toque para compartilhar</div>
-      </div>
     </div>
   </header>
+
+  <!-- QR Share Button -->
+  <div id="share-container">
+    <button id="share-icon" class="share-icon" aria-label="Compartilhar">
+      <i class="fas fa-qrcode"></i>
+    </button>
+    <span id="share-label">Clique</span>
+    <div id="share-tooltip">Toque para compartilhar</div>
+  </div>
 
   <main class="container">
     <!-- Busca -->
@@ -91,22 +71,31 @@
           </select>
         </div>
         <div class="radius-control">
-          <button class="radius-btn" data-value="5">5 km</button>
-          <button class="radius-btn active" data-value="15">15 km</button>
+          <button class="radius-btn" data-value="5">5 km</button>
+          <button class="radius-btn active" data-value="15">15 km</button>
         </div>
         <div class="barcode-wrap">
-          <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
           <button id="btn-search" class="btn-primary">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
-        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada">
+        <!-- Botão de ver lista ordenada -->
+        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
           <i class="fas fa-list"></i>
-          <span class="btn-text">Lista Ordenada</span>
+          <span class="btn-text">Ver Lista Ordenada</span>
         </button>
       </div>
-      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+      <div id="loading" class="loading-overlay">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+      </div>
     </section>
 
     <!-- Resultado -->
@@ -114,12 +103,12 @@
       <div id="summary"></div>
       <div id="result" class="cards"></div>
 
-      <!-- Price List Modal -->
-      <div id="list-modal" class="modal-overlay">
+      <!-- Modal para lista ordenada -->
+      <div id="modal" class="modal">
         <div class="modal-content">
-          <button class="close-btn" id="close-list">&times;</button>
+          <span class="close" id="close-modal">&times;</span>
           <h2>Lista de Preços</h2>
-          <ol id="modal-list" class="cards"></ol>
+          <ol id="modal-list"></ol>
         </div>
       </div>
     </section>
@@ -142,6 +131,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="app.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -149,9 +139,6 @@
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
       const tooltip = document.getElementById('share-tooltip');
-      const listModal = document.getElementById('list-modal');
-      const openList = document.getElementById('open-modal');
-      const closeList = document.getElementById('close-list');
 
       // Tooltip logic
       if (!localStorage.getItem('shareHintShown')) {
@@ -162,17 +149,12 @@
       }
 
       // Generate QR
-      new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+      new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
       // Open/close share modal
       shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
       document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
-
-      // Open/close list modal
-      openList.addEventListener('click', () => listModal.classList.add('show'));
-      closeList.addEventListener('click', () => listModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && listModal.classList.remove('show'));
     });
   </script>
 </body>
