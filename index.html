@@ -15,10 +15,7 @@
   </script>
 
   <link rel="stylesheet" href="style.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -40,11 +37,9 @@
       cursor: pointer;
       z-index: 10000;
     }
-    #share-btn i {
-      font-size: 1.5rem;
-    }
+    #share-btn i { font-size: 1.5rem; }
     /* Modal Overlay */
-    #share-modal {
+    .modal {
       display: none;
       position: fixed;
       top: 0;
@@ -54,50 +49,36 @@
       background: rgba(0, 0, 0, 0.85);
       justify-content: center;
       align-items: center;
-      flex-direction: column;
       padding: 1rem;
       box-sizing: border-box;
       z-index: 9999;
     }
-    #share-modal.show {
-      display: flex;
-    }
-    #share-modal .modal-content {
+    .modal.show { display: flex; }
+    .modal .modal-content {
       background: #fff;
       padding: 1rem;
       border-radius: 0.5rem;
       text-align: center;
       max-width: 90vw;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
     }
-    #share-modal h2 {
-      margin-top: 0;
-      font-size: 1.25rem;
-      color: #333;
+    .modal h2 { margin-top: 0; font-size: 1.25rem; color: #333; }
+    .modal .close-btn, .modal .close {
+      position: absolute; top: 0.5rem; right: 1rem; font-size: 1.5rem; cursor: pointer; color: #333;
     }
-    #share-modal #qrcode {
-      margin: 1rem auto;
-      width: 200px;
-      height: 200px;
-    }
-    #share-modal .close-btn {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      background: #dc3545;
-      color: #fff;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-    }
+    /* Description list styling */
+    #desc-list { padding: 0; margin: 1rem 0; list-style: none; }
+    #desc-list li { display: flex; align-items: center; padding: .5em; border-bottom: 1px solid #ddd; cursor: pointer; }
+    #desc-list li img { width: 40px; height: 40px; object-fit: contain; margin-right: .5em; }
   </style>
 </head>
 <body>
   <!-- Topbar -->
   <header class="topbar">
     <div class="container">
-      <h1 class="brand">
-        <i class="fas fa-tags"></i>
-        ConsultaPreço <span class="highlight">AL</span>
-      </h1>
+      <h1 class="brand"><i class="fas fa-tags"></i> ConsultaPreço <span class="highlight">AL</span></h1>
     </div>
   </header>
 
@@ -121,27 +102,19 @@
           <button class="radius-btn active" data-value="15">15 km</button>
         </div>
         <div class="barcode-wrap">
-          <input
-            id="barcode"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            placeholder="Código de barras"
-          />
-          <button id="btn-search" class="btn-primary">
-            <i class="fas fa-search"></i>
-            <span class="btn-text">Pesquisar</span>
-          </button>
+          <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
+          <button id="btn-search" class="btn-primary"><i class="fas fa-search"></i> <span class="btn-text">Pesquisar</span></button>
         </div>
         <!-- Ver lista ordenada -->
         <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
-          <i class="fas fa-list"></i>
-          <span class="btn-text">Ver Lista Ordenada</span>
+          <i class="fas fa-list"></i> <span class="btn-text">Ver Lista Ordenada</span>
+        </button>
+        <!-- Novo botão buscar por descrição -->
+        <button id="open-desc-modal" class="open-modal-btn" title="Buscar por descrição">
+          <i class="fas fa-search"></i> <span class="btn-text">Buscar Descrição</span>
         </button>
       </div>
-      <div id="loading" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-2x"></i>
-      </div>
+      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
     </section>
 
     <!-- Resultado -->
@@ -155,6 +128,17 @@
           <span class="close" id="close-modal">&times;</span>
           <h2>Lista de Preços</h2>
           <ol id="modal-list"></ol>
+        </div>
+      </div>
+
+      <!-- Modal para busca por descrição -->
+      <div id="desc-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" id="close-desc-modal">&times;</span>
+          <h2>Buscar Produto por Descrição</h2>
+          <input type="text" id="desc-input" placeholder="Digite a descrição..." />
+          <button id="btn-desc-search" class="btn-primary">Pesquisar</button>
+          <ul id="desc-list"></ul>
         </div>
       </div>
     </section>
@@ -171,7 +155,7 @@
   <button id="share-btn" aria-label="Compartilhar"><i class="fas fa-share-alt"></i></button>
 
   <!-- Modal de compartilhamento com QR Code -->
-  <div id="share-modal">
+  <div id="share-modal" class="modal">
     <div class="modal-content">
       <h2>Compartilhe este app</h2>
       <div id="qrcode"></div>
@@ -185,25 +169,55 @@
     // Geração do QR Code para compartilhamento
     document.addEventListener('DOMContentLoaded', () => {
       new QRCode(document.getElementById('qrcode'), {
-        text: 'https://sanappsprice.netlify.app',
-        width: 200,
-        height: 200,
-        correctLevel: QRCode.CorrectLevel.H,
+        text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H,
       });
-
+      // Compartilhar modal
       const shareBtn = document.getElementById('share-btn');
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
+      shareBtn.addEventListener('click', () => shareModal.classList.add('show'));
+      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') shareModal.classList.remove('show'); });
 
-      shareBtn.addEventListener('click', () => {
-        shareModal.classList.add('show');
-      });
-      closeShare.addEventListener('click', () => {
-        shareModal.classList.remove('show');
-      });
-      // Fechar com ESC
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') shareModal.classList.remove('show');
+      // Lista ordenada modal
+      const openModal = document.getElementById('open-modal');
+      const modal = document.getElementById('modal');
+      const closeModal = document.getElementById('close-modal');
+      openModal.addEventListener('click', () => modal.classList.add('show'));
+      closeModal.addEventListener('click', () => modal.classList.remove('show'));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('show'); });
+
+      // Modal busca descrição
+      const openDesc = document.getElementById('open-desc-modal');
+      const descModal = document.getElementById('desc-modal');
+      const closeDesc = document.getElementById('close-desc-modal');
+      openDesc.addEventListener('click', () => descModal.classList.add('show'));
+      closeDesc.addEventListener('click', () => descModal.classList.remove('show'));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') descModal.classList.remove('show'); });
+
+      // Busca por descrição e popula lista
+      document.getElementById('btn-desc-search').addEventListener('click', async () => {
+        const desc = document.getElementById('desc-input').value.trim();
+        const list = document.getElementById('desc-list');
+        list.innerHTML = '';
+        if (!desc) return alert('Informe a descrição!');
+        try {
+          // usar mesma lógica de app.js para coleta de localização
+          const city = document.getElementById('city').value.split(',');
+          const payload = { produto:{ descricao: desc.toUpperCase() }, estabelecimento:{ geolocalizacao:{ latitude: parseFloat(city[0]), longitude: parseFloat(city[1]), raio: 15 } }, dias: 3, pagina: 1, registrosPorPagina: 50 };
+          const res = await fetch('http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa', { method:'POST', headers:{ 'Content-Type':'application/json','AppToken':'e679e13f8bd7e315e865d2fbc7dda23a6b5a6b2d' }, body: JSON.stringify(payload) });
+          const data = await res.json();
+          (data.conteudo || []).forEach(entry => {
+            const li = document.createElement('li');
+            const img = entry.produto.gtin ? `<img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.produto.gtin}" alt> ` : '';
+            li.innerHTML = img + `<strong>${entry.produto.gtin}</strong> - ${entry.produto.descricaoSefaz||entry.produto.descricao} (<small>R$ ${entry.produto.venda.valorVenda.toFixed(2)}</small>)`;
+            li.addEventListener('click', () => {
+              document.getElementById('barcode').value = entry.produto.gtin;
+              descModal.classList.remove('show');
+            });
+            list.appendChild(li);
+          });
+        } catch (e) { alert('Erro na busca: ' + e.message); }
       });
     });
   </script>
