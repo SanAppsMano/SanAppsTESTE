@@ -16,6 +16,25 @@
 
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <!-- Share QR CSS -->
+  <style>
+    /* Share icon container */
+    #share-container { position: fixed; top: 1rem; right: 1rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 1000; }
+    .share-icon { background: none; border: none; font-size: 1.5rem; color: #005bbb; padding: 0.25rem; }
+    .share-icon:hover { color: #ff7f00; }
+    #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #005bbb; pointer-events: none; }
+    #share-tooltip { position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #share-tooltip.show { opacity: 1; }
+
+    /* Modal overlay for share */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 999; }
+    .modal-overlay.show { display: flex; }
+    .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; text-align: center; max-width: 90vw; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
+    .modal-content #qrcode { margin: 1rem auto; }
+    .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; color: #333; border: none; font-size: 1.25rem; cursor: pointer; }
+    .close-btn:hover { color: #000; }
+  </style>
 </head>
 <body>
   <!-- Topbar -->
@@ -27,6 +46,15 @@
       </h1>
     </div>
   </header>
+
+  <!-- Share QR Button -->
+  <div id="share-container">
+    <button id="share-icon" class="share-icon" aria-label="Compartilhar">
+      <i class="fas fa-qrcode"></i>
+    </button>
+    <span id="share-label">Clique</span>
+    <div id="share-tooltip">Toque para compartilhar</div>
+  </div>
 
   <main class="container">
     <!-- Busca -->
@@ -94,6 +122,45 @@
     </section>
   </main>
 
+  <!-- Share QR Modal -->
+  <div id="share-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="close-btn" id="close-share">&times;</button>
+      <h2>Compartilhe este app</h2>
+      <div id="qrcode"></div>
+      <p>Aponte a câmera para acessar</p>
+    </div>
+  </div>
+
+  <!-- QRCode library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- App script -->
   <script src="app.js" defer></script>
+
+  <!-- Share QR logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const shareContainer = document.getElementById('share-container');
+      const shareModal = document.getElementById('share-modal');
+      const closeShare = document.getElementById('close-share');
+      const tooltip = document.getElementById('share-tooltip');
+
+      // Tooltip logic
+      if (!localStorage.getItem('shareHintShown')) {
+        setTimeout(() => tooltip.classList.add('show'), 500);
+        const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
+        shareContainer.addEventListener('click', hideTooltip, { once: true });
+        setTimeout(hideTooltip, 7000);
+      }
+
+      // Generate QR with current URL
+      new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+
+      // Open/close share modal
+      shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
+      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
+    });
+  </script>
 </body>
 </html>
