@@ -39,7 +39,7 @@
     #share-tooltip.show { opacity: 1; }
 
     /* Modal overlay common */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
     .modal-overlay.show { display: flex; }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; text-align: center; max-width: 90vw; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
     .modal-content #qrcode { margin: 1rem auto; }
@@ -51,23 +51,8 @@
     /* Active radius style */
     .radius-control button.active { background-color: #005bbb; color: #fff; }
 
-    /* Main cards text alignment */
-    .cards .card {
-      text-align: left;
-    }
-
-    /* Modal cards styling: reuse .cards and .card from style.css */
-    .modal-content .cards {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    /* Modal cards text alignment */
-    .modal-content .card {
+    /* Força alinhamento igual ao dos cards principais dentro do modal */
+    #list-modal .card {
       text-align: left;
     }
   </style>
@@ -128,13 +113,13 @@
     <section>
       <div id="summary"></div>
       <div id="result" class="cards"></div>
+
       <!-- Price List Modal -->
       <div id="list-modal" class="modal-overlay">
         <div class="modal-content">
           <button class="close-btn" id="close-list">&times;</button>
           <h2>Lista de Preços</h2>
-          <!-- Replaced list with cards format -->
-          <div id="modal-list" class="cards"></div>
+          <ol id="modal-list" class="cards"></ol>
         </div>
       </div>
     </section>
@@ -185,9 +170,9 @@
       document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
 
       // Open/close list modal
-      openList.addEventListener('click', () => list-modal.classList.add('show'));
-      closeList.addEventListener('click', () => list-modal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && list-modal.classList.remove('show'));
+      openList.addEventListener('click', () => listModal.classList.add('show'));
+      closeList.addEventListener('click', () => listModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && listModal.classList.remove('show'));
     });
   </script>
 </body>
