@@ -251,9 +251,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   
     // faz a busca por descrição e preenche a lista
-    // … logo antes você já tem definidas essas constantes:
-const APP_TOKEN = 'e679e13f8bd7e315e865d2fbc7dda23a6b5a6b2d';
-const API_URL   = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+
 // latitude, longitude e selectedRadius também já existem no seu código
 document.getElementById('btn-desc-search').addEventListener('click', async () => {
   const termo = descInput.value.trim();
