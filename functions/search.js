@@ -1,6 +1,8 @@
 // functions/search.js
 
-exports.handler = async (event) => {
+const fetch = require('node-fetch');
+
+exports.handler = async (event) => { = async (event) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
