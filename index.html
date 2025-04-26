@@ -41,6 +41,13 @@
     /* Modal overlay common */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
     .modal-overlay.show { display: flex; }
+    /* Center content in share modal */
+    #share-modal .modal-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 
     /* Close button top-right */
