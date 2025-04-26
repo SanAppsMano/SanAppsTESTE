@@ -100,6 +100,7 @@
     </section>
   </main>
 
+  <!-- Modals -->
   <div id="share-modal" class="modal-overlay">
     <div class="modal-content">
       <button class="close-btn" id="close-share">&times;</button>
@@ -120,9 +121,15 @@
       });
 
       // Search button
-      document.getElementById('btn-search').addEventListener('click', () => {
-        if (typeof performSearch === 'function') performSearch();
-        else console.log('performSearch não definida');
+      const searchBtn = document.getElementById('btn-search');
+      searchBtn.addEventListener('click', () => {
+        // call actual search or fallback to list
+        if (typeof performSearch === 'function') {
+          performSearch();
+        } else {
+          console.warn('performSearch não definida');
+          document.getElementById('open-modal').click();
+        }
       });
 
       // Tooltip
@@ -135,41 +142,36 @@
         setTimeout(hideTooltip, 7000);
       }
 
-      // Generate QR
+      // QR Code
       new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
-      // Share modal events
+      // Share modal
       const shareModal = document.getElementById('share-modal');
       document.getElementById('share-icon').addEventListener('click', () => shareModal.classList.add('show'));
       document.getElementById('close-share').addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
 
-      // List modal events
+      // List modal
       const openList = document.getElementById('open-modal');
       const listModal = document.getElementById('list-modal');
       const closeList = document.getElementById('close-list');
       const modalList = document.getElementById('modal-list');
       const countSpan = document.getElementById('count');
 
-      // Update count on open
       openList.addEventListener('click', () => {
         countSpan.textContent = `(${modalList.children.length})`;
         listModal.classList.add('show');
       });
-
-      // Update count on history click
       const historyList = document.getElementById('history-list');
       historyList.addEventListener('click', e => {
         if (e.target.tagName === 'LI') {
-          if (typeof performSearch === 'function') performSearch();
-          setTimeout(() => {
-            countSpan.textContent = `(${modalList.children.length})`;
-          }, 300);
+          if (typeof performSearch === 'function') {
+            performSearch();
+            setTimeout(() => countSpan.textContent = `(${modalList.children.length})`, 300);
+          }
         }
       });
-
       closeList.addEventListener('click', () => listModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && listModal.classList.remove('show'));
     });
   </script>
 </body>
