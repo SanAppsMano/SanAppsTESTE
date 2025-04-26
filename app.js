@@ -231,7 +231,99 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     modal.classList.add('active');
   });
-
+    // — Botão e modal de Busca por Descrição —
+    const openDescBtn    = document.getElementById('open-desc-modal');
+    const descModal      = document.getElementById('desc-modal');
+    const closeDescBtn   = document.getElementById('close-desc-modal');
+    const descInput      = document.getElementById('desc-input');
+    const descList       = document.getElementById('desc-list');
+  
+    // abre o modal vazio
+    openDescBtn.addEventListener('click', () => {
+      descList.innerHTML = '';
+      descModal.classList.add('active');
+    });
+  
+    // fecha modal ao clicar no X ou fora do conteúdo
+    closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
+    descModal.addEventListener('click', e => {
+      if (e.target === descModal) descModal.classList.remove('active');
+    });
+  
+    // faz a busca por descrição e preenche a lista
+    document.getElementById('btn-desc-search').addEventListener('click', async () => {
+      const termo = descInput.value.trim();
+      if (!termo) {
+        alert('Informe a descrição do produto!');
+        return;
+      }
+  
+      descList.innerHTML = '';
+      loading.classList.add('active');
+  
+      // mesma lógica de localização do btnSearch:
+      let latitude, longitude;
+      const locType = document.querySelector('input[name="loc"]:checked').value;
+      if (locType === 'gps') {
+        try {
+          const pos = await new Promise((res, rej) =>
+            navigator.geolocation.getCurrentPosition(res, rej)
+          );
+          latitude  = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+        } catch {
+          loading.classList.remove('active');
+          alert('Não foi possível obter sua localização.');
+          return;
+        }
+      } else {
+        [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
+      }
+  
+      // chama a mesma função de busca, trocando apenas o corpo
+      try {
+        const res = await fetch('/.netlify/functions/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            descricao: termo,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+            raio: Number(selectedRadius),
+            dias: 3
+          })
+        });
+        const data = await res.json();
+        const lista = Array.isArray(data) ? data : data.conteudo || [];
+  
+        loading.classList.remove('active');
+  
+        if (!lista.length) {
+          descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+          return;
+        }
+  
+        // monta cada <li> com imagem, GTIN e nome
+        lista.forEach(entry => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}" 
+                 onerror="this.src='https://via.placeholder.com/40';" />
+            <strong>${entry.codGetin}</strong> – ${entry.dscProduto}
+          `;
+          li.addEventListener('click', () => {
+            // ao clicar, fecha modal e preenche o código de barras
+            document.getElementById('barcode').value = entry.codGetin;
+            descModal.classList.remove('active');
+          });
+          descList.appendChild(li);
+        });
+      } catch (e) {
+        loading.classList.remove('active');
+        alert('Erro na busca: ' + e.message);
+      }
+    });
+  
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
 });
