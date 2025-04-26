@@ -50,6 +50,9 @@
 
     /* Active radius style */
     .radius-control button.active { background-color: #005bbb; color: #fff; }
+
+    /* Modal cards styling: reuse .cards and .card from style.css */
+    .modal-content .cards { margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -113,7 +116,8 @@
         <div class="modal-content">
           <button class="close-btn" id="close-list">&times;</button>
           <h2>Lista de Preços</h2>
-          <ol id="modal-list"></ol>
+          <!-- Replaced list with cards format -->
+          <div id="modal-list" class="cards"></div>
         </div>
       </div>
     </section>
@@ -166,7 +170,7 @@
       // Open/close list modal
       openList.addEventListener('click', () => listModal.classList.add('show'));
       closeList.addEventListener('click', () => listModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && listModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && list-modal.classList.remove('show'));
     });
   </script>
 </body>
