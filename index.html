@@ -15,30 +15,27 @@
   </script>
 
   <link rel="stylesheet" href="style.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    /* Neumorphic floating QR button */
+    /* Neumorphic floating QR button (smaller, circular) */
     #small-qrcode {
       position: fixed;
       bottom: 1rem;
       right: 1rem;
-      width: 4rem;
-      height: 4rem;
-      border-radius: 0.75rem;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
       background: #e0e0e0;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow:
-        -4px -4px 8px rgba(255,255,255,0.7),
-        4px 4px 8px rgba(0,0,0,0.15),
-        inset -2px -2px 4px rgba(255,255,255,0.7),
-        inset 2px 2px 4px rgba(0,0,0,0.1);
+        -3px -3px 6px rgba(255,255,255,0.7),
+        3px 3px 6px rgba(0,0,0,0.15),
+        inset -1px -1px 3px rgba(255,255,255,0.7),
+        inset 1px 1px 3px rgba(0,0,0,0.1);
       cursor: pointer;
       z-index: 10000;
     }
@@ -65,9 +62,7 @@
       box-sizing: border-box;
       z-index: 9999;
     }
-    #share-modal.show {
-      display: flex;
-    }
+    #share-modal.show { display: flex; }
     #share-modal .modal-content {
       background: #fff;
       padding: 1.5rem;
@@ -179,7 +174,7 @@
     </section>
   </main>
 
-  <!-- Neumorphic QR trigger -->
+  <!-- Circular QR trigger button -->
   <div id="small-qrcode" aria-label="Compartilhar aplicativo" role="button" title="Compartilhar"></div>
 
   <!-- Modal de compartilhamento com QR Code -->
@@ -195,14 +190,14 @@
   <script src="app.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // QR Code para trigger pequeno
+      // Pequeno QR (48×48)
       new QRCode(document.getElementById('small-qrcode'), {
         text: 'https://sanappsprice.netlify.app',
-        width: 80,
-        height: 80,
+        width: 48,
+        height: 48,
         correctLevel: QRCode.CorrectLevel.H,
       });
-      // QR Code do modal
+      // QR do modal (200×200)
       new QRCode(document.getElementById('qrcode'), {
         text: 'https://sanappsprice.netlify.app',
         width: 200,
@@ -214,15 +209,9 @@
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
 
-      smallQR.addEventListener('click', () => {
-        shareModal.classList.add('show');
-      });
-      closeShare.addEventListener('click', () => {
-        shareModal.classList.remove('show');
-      });
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') shareModal.classList.remove('show');
-      });
+      smallQR.addEventListener('click', () => shareModal.classList.add('show'));
+      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
     });
   </script>
 </body>
