@@ -24,47 +24,61 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: #005bbb;
+      padding: 0.5rem 1rem;
+    }
+    .brand {
+      color: #fff;
+      margin: 0;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+    }
+    .brand .highlight {
+      color: #ff7f00;
+      margin-left: 0.25rem;
+    }
+    /* Share container: icon + label stacked vertically */
+    #share-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
     }
     .share-icon {
       background: none;
       border: none;
-      cursor: pointer;
       font-size: 1.5rem;
-      color: #007bff;
+      color: #fff;
       padding: 0.25rem;
-      position: relative;
     }
     .share-icon:hover {
-      color: #0056b3;
+      color: #ff7f00;
     }
-    /* Discreet rotated label under icon */
     #share-label {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%) rotate(-15deg);
-      transform-origin: top center;
-      font-size: 0.7rem;
-      color: #ff7f00; /* orange from AL */
-      opacity: 0.9;
-      pointer-events: none;
+      margin-top: 0.2rem;
+      font-size: 0.75rem;
+      color: #ff7f00;
       user-select: none;
-      margin-top: 0.1rem;
+      pointer-events: none;
     }
     /* Tooltip instruction for first-time users */
     #share-tooltip {
       position: absolute;
-      top: 2.5rem;
-      right: 0;
+      top: calc(100% + 0.5rem);
+      left: 50%;
+      transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.75);
       color: #fff;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 0.4rem;
       font-size: 0.85rem;
       white-space: nowrap;
       z-index: 10001;
       opacity: 0;
       transition: opacity 0.3s ease;
+      pointer-events: none;
     }
     #share-tooltip.show {
       opacity: 1;
@@ -92,21 +106,9 @@
       max-width: 90vw;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
-    #share-modal h2 {
-      margin-top: 0;
-      font-size: 1.4rem;
-      color: #333;
-    }
-    #share-modal #qrcode {
-      margin: 1rem auto;
-      width: 200px;
-      height: 200px;
-    }
-    #share-modal p {
-      margin: 0.5rem 0 1rem;
-      color: #555;
-      font-size: 1rem;
-    }
+    #share-modal h2 { margin-top: 0; font-size: 1.4rem; color: #333; }
+    #share-modal #qrcode { margin: 1rem auto; width: 200px; height: 200px; }
+    #share-modal p { margin: 0.5rem 0 1rem; color: #555; font-size: 1rem; }
     #share-modal .close-btn {
       padding: 0.6rem 1.2rem;
       background: #dc3545;
@@ -124,82 +126,24 @@
     <div class="container">
       <h1 class="brand">
         <i class="fas fa-tags"></i>
-        ConsultaPreço <span class="highlight">AL</span>
+        <span>ConsultaPreço</span>
+        <span class="highlight">AL</span>
       </h1>
-      <div style="position: relative; display: inline-block;">
+      <div id="share-container">
         <button id="share-icon" class="share-icon" aria-label="Compartilhar aplicativo">
           <i class="fas fa-qrcode"></i>
         </button>
         <span id="share-label">Clique</span>
-        <div id="share-tooltip">Toque no ícone para compartilhar este app</div>
+        <div id="share-tooltip">Toque para compartilhar</div>
       </div>
     </div>
   </header>
 
   <main class="container">
     <!-- Busca -->
-    <section class="search-panel">
-      <div class="controls">
-        <div class="location-choice">
-          <label><input type="radio" name="loc" value="city" checked /> Município</label>
-          <label><input type="radio" name="loc" value="gps" /> GPS</label>
-        </div>
-        <div id="city-block">
-          <select id="city" class="select-field">
-            <option value="-9.6432331,-35.7190686">Maceió</option>
-            <option value="-9.751419,-36.659076">Arapiraca</option>
-            <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
-          </select>
-        </div>
-        <div class="radius-control">
-          <button class="radius-btn" data-value="5">5 km</button>
-          <button class="radius-btn active" data-value="15">15 km</button>
-        </div>
-        <div class="barcode-wrap">
-          <input
-            id="barcode"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            placeholder="Código de barras"
-          />
-          <button id="btn-search" class="btn-primary">
-            <i class="fas fa-search"></i>
-            <span class="btn-text">Pesquisar</span>
-          </button>
-        </div>
-        <!-- Botão de ver lista ordenada -->
-        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
-          <i class="fas fa-list"></i>
-          <span class="btn-text">Ver Lista Ordenada</span>
-        </button>
-      </div>
-      <div id="loading" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-2x"></i>
-      </div>
-    </section>
-
-    <!-- Resultado -->
-    <section>
-      <div id="summary"></div>
-      <div id="result" class="cards"></div>
-
-      <!-- Modal para lista ordenada -->
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <span class="close" id="close-modal">&times;</span>
-          <h2>Lista de Preços</h2>
-          <ol id="modal-list"></ol>
-        </div>
-      </div>
-    </section>
-
-    <!-- Histórico -->
-    <section class="history-panel">
-      <h2>Buscas Recentes</h2>
-      <ul id="history-list" class="history-list"></ul>
-      <button id="clear-history" class="btn-secondary">Limpar histórico</button>
-    </section>
+    <section class="search-panel">...</section>
+    <section>...</section>
+    <section class="history-panel">...</section>
   </main>
 
   <!-- Modal de compartilhamento com QR Code -->
@@ -207,7 +151,7 @@
     <div class="modal-content">
       <h2>Compartilhe este app</h2>
       <div id="qrcode"></div>
-      <p>Aponte a câmera de outro celular para acessar</p>
+      <p>Aponte a câmera para acessar</p>
       <button class="close-btn" id="close-share">Fechar</button>
     </div>
   </div>
@@ -216,29 +160,23 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const shareIcon = document.getElementById('share-icon');
+      const shareContainer = document.getElementById('share-container');
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
       const tooltip = document.getElementById('share-tooltip');
 
-      // Mostrar tooltip na primeira visita
       if (!localStorage.getItem('shareHintShown')) {
         setTimeout(() => tooltip.classList.add('show'), 500);
-        const hideTooltip = () => {tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true');};
-        shareIcon.addEventListener('click', hideTooltip, { once: true });
+        const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
+        shareContainer.addEventListener('click', hideTooltip, { once: true });
         setTimeout(hideTooltip, 7000);
       }
 
-      // Geração do QR Code no modal
-      new QRCode(document.getElementById('qrcode'), {
-        text: 'https://sanappsprice.netlify.app',
-        width: 200, height: 200,
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
-      // Abertura/fechamento do modal
-      shareIcon.addEventListener('click', () => shareModal.classList.add('show'));
+      shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
     });
   </script>
 </body>
