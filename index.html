@@ -19,80 +19,32 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
-    /* Topbar */
-    .topbar .container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #005bbb;
-      padding: 0.1rem 1rem;
-    }
+    .topbar .container { display: flex; align-items: center; justify-content: space-between; background: #005bbb; padding: 0.1rem 1rem; }
     .brand { display: flex; align-items: center; color: #fff; margin: 0; font-size: 1.25rem; }
     .brand .highlight { color: #ff7f00; margin-left: 0.25rem; }
-
-    /* Share icon container */
     #share-container { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
     .share-icon { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0.25rem; }
     .share-icon:hover { color: #ff7f00; }
     #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #ff7f00; pointer-events: none; }
     #share-tooltip { position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     #share-tooltip.show { opacity: 1; }
-
-    /* Modal overlay common */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
     .modal-overlay.show { display: flex; }
-    /* Center content in share modal */
-    #share-modal .modal-content {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-
-    /* Close button top-right */
     .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; color: #333; border: none; font-size: 1.25rem; cursor: pointer; }
     .close-btn:hover { color: #000; }
-
-    /* Price List Modal Specific */
-    #list-modal .modal-content {
-      width: 95vw;
-      max-width: 600px;
-      padding: 1.5rem;
-    }
-    #list-modal h2 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    #list-modal .count {
-      font-size: 0.9rem;
-      color: #555;
-      margin-top: -0.5rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    #list-modal ol {
-      list-style-position: inside;
-      padding: 0;
-    }
-    #list-modal li {
-      margin: 0.5rem 0;
-      text-align: center;
-      font-size: 1rem;
-      color: #333;
-    }
+    #list-modal .modal-content { width: 95vw; max-width: 600px; padding: 1.5rem; text-align: left; }
+    #list-modal h2 { margin-top: 0; margin-bottom: 0.5rem; text-align: center; font-size: 1.5rem; }
+    #list-modal .count { display: block; text-align: center; margin-bottom: 1rem; color: #555; }
+    #list-modal ol { list-style-position: inside; padding: 0; }
+    #list-modal li { margin: 0.5rem 0; text-align: center; font-size: 1rem; color: #333; }
+    .radius-control button.active { background-color: #005bbb; color: #fff; }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="container">
-      <h1 class="brand">
-        <i class="fas fa-tags"></i>
-        <span>ConsultaPreço</span>
-        <span class="highlight">AL</span>
-      </h1>
+      <h1 class="brand"><i class="fas fa-tags"></i> ConsultaPreço <span class="highlight">AL</span></h1>
       <div id="share-container">
         <button id="share-icon" class="share-icon" aria-label="Compartilhar"><i class="fas fa-qrcode"></i></button>
         <span id="share-label">Clique</span>
@@ -102,7 +54,6 @@
   </header>
 
   <main class="container">
-    <!-- Busca -->
     <section class="search-panel">
       <div class="controls">
         <div class="location-choice">
@@ -121,33 +72,17 @@
           <button class="radius-btn active" data-value="15">15 km</button>
         </div>
         <div class="barcode-wrap">
-          <input
-            id="barcode"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            placeholder="Código de barras"
-          />
-          <button id="btn-search" class="btn-primary">
-            <i class="fas fa-search"></i>
-            <span class="btn-text">Pesquisar</span>
-          </button>
+          <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
+          <button id="btn-search" class="btn-primary"><i class="fas fa-search"></i> <span class="btn-text">Pesquisar</span></button>
         </div>
-        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada">
-          <i class="fas fa-list"></i>
-          <span class="btn-text">Lista Ordenada</span>
-        </button>
+        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada"><i class="fas fa-list"></i> <span class="btn-text">Lista Ordenada</span></button>
       </div>
-      <div id="loading" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-2x"></i>
-      </div>
+      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
     </section>
 
-    <!-- Resultado -->
     <section>
       <div id="summary"></div>
       <div id="result" class="cards"></div>
-      <!-- Price List Modal -->
       <div id="list-modal" class="modal-overlay">
         <div class="modal-content">
           <button class="close-btn" id="close-list">&times;</button>
@@ -158,11 +93,12 @@
     </section>
 
     <section class="history-panel">
-      <!-- histórico... -->
+      <h2>Buscas Recentes</h2>
+      <ul id="history-list" class="history-list"><li>Nenhuma busca recente</li></ul>
+      <button id="clear-history" class="btn-secondary">Limpar histórico</button>
     </section>
   </main>
 
-  <!-- Share QR Modal -->
   <div id="share-modal" class="modal-overlay">
     <div class="modal-content">
       <button class="close-btn" id="close-share">&times;</button>
@@ -172,20 +108,25 @@
     </div>
   </div>
 
-  <script src="app.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Radius toggle
+      document.querySelectorAll('.radius-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+      // Search button
+      document.getElementById('btn-search').addEventListener('click', () => {
+        // Aqui você chama a função de busca existente
+        if (typeof performSearch === 'function') performSearch();
+        else console.log('performSearch não definida');
+      });
+      
+      // Tooltip logic
       const shareContainer = document.getElementById('share-container');
-      const shareModal = document.getElementById('share-modal');
-      const closeShare = document.getElementById('close-share');
       const tooltip = document.getElementById('share-tooltip');
-      const listModal = document.getElementById('list-modal');
-      const openList = document.getElementById('open-modal');
-      const closeList = document.getElementById('close-list');
-      const modalList = document.getElementById('modal-list');
-      const countSpan = document.getElementById('count');
-
-      // Tooltip
       if (!localStorage.getItem('shareHintShown')) {
         setTimeout(() => tooltip.classList.add('show'), 500);
         const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
@@ -193,22 +134,28 @@
         setTimeout(hideTooltip, 7000);
       }
 
-      // Generate QR
+      // QR Code generation
       new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
       // Share modal
+      const shareModal = document.getElementById('share-modal');
+      const closeShare = document.getElementById('close-share');
       shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
 
       // List modal
+      const openList = document.getElementById('open-modal');
+      const listModal = document.getElementById('list-modal');
+      const closeList = document.getElementById('close-list');
+      const modalList = document.getElementById('modal-list');
+      const countSpan = document.getElementById('count');
       openList.addEventListener('click', () => {
-        const items = modalList.children.length;
-        countSpan.textContent = `(${items})`;
+        countSpan.textContent = `(${modalList.children.length})`;
         listModal.classList.add('show');
       });
       closeList.addEventListener('click', () => listModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && listModal.classList.remove('show'));  
+      document.addEventListener('keydown', e => e.key==='Escape' && listModal.classList.remove('show'));
     });
   </script>
 </body>
