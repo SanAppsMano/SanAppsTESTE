@@ -19,25 +19,39 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
-    .topbar .container { display: flex; align-items: center; justify-content: space-between; background: #005bbb; padding: 0.1rem 1rem; }
+    .topbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #005bbb;
+      padding: 0.1rem 1rem;
+    }
     .brand { display: flex; align-items: center; color: #fff; margin: 0; font-size: 1.25rem; }
     .brand .highlight { color: #ff7f00; margin-left: 0.25rem; }
+
     #share-container { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
     .share-icon { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0.25rem; }
     .share-icon:hover { color: #ff7f00; }
     #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #ff7f00; pointer-events: none; }
     #share-tooltip { position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     #share-tooltip.show { opacity: 1; }
+
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box; z-index: 9999; }
     .modal-overlay.show { display: flex; }
     .modal-content { background: #fff; padding: 1.5rem; border-radius: 0.75rem; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; color: #333; border: none; font-size: 1.25rem; cursor: pointer; }
     .close-btn:hover { color: #000; }
+
+    /* Share modal centering */
+    #share-modal .modal-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    #share-modal #qrcode { margin: 1rem auto; }
+
     #list-modal .modal-content { width: 95vw; max-width: 600px; padding: 1.5rem; text-align: left; }
     #list-modal h2 { margin-top: 0; margin-bottom: 0.5rem; text-align: center; font-size: 1.5rem; }
     #list-modal .count { display: block; text-align: center; margin-bottom: 1rem; color: #555; }
     #list-modal ol { list-style-position: inside; padding: 0; }
     #list-modal li { margin: 0.5rem 0; text-align: center; font-size: 1rem; color: #333; }
+
     .radius-control button.active { background-color: #005bbb; color: #fff; }
   </style>
 </head>
@@ -99,6 +113,8 @@
     </section>
   </main>
 
+  <!-- Include external search logic -->
+  <script src="app.js" defer></script>
   <div id="share-modal" class="modal-overlay">
     <div class="modal-content">
       <button class="close-btn" id="close-share">&times;</button>
@@ -117,13 +133,13 @@
           btn.classList.add('active');
         });
       });
-      // Search button
+
+      // Search button: call performSearch or fallback
       document.getElementById('btn-search').addEventListener('click', () => {
-        // Aqui você chama a função de busca existente
         if (typeof performSearch === 'function') performSearch();
         else console.log('performSearch não definida');
       });
-      
+
       // Tooltip logic
       const shareContainer = document.getElementById('share-container');
       const tooltip = document.getElementById('share-tooltip');
@@ -134,17 +150,16 @@
         setTimeout(hideTooltip, 7000);
       }
 
-      // QR Code generation
+      // Generate QR Code
       new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
 
-      // Share modal
+      // Share modal events
       const shareModal = document.getElementById('share-modal');
-      const closeShare = document.getElementById('close-share');
-      shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
-      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
+      document.getElementById('share-icon').addEventListener('click', () => shareModal.classList.add('show'));
+      document.getElementById('close-share').addEventListener('click', () => shareModal.classList.remove('show'));
       document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
 
-      // List modal
+      // List modal events
       const openList = document.getElementById('open-modal');
       const listModal = document.getElementById('list-modal');
       const closeList = document.getElementById('close-list');
