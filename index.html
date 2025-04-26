@@ -18,24 +18,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
+    /* Topbar */
     .topbar .container {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: #005bbb;
-      padding: 0.25rem 1rem;
+      padding: 0.1rem 1rem;
     }
     .brand {
+      display: flex;
+      align-items: center;
       color: #fff;
       margin: 0;
       font-size: 1.25rem;
-      display: flex;
-      align-items: center;
     }
-    .brand .highlight {
-      color: #ff7f00;
-      margin-left: 0.25rem;
-    }
+    .brand .highlight { color: #ff7f00; margin-left: 0.25rem; }
     /* Share container */
     #share-container {
       display: flex;
@@ -51,14 +49,11 @@
       color: #fff;
       padding: 0.25rem;
     }
-    .share-icon:hover {
-      color: #ff7f00;
-    }
+    .share-icon:hover { color: #ff7f00; }
     #share-label {
       margin-top: 0.2rem;
       font-size: 0.75rem;
       color: #ff7f00;
-      user-select: none;
       pointer-events: none;
     }
     #share-tooltip {
@@ -72,14 +67,13 @@
       border-radius: 0.4rem;
       font-size: 0.85rem;
       white-space: nowrap;
-      z-index: 10001;
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
     }
     #share-tooltip.show { opacity: 1; }
-    /* Modal */
-    #share-modal {
+    /* Modals */
+    .modal-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0;
@@ -91,8 +85,8 @@
       box-sizing: border-box;
       z-index: 9999;
     }
-    #share-modal.show { display: flex; }
-    #share-modal .modal-content {
+    .modal-overlay.show { display: flex; }
+    .modal-content {
       background: #fff;
       padding: 1.5rem;
       border-radius: 0.75rem;
@@ -100,10 +94,7 @@
       max-width: 90vw;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    #share-modal h2 { margin-top: 0; font-size: 1.4rem; color: #333; }
-    #share-modal #qrcode { margin: 1rem auto; width: 200px; height: 200px; }
-    #share-modal p { margin: 0.5rem 0 1rem; color: #555; font-size: 1rem; }
-    #share-modal .close-btn {
+    .close-btn {
       padding: 0.6rem 1.2rem;
       background: #dc3545;
       color: #fff;
@@ -119,13 +110,10 @@
     <div class="container">
       <h1 class="brand">
         <i class="fas fa-tags"></i>
-        <span>ConsultaPreço</span>
-        <span class="highlight">AL</span>
+        ConsultaPreço <span class="highlight">AL</span>
       </h1>
       <div id="share-container">
-        <button id="share-icon" class="share-icon" aria-label="Compartilhar aplicativo">
-          <i class="fas fa-qrcode"></i>
-        </button>
+        <button id="share-icon" class="share-icon" aria-label="Compartilhar"> <i class="fas fa-qrcode"></i> </button>
         <span id="share-label">Clique</span>
         <div id="share-tooltip">Toque para compartilhar</div>
       </div>
@@ -137,8 +125,8 @@
     <section class="search-panel">
       <div class="controls">
         <div class="location-choice">
-          <label><input type="radio" name="loc" value="city" checked> Município</label>
-          <label><input type="radio" name="loc" value="gps"> GPS</label>
+          <label><input type="radio" name="loc" value="city" checked /> Município</label>
+          <label><input type="radio" name="loc" value="gps" /> GPS</label>
         </div>
         <div id="city-block">
           <select id="city" class="select-field">
@@ -148,8 +136,8 @@
           </select>
         </div>
         <div class="radius-control">
-          <button class="radius-btn" data-value="5">5 km</button>
-          <button class="radius-btn active" data-value="15">15 km</button>
+          <button class="radius-btn" data-value="5">5 km</button>
+          <button class="radius-btn active" data-value="15">15 km</button>
         </div>
         <div class="barcode-wrap">
           <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
@@ -157,20 +145,20 @@
             <i class="fas fa-search"></i> <span class="btn-text">Pesquisar</span>
           </button>
         </div>
-        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
-          <i class="fas fa-list"></i> <span class="btn-text">Ver Lista Ordenada</span>
+        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada">
+          <i class="fas fa-list"></i> <span class="btn-text">Lista Ordenada</span>
         </button>
       </div>
-      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+      <div id="loading" class="loading-overlay"> <i class="fas fa-spinner fa-spin fa-2x"></i> </div>
     </section>
 
     <!-- Resultado -->
     <section>
       <div id="summary"></div>
       <div id="result" class="cards"></div>
-      <div id="modal" class="modal">
+      <div id="modal" class="modal-overlay">
         <div class="modal-content">
-          <span class="close" id="close-modal">&times;</span>
+          <span class="close-btn" id="close-list">&times;</span>
           <h2>Lista de Preços</h2>
           <ol id="modal-list"></ol>
         </div>
@@ -185,7 +173,8 @@
     </section>
   </main>
 
-  <div id="share-modal">
+  <!-- Share QR Modal -->
+  <div id="share-modal" class="modal-overlay">
     <div class="modal-content">
       <h2>Compartilhe este app</h2>
       <div id="qrcode"></div>
@@ -201,16 +190,26 @@
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
       const tooltip = document.getElementById('share-tooltip');
+      const listModal = document.getElementById('modal');
+      const closeList = document.getElementById('close-list');
+
       if (!localStorage.getItem('shareHintShown')) {
         setTimeout(() => tooltip.classList.add('show'), 500);
         const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
         shareContainer.addEventListener('click', hideTooltip, { once: true });
         setTimeout(hideTooltip, 7000);
       }
+
       new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+
       shareContainer.addEventListener('click', () => shareModal.classList.add('show'));
       closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
+
+      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
+
+      document.getElementById('open-modal').addEventListener('click', () => listModal.classList.add('show'));
+      closeList.addEventListener('click', () => listModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key==='Escape' && listModal.classList.remove('show'));  
     });
   </script>
 </body>
