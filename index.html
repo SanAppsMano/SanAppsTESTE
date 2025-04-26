@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ConsultaPreço AL</title>
 
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JSBLQWKYX9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -17,37 +18,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    .topbar .container { display: flex; align-items: center; justify-content: space-between; background: #005bbb; padding: 0.1rem 1rem; }
-    .brand { display: flex; align-items: center; color: #fff; margin: 0; font-size: 1.25rem; }
-    .brand .highlight { color: #ff7f00; margin-left: 0.25rem; }
-    #share-container { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .share-icon { background: none; border: none; font-size: 1.5rem; color: #fff; padding: 0.25rem; }
-    .share-icon:hover { color: #ff7f00; }
-    #share-label { margin-top: 0.2rem; font-size: 0.75rem; color: #ff7f00; pointer-events: none; }
-    #share-tooltip { position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-    #share-tooltip.show { opacity: 1; }
-    .modal-overlay { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; padding:1rem; box-sizing:border-box; z-index:9999; }
-    .modal-overlay.show { display: flex; }
-    .modal-content { background: #fff; padding:1.5rem; border-radius:0.75rem; position:relative; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-    .close-btn { position:absolute; top:0.5rem; right:0.5rem; background:transparent; color:#333; border:none; font-size:1.25rem; cursor:pointer; }
-    .close-btn:hover { color:#000; }
-    #share-modal .modal-content { display:flex; flex-direction:column; align-items:center; text-align:center; }
-    #share-modal #qrcode { margin:1rem auto; }
-    #list-modal .modal-content { width:95vw; max-width:600px; padding:1.5rem; text-align:left; }
-    #list-modal h2 { margin:0; text-align:center; font-size:1.5rem; }
-    #list-modal .count { display:block; text-align:center; margin:0.5rem 0 1rem; color:#555; }
-    #list-modal ol { list-style-position:inside; padding:0; }
-    #list-modal li { margin:0.5rem 0; text-align:left; font-size:1rem; color:#333; }
-    .radius-control button.active { background-color:#005bbb; color:#fff; }
+    /* Coloque aqui seus estilos, incluindo topbar, modais, etc. */
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="container">
       <h1 class="brand"><i class="fas fa-tags"></i> ConsultaPreço <span class="highlight">AL</span></h1>
+      <!-- Botão QR Code -->
       <div id="share-container">
-        <button id="share-icon" class="share-icon" aria-label="Compartilhar"><i class="fas fa-qrcode"></i></button>
+        <button id="share-icon" class="share-icon" aria-label="Compartilhar">
+          <i class="fas fa-qrcode"></i>
+        </button>
         <span id="share-label">Clique</span>
         <div id="share-tooltip">Toque para compartilhar</div>
       </div>
@@ -55,6 +37,7 @@
   </header>
 
   <main class="container">
+    <!-- Busca -->
     <section class="search-panel">
       <div class="controls">
         <div class="location-choice">
@@ -81,9 +64,11 @@
       <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
     </section>
 
+    <!-- Resultado -->
     <section>
       <div id="summary"></div>
       <div id="result" class="cards"></div>
+      <!-- Modal Lista Ordenada -->
       <div id="list-modal" class="modal-overlay">
         <div class="modal-content">
           <button class="close-btn" id="close-list">&times;</button>
@@ -93,6 +78,7 @@
       </div>
     </section>
 
+    <!-- Histórico -->
     <section class="history-panel">
       <h2>Buscas Recentes</h2>
       <ul id="history-list" class="history-list"><li>Nenhuma busca recente</li></ul>
@@ -100,7 +86,7 @@
     </section>
   </main>
 
-  <!-- Modals -->
+  <!-- Modal Compartilhar QR -->
   <div id="share-modal" class="modal-overlay">
     <div class="modal-content">
       <button class="close-btn" id="close-share">&times;</button>
@@ -112,66 +98,58 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Radius toggle
-      document.querySelectorAll('.radius-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-        });
+      // Toggle de raio
+      document.querySelectorAll('.radius-btn').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }));
+
+      // Botão Pesquisar
+      document.getElementById('btn-search').addEventListener('click', e => {
+        e.preventDefault();
+        performSearch();
       });
 
-      // Search button
-      const searchBtn = document.getElementById('btn-search');
-      searchBtn.addEventListener('click', () => {
-        // call actual search or fallback to list
-        if (typeof performSearch === 'function') {
-          performSearch();
-        } else {
-          console.warn('performSearch não definida');
-          document.getElementById('open-modal').click();
-        }
-      });
-
-      // Tooltip
+      // Tooltip share
       const shareContainer = document.getElementById('share-container');
       const tooltip = document.getElementById('share-tooltip');
       if (!localStorage.getItem('shareHintShown')) {
         setTimeout(() => tooltip.classList.add('show'), 500);
-        const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
-        shareContainer.addEventListener('click', hideTooltip, { once: true });
-        setTimeout(hideTooltip, 7000);
+        const hide = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true'); };
+        shareContainer.addEventListener('click', hide, { once: true });
+        setTimeout(hide, 7000);
       }
 
-      // QR Code
-      new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+      // Gerar QR Code
+      new QRCode(document.getElementById('qrcode'), { text: 'https://sanappsprice.netlify.app', width:200, height:200, correctLevel: QRCode.CorrectLevel.H });
 
-      // Share modal
+      // Modais de compartilhar
       const shareModal = document.getElementById('share-modal');
       document.getElementById('share-icon').addEventListener('click', () => shareModal.classList.add('show'));
       document.getElementById('close-share').addEventListener('click', () => shareModal.classList.remove('show'));
-      document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));
 
-      // List modal
+      // Modal lista ordenada
       const openList = document.getElementById('open-modal');
       const listModal = document.getElementById('list-modal');
       const closeList = document.getElementById('close-list');
       const modalList = document.getElementById('modal-list');
       const countSpan = document.getElementById('count');
-
       openList.addEventListener('click', () => {
         countSpan.textContent = `(${modalList.children.length})`;
         listModal.classList.add('show');
       });
+      closeList.addEventListener('click', () => listModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key==='Escape' && listModal.classList.remove('show'));
+
+      // Histórico
       const historyList = document.getElementById('history-list');
       historyList.addEventListener('click', e => {
-        if (e.target.tagName === 'LI') {
-          if (typeof performSearch === 'function') {
-            performSearch();
-            setTimeout(() => countSpan.textContent = `(${modalList.children.length})`, 300);
-          }
+        if (e.target.tagName==='LI') {
+          performSearch();
+          setTimeout(() => countSpan.textContent = `(${modalList.children.length})`,300);
         }
       });
-      closeList.addEventListener('click', () => listModal.classList.remove('show'));
     });
   </script>
 </body>
