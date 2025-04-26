@@ -1,21 +1,94 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ConsultaPreço AL</title>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JSBLQWKYX9"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}  
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-JSBLQWKYX9');
   </script>
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* Floating share button */
+    #share-btn {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      z-index: 10000;
+    }
+    #share-btn i {
+      font-size: 1.5rem;
+    }
+    /* Modal Overlay */
+    #share-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 1rem;
+      box-sizing: border-box;
+      z-index: 9999;
+    }
+    #share-modal.show {
+      display: flex;
+    }
+    #share-modal .modal-content {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      text-align: center;
+      max-width: 90vw;
+    }
+    #share-modal h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      color: #333;
+    }
+    #share-modal #qrcode {
+      margin: 1rem auto;
+      width: 200px;
+      height: 200px;
+    }
+    #share-modal .close-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 0.3rem;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <!-- Topbar -->
@@ -33,8 +106,8 @@
     <section class="search-panel">
       <div class="controls">
         <div class="location-choice">
-          <label><input type="radio" name="loc" value="city" checked> Município</label>
-          <label><input type="radio" name="loc" value="gps"> GPS</label>
+          <label><input type="radio" name="loc" value="city" checked /> Município</label>
+          <label><input type="radio" name="loc" value="gps" /> GPS</label>
         </div>
         <div id="city-block">
           <select id="city" class="select-field">
@@ -60,7 +133,7 @@
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
-        <!-- Botão de ver lista ordenada -->
+        <!-- Ver lista ordenada -->
         <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
@@ -94,6 +167,45 @@
     </section>
   </main>
 
+  <!-- Botão flutuante de compartilhamento -->
+  <button id="share-btn" aria-label="Compartilhar"><i class="fas fa-share-alt"></i></button>
+
+  <!-- Modal de compartilhamento com QR Code -->
+  <div id="share-modal">
+    <div class="modal-content">
+      <h2>Compartilhe este app</h2>
+      <div id="qrcode"></div>
+      <p>Aponte a câmera de outro celular para acessar</p>
+      <button class="close-btn" id="close-share">Fechar</button>
+    </div>
+  </div>
+
   <script src="app.js" defer></script>
+  <script>
+    // Geração do QR Code para compartilhamento
+    document.addEventListener('DOMContentLoaded', () => {
+      new QRCode(document.getElementById('qrcode'), {
+        text: 'https://sanappsprice.netlify.app',
+        width: 200,
+        height: 200,
+        correctLevel: QRCode.CorrectLevel.H,
+      });
+
+      const shareBtn = document.getElementById('share-btn');
+      const shareModal = document.getElementById('share-modal');
+      const closeShare = document.getElementById('close-share');
+
+      shareBtn.addEventListener('click', () => {
+        shareModal.classList.add('show');
+      });
+      closeShare.addEventListener('click', () => {
+        shareModal.classList.remove('show');
+      });
+      // Fechar com ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') shareModal.classList.remove('show');
+      });
+    });
+  </script>
 </body>
 </html>
