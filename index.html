@@ -41,7 +41,7 @@
     #share-tooltip {
       position: absolute;
       top: 2.5rem;
-      right: 1rem;
+      right: 0;
       background: rgba(0, 0, 0, 0.75);
       color: #fff;
       padding: 0.5rem 0.75rem;
@@ -112,27 +112,78 @@
         <i class="fas fa-tags"></i>
         ConsultaPreço <span class="highlight">AL</span>
       </h1>
-      <button id="share-icon" class="share-icon" aria-label="Compartilhar aplicativo">
-        <i class="fas fa-qrcode"></i>
-      </button>
-      <div id="share-tooltip">Toque no ícone para compartilhar este app</div>
+      <div style="position: relative;">
+        <button id="share-icon" class="share-icon" aria-label="Compartilhar aplicativo">
+          <i class="fas fa-qrcode"></i>
+        </button>
+        <div id="share-tooltip">Toque no ícone para compartilhar este app</div>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <!-- Busca -->
     <section class="search-panel">
-      <!-- existing search controls... -->
+      <div class="controls">
+        <div class="location-choice">
+          <label><input type="radio" name="loc" value="city" checked /> Município</label>
+          <label><input type="radio" name="loc" value="gps" /> GPS</label>
+        </div>
+        <div id="city-block">
+          <select id="city" class="select-field">
+            <option value="-9.6432331,-35.7190686">Maceió</option>
+            <option value="-9.751419,-36.659076">Arapiraca</option>
+            <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
+          </select>
+        </div>
+        <div class="radius-control">
+          <button class="radius-btn" data-value="5">5 km</button>
+          <button class="radius-btn active" data-value="15">15 km</button>
+        </div>
+        <div class="barcode-wrap">
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
+          <button id="btn-search" class="btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Pesquisar</span>
+          </button>
+        </div>
+        <!-- Botão de ver lista ordenada -->
+        <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
+          <i class="fas fa-list"></i>
+          <span class="btn-text">Ver Lista Ordenada</span>
+        </button>
+      </div>
+      <div id="loading" class="loading-overlay">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+      </div>
     </section>
 
     <!-- Resultado -->
     <section>
-      <!-- existing result and modal list... -->
+      <div id="summary"></div>
+      <div id="result" class="cards"></div>
+
+      <!-- Modal para lista ordenada -->
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <span class="close" id="close-modal">&times;</span>
+          <h2>Lista de Preços</h2>
+          <ol id="modal-list"></ol>
+        </div>
+      </div>
     </section>
 
     <!-- Histórico -->
     <section class="history-panel">
-      <!-- existing history code... -->
+      <h2>Buscas Recentes</h2>
+      <ul id="history-list" class="history-list"></ul>
+      <button id="clear-history" class="btn-secondary">Limpar histórico</button>
     </section>
   </main>
 
@@ -157,7 +208,7 @@
       // Mostrar tooltip na primeira visita
       if (!localStorage.getItem('shareHintShown')) {
         setTimeout(() => tooltip.classList.add('show'), 500);
-        const hideTooltip = () => { tooltip.classList.remove('show'); localStorage.setItem('shareHintShown', 'true'); };
+        const hideTooltip = () => {tooltip.classList.remove('show'); localStorage.setItem('shareHintShown','true');};
         shareIcon.addEventListener('click', hideTooltip, { once: true });
         setTimeout(hideTooltip, 7000);
       }
@@ -165,26 +216,14 @@
       // Geração do QR Code no modal
       new QRCode(document.getElementById('qrcode'), {
         text: 'https://sanappsprice.netlify.app',
-        width: 200,
-        height: 200,
-        correctLevel: QRCode.CorrectLevel.H,
+        width: 200, height: 200,
+        correctLevel: QRCode.CorrectLevel.H
       });
 
-      // Abertura/fechamento do modal com logs de verificação
-      shareIcon.addEventListener('click', () => {
-        console.log('Share icon clicked, opening modal');
-        shareModal.classList.add('show');
-      });
-      closeShare.addEventListener('click', () => {
-        console.log('Close button clicked, closing modal');
-        shareModal.classList.remove('show');
-      });
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-          console.log('Escape pressed, closing modal');
-          shareModal.classList.remove('show');
-        }
-      });
+      // Abertura/fechamento do modal
+      shareIcon.addEventListener('click', () => shareModal.classList.add('show'));
+      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
+      document.addEventListener('keydown', e => e.key==='Escape' && shareModal.classList.remove('show'));  
     });
   </script>
 </body>
