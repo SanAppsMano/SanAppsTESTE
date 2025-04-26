@@ -51,8 +51,25 @@
     /* Active radius style */
     .radius-control button.active { background-color: #005bbb; color: #fff; }
 
+    /* Main cards text alignment */
+    .cards .card {
+      text-align: left;
+    }
+
     /* Modal cards styling: reuse .cards and .card from style.css */
-    .modal-content .cards { margin-top: 1rem; }
+    .modal-content .cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* Modal cards text alignment */
+    .modal-content .card {
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -168,8 +185,8 @@
       document.addEventListener('keydown', e => e.key === 'Escape' && shareModal.classList.remove('show'));
 
       // Open/close list modal
-      openList.addEventListener('click', () => listModal.classList.add('show'));
-      closeList.addEventListener('click', () => listModal.classList.remove('show'));
+      openList.addEventListener('click', () => list-modal.classList.add('show'));
+      closeList.addEventListener('click', () => list-modal.classList.remove('show'));
       document.addEventListener('keydown', e => e.key === 'Escape' && list-modal.classList.remove('show'));
     });
   </script>
