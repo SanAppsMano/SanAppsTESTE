@@ -97,7 +97,43 @@
   <main class="container">
     <!-- Busca -->
     <section class="search-panel">
-      <!-- controls... -->
+      <div class="controls">
+        <div class="location-choice">
+          <label><input type="radio" name="loc" value="city" checked> Município</label>
+          <label><input type="radio" name="loc" value="gps"> GPS</label>
+        </div>
+        <div id="city-block">
+          <select id="city" class="select-field">
+            <option value="-9.6432331,-35.7190686">Maceió</option>
+            <option value="-9.751419,-36.659076">Arapiraca</option>
+            <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
+          </select>
+        </div>
+        <div class="radius-control">
+          <button class="radius-btn" data-value="5">5 km</button>
+          <button class="radius-btn active" data-value="15">15 km</button>
+        </div>
+        <div class="barcode-wrap">
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
+          <button id="btn-search" class="btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Pesquisar</span>
+          </button>
+        </div>
+        <button id="open-modal" class="open-modal-btn" title="Ver lista ordenada">
+          <i class="fas fa-list"></i>
+          <span class="btn-text">Lista Ordenada</span>
+        </button>
+      </div>
+      <div id="loading" class="loading-overlay">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+      </div>
     </section>
 
     <!-- Resultado -->
