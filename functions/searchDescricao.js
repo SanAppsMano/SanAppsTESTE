@@ -45,7 +45,7 @@ exports.handler = async function(event) {
   }
 
   // Monta payload para API Economiza Alagoas
-  const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+  const apiUrl = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
   const payload = {
     produto: { descricao: descricao.toUpperCase() },
     estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
