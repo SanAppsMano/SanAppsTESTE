@@ -66,14 +66,117 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderCards(dados) {
-    // ... código inalterado para renderCards
+    resultContainer.innerHTML = '';
+    const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+    [menor, maior].forEach((e, i) => {
+      const label      = i === 0 ? 'Menor preço' : 'Maior preço';
+      const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const price      = brlFormatter.format(e.valMinimoVendido);
+      const priceColor = i === 0 ? '#28a745' : '#dc3545';
+      const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const card       = document.createElement('div');
+      card.className   = 'card';
+      card.innerHTML   = `
+        <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+        <div class="card-body">
+          <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
+          <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
+          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+          <p><strong>Quando:</strong> ${when}</p>
+          <p style="font-size:0.95rem;">
+            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+          </p>
+        </div>
+      `;
+      resultContainer.appendChild(card);
+    });
   }
 
   function loadFromCache(item) {
-    // ... código inalterado para loadFromCache
+    if (!item.dados || !Array.isArray(item.dados)) {
+      alert('Sem dados em cache. Faça a busca primeiro.');
+      return;
+    }
+    const dados = item.dados;
+    barcodeInput.value = item.code;
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
+          <div class="product-name-overlay">${item.name}</div>
+        </div>
+        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+      </div>
+    `;
+    currentResults = dados;
+    renderCards(dados);
   }
 
-  // Busca principal - inalterado
+  // Busca principal
+  btnSearch.addEventListener('click', async () => {
+    const code = barcodeInput.value.trim();
+    if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active');
+    resultContainer.innerHTML = '';
+    summaryContainer.innerHTML = '';
+
+    let lat, lng;
+    const loc = document.querySelector('input[name="loc"]:checked').value;
+    if (loc === 'gps') {
+      try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      } catch {
+        loading.classList.remove('active');
+        return alert('Não foi possível obter localização.');
+      }
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+
+    try {
+      const resp = await fetch(`${API_BASE}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
+      });
+      const data = await resp.json();
+      loading.classList.remove('active');
+      const lista = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
+      if (!lista.length) return summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
+
+      const primeiro    = lista[0];
+      const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
+      const productImg  = primeiro.codGetin
+        ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
+        : '';
+      const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
+      const priceColor  = '#28a745';
+
+      summaryContainer.innerHTML = `
+        <div class="product-header">
+          <div class="product-image-wrapper">
+            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+            <div class="product-name-overlay">${productName}</div>
+          </div>
+          <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
+          <p><strong>Menor preço:</strong> <span style="color:${priceColor}">${priceMain}</span></p>
+        </div>
+      `;
+
+      historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
+      saveHistory(); renderHistory();
+      currentResults = lista;
+      renderCards(lista);
+    } catch (e) {
+      loading.classList.remove('active');
+      alert('Erro na busca.');
+    }
+  });
 
   // Lista Ordenada (Modal)
   const openModalBtn  = document.getElementById('open-modal');
@@ -94,7 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const li        = document.createElement('li');
       li.innerHTML    = `
         <div class="card">
-          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — <span style="color:${priceColor}">${price}</span></div>
           <div class="card-body">
             <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
@@ -113,6 +216,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 
-  // Busca Descrição Modal - inalterado
-
+  // Busca Descrição Modal
+  document.getElementById('open-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.add('active'));
+  document.getElementById('close-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.remove('active'));
 });
