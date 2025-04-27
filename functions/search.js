@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async function(event) {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
