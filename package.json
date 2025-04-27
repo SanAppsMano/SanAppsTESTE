@@ -1,1 +1,16 @@
 
+{
+  "name": "sanapps-teste",
+  "version": "1.0.0",
+  "description": "Serverless functions for SanAppsTESTE on Vercel",
+  "main": "",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
