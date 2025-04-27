@@ -1,3 +1,5 @@
+// functions/search.js
+
 exports.handler = async function(event) {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -11,41 +13,57 @@ exports.handler = async function(event) {
     };
   }
 
+  let body;
   try {
-    // Parse and validate request body
-    const { codigoDeBarras, descricao, latitude, longitude, dias = 3, raio = 15 } = JSON.parse(event.body);
-    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
-      return {
-        statusCode: 400,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Latitude e longitude devem ser números.' }),
-      };
-    }
+    body = JSON.parse(event.body);
+  } catch (err) {
+    return {
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'JSON inválido no corpo da requisição.' })
+    };
+  }
 
-    // Determine endpoint and payload based on search type
-    let apiUrl, payload;
-    if (descricao) {
-      apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
-      payload = {
-        produto: { descricao: descricao.toUpperCase() },
-        estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
-        dias,
-        pagina: 1,
-        registrosPorPagina: 50,
-      };
-    } else {
-      apiUrl = 'https://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras';
-      payload = { codigoDeBarras, dias, latitude, longitude, raio };
-    }
+  const { codigoDeBarras, descricao, latitude, longitude, dias = 3, raio = 15 } = body;
 
-    // Fetch data from SEFAZ API
+  // Validate location
+  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    return {
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Latitude e longitude devem ser números.' })
+    };
+  }
+
+  // Validate search criteria
+  if (!descricao && !codigoDeBarras) {
+    return {
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Informe descrição ou código de barras.' })
+    };
+  }
+
+  // Use Economiza Alagoas API for both barcode (gtin) and description
+  const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+  const payload = {
+    produto: descricao
+      ? { descricao: descricao.toUpperCase() }
+      : { gtin: codigoDeBarras },
+    estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
+    dias,
+    pagina: 1,
+    registrosPorPagina: 50
+  };
+
+  try {
     const resp = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'AppToken': process.env.APP_TOKEN,
+        'AppToken': process.env.APP_TOKEN
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const data = await resp.json();
@@ -53,18 +71,18 @@ exports.handler = async function(event) {
       statusCode: resp.ok ? 200 : resp.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     };
   } catch (err) {
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({ error: 'Erro ao chamar a API externa.', details: err.message })
     };
   }
 };
