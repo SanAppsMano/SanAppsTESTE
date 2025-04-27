@@ -103,14 +103,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const dados = item.dados;
     barcodeInput.value = item.code;
     summaryContainer.innerHTML = `
-      <div class="product-header">
-        <div class="product-image-wrapper">
-          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
-          <div class="product-name-overlay">${item.name}</div>
+        <div class="product-header">
+          <div class="product-image-wrapper">
+            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+            <div class="product-name-overlay">${productName}</div>
+          </div>
+          <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
         </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
-      </div>
-    `;
+      `;
     currentResults = dados;
     renderCards(dados);
   }
