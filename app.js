@@ -10,6 +10,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
 
+  // Variável para lista ordenada de resultados
+  let currentResults = [];
+
   // — Histórico —
   const historyListEl   = document.getElementById('history-list');
   const clearHistoryBtn = document.getElementById('clear-history');
@@ -105,6 +108,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
     `;
+    currentResults = dados;
     renderCards(dados);
   }
 
@@ -158,7 +162,9 @@ window.addEventListener('DOMContentLoaded', () => {
       `;
 
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
-      saveHistory(); renderHistory(); renderCards(lista);
+      saveHistory(); renderHistory();
+      currentResults = lista;
+      renderCards(lista);
     } catch (e) {
       loading.classList.remove('active');
       alert('Erro na busca.');
@@ -182,8 +188,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } catch {
         loading.classList.remove('active'); return alert('Não foi possível obter localização.');
       }
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    } else {\n      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
       const resDesc = await fetch(`${API_BASE}/searchDescricao`, {
@@ -193,7 +198,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const json = await resDesc.json();
       loading.classList.remove('active');
-      const itens = Array.isArray(json.conteúdo) ? json.conteúdo : [];
+      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
       if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry => {
         const li = document.createElement('li');
@@ -214,9 +219,31 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Funções de modal para lista e descrição
-  document.getElementById('open-modal').addEventListener('click', () => document.getElementById('modal').classList.add('active'));
-  document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+  // Lista Ordenada (Modal)
+  const openModalBtn  = document.getElementById('open-modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  const modal         = document.getElementById('modal');
+  const modalList     = document.getElementById('modal-list');
+
+  openModalBtn.addEventListener('click', () => {
+    if (!currentResults.length) return alert('Não há resultados para exibir. Faça uma busca primeiro.');
+    modalList.innerHTML = '';
+    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    sortedAll.forEach(e => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — R$ ${e.valMinimoVendido.toFixed(2)}</div>
+        </div>
+      `;
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Busca Descrição Modal
   document.getElementById('open-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.add('active'));
   document.getElementById('close-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.remove('active'));
 });
