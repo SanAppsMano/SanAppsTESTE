@@ -1,9 +1,8 @@
-
 {
   "name": "sanapps-teste",
   "version": "1.0.0",
++ "type": "module",
   "description": "Serverless functions for SanAppsTESTE on Vercel",
-  "main": "",
   "scripts": {
     "dev": "vercel dev"
   },
