@@ -1,7 +1,7 @@
 // functions/search.js
 
 exports.handler = async function(event) {
-  // Handle CORS preflight
+  // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -26,7 +26,6 @@ exports.handler = async function(event) {
 
   const { codigoDeBarras, descricao, latitude, longitude, dias = 3, raio = 15 } = body;
 
-  // Validate location
   if (typeof latitude !== 'number' || typeof longitude !== 'number') {
     return {
       statusCode: 400,
@@ -35,7 +34,6 @@ exports.handler = async function(event) {
     };
   }
 
-  // Validate search criteria
   if (!descricao && !codigoDeBarras) {
     return {
       statusCode: 400,
@@ -44,7 +42,7 @@ exports.handler = async function(event) {
     };
   }
 
-  // Use Economiza Alagoas API for both barcode (gtin) and description
+  // Unified search via Economiza Alagoas API
   const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
   const payload = {
     produto: descricao
@@ -53,7 +51,7 @@ exports.handler = async function(event) {
     estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
     dias,
     pagina: 1,
-    registrosPorPagina: 50
+    registrosPorPagina: 100
   };
 
   try {
