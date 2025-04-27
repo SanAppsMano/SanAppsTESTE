@@ -74,7 +74,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     [menor, maior].forEach((e, i) => {
       const priceLab = i === 0 ? 'Menor preço' : 'Maior preço';
-      // Usa caminho correto para imagens no Git
       const iconSrc  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const altText  = i === 0 ? 'Ai sim' : 'Eita';
       const mapL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
@@ -158,7 +157,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let data;
     try {
-      const res = await fetch('/.netlify/functions/search', {
+      const res = await fetch(`${API_BASE}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ codigoDeBarras: barcode, latitude: Number(latitude), longitude: Number(longitude), raio: Number(selectedRadius), dias: 3 })
@@ -222,95 +221,4 @@ window.addEventListener('DOMContentLoaded', () => {
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
           ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-          <p><strong>Quando:</strong> ${when}</p>
-          <p style="font-size:0.95rem;"><a href="${mapL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
-        </div>
-      `;
-      li.appendChild(card);
-      modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
-    // — Botão e modal de Busca por Descrição —
-    const openDescBtn    = document.getElementById('open-desc-modal');
-    const descModal      = document.getElementById('desc-modal');
-    const closeDescBtn   = document.getElementById('close-desc-modal');
-    const descInput      = document.getElementById('desc-input');
-    const descList       = document.getElementById('desc-list');
-  
-    // abre o modal vazio
-    openDescBtn.addEventListener('click', () => {
-      descList.innerHTML = '';
-      descModal.classList.add('active');
-    });
-  
-    // fecha modal ao clicar no X ou fora do conteúdo
-    closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
-    descModal.addEventListener('click', e => {
-      if (e.target === descModal) descModal.classList.remove('active');
-    });
-  
-    // faz a busca por descrição e preenche a lista
-
-// latitude, longitude e selectedRadius também já existem no seu código
-document.getElementById('btn-desc-search').addEventListener('click', async () => {
-  const termo = descInput.value.trim();
-  if (!termo) return alert('Informe a descrição do produto!');
-  descList.innerHTML = '';
-  loading.classList.add('active');
-
-  // pega latitude/longitude igual ao btnSearch original…
-  let latitude, longitude;
-  const locType = document.querySelector('input[name="loc"]:checked').value;
-  if (locType === 'gps') {
-    // mesmo código de geo…
-  } else {
-    [latitude, longitude] = document.getElementById('city').value.split(',').map(Number);
-  }
-
-  try {
-    const res = await fetch('/.netlify/functions/searchDescricao', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        descricao: termo,
-        latitude,
-        longitude,
-        raio: Number(selectedRadius),
-        dias: 3
-      })
-    });
-    const json = await res.json();
-    loading.classList.remove('active');
-
-    const lista = Array.isArray(json.conteudo) ? json.conteudo : [];
-    if (!lista.length) {
-      descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-      return;
-    }
-
-    lista.forEach(entry => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}"
-             onerror="this.src='https://via.placeholder.com/40';" />
-        <strong>${entry.codGetin || '-'}</strong> – ${entry.dscProduto}
-      `;
-      li.addEventListener('click', () => {
-        document.getElementById('barcode').value = entry.codGetin;
-        descModal.classList.remove('active');
-        barcodeInput.focus();
-      });
-      descList.appendChild(li);
-    });
-  } catch (e) {
-    loading.classList.remove('active');
-    alert('Erro na busca: ' + e.message);
-  }
-});
-
-
-
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
-});
+          <p><strong>Quando:</strong> ${when}</p>\``}]}
