@@ -12,7 +12,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Formatter moeda BRL
   const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-
   let currentResults = [];
 
   // Histórico
@@ -52,7 +51,6 @@ window.addEventListener('DOMContentLoaded', () => {
       renderHistory();
     }
   });
-
   renderHistory();
 
   // Seleção de raio
@@ -96,7 +94,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Carrega do histórico
-  async function loadFromCache(item) {
+  function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
     const productName = item.name;
@@ -196,4 +194,23 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+          </div>
+        </div>
+      `;
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Modal descrição
+  const openDescBtn = document.getElementById('open-desc-modal');
+  const descModal   = document.getElementById('desc-modal');
+  const closeDescBtn= document.getElementById('close-desc-modal');
+  const btnDescSearch = document.getElementById('btn-desc-search');
+  const descInput   = document.getElementById('desc-input');
+  const descList    = document.getElementById('desc-list');
+
+  openDescBtn.addEventListener('click', () => {
+    descList.innerHTML = '';
