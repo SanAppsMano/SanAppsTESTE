@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
 
-  // Variável para lista ordenada de resultados
+  // Variável para lista ordenada
   let currentResults = [];
 
   // — Histórico —
@@ -171,54 +171,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Busca por descrição
-  const descInput = document.getElementById('desc-input');
-  const descList  = document.getElementById('desc-list');
-  document.getElementById('btn-desc-search').addEventListener('click', async () => {
-    const termo = descInput.value.trim();
-    if (!termo) return alert('Informe a descrição!');
-    descList.innerHTML = '';
-    loading.classList.add('active');
-    let lat, lng;
-    const loc = document.querySelector('input[name="loc"]:checked').value;
-    if (loc === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active'); return alert('Não foi possível obter localização.');
-      }
-    } else {\n      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
-    }
-    try {
-      const resDesc = await fetch(`${API_BASE}/searchDescricao`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
-      });
-      const json = await resDesc.json();
-      loading.classList.remove('active');
-      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
-      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-      itens.forEach(entry => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}"
-               onerror="this.src='https://via.placeholder.com/40';" />
-          <strong>${entry.codGetin || '-'}</strong> – ${entry.dscProduto}
-        `;
-        li.addEventListener('click', () => {
-          barcodeInput.value = entry.codGetin;
-          descList.innerHTML = '';
-        });
-        descList.appendChild(li);
-      });
-    } catch {
-      loading.classList.remove('active');
-      alert('Erro na busca por descrição.');
-    }
-  });
-
   // Lista Ordenada (Modal)
   const openModalBtn  = document.getElementById('open-modal');
   const closeModalBtn = document.getElementById('close-modal');
@@ -230,10 +182,21 @@ window.addEventListener('DOMContentLoaded', () => {
     modalList.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     sortedAll.forEach(e => {
-      const li = document.createElement('li');
+      const when   = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const li     = document.createElement('li');
       li.innerHTML = `
         <div class="card">
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — R$ ${e.valMinimoVendido.toFixed(2)}</div>
+          <div class="card-body">
+            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p style="font-size:0.95rem;">
+              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+            </p>
+          </div>
         </div>
       `;
       modalList.appendChild(li);
