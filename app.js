@@ -88,10 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-          <p style="font-size:0.95rem;">
-            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-          </p>
+          <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
         </div>
       `;
       resultContainer.appendChild(card);
@@ -99,7 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Carrega do histórico
-  function loadFromCache(item) {
+  async function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
     const productName = item.name;
@@ -155,13 +152,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const productImg  = primeiro.codGetin
         ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
         : '';
-      const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
-      const priceColor  = '#28a745';
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
             <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-            <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
           <p style="font-size:0.95rem;"><a href="#" id="open-modal">Ver lista ordenada</a></p>
@@ -202,99 +196,4 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
-          </div>
-        </div>
-      `;
-      modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-  // Modal descrição (Buscar por Descrição)
-  const openDescBtn = document.getElementById('open-desc-modal');
-  const descModal = document.getElementById('desc-modal');
-  const closeDescBtn = document.getElementById('close-desc-modal');
-  const btnDescSearch = document.getElementById('btn-desc-search');
-  const descInput = document.getElementById('desc-input');
-  const descList = document.getElementById('desc-list');
-
-  openDescBtn.addEventListener('click', () => {
-    descList.innerHTML = '';
-    descModal.classList.add('active');
-  });
-
-  closeDescBtn.addEventListener('click', () => {
-    descModal.classList.remove('active');
-  });
-
-  btnDescSearch.addEventListener('click', async () => {
-    const termo = descInput.value.trim();
-    if (!termo) return alert('Informe a descrição!');
-    descList.innerHTML = '';
-    loading.classList.add('active');
-    let lat, lng;
-    const locType = document.querySelector('input[name="loc"]:checked').value;
-    if (locType === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active');
-        return alert('Não foi possível obter localização.');
-      }
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
-    }
-    try {
-      const resp = await fetch(`${API_BASE}/searchDescricao`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
-      });
-      const json = await resp.json();
-      loading.classList.remove('active');
-      // Normaliza array de itens, tratando campo produto
-      const raw = Array.isArray(json.conteudo) ? json.conteudo : [];
-      const itens = raw.map(item => {
-        const prod = item.produto || item;
-        return {
-          cod: prod.codGetin || prod.gtin || prod.CodGetin || '',
-          desc: prod.dscProduto || prod.descricao || prod.DscProduto || prod.descricaoProduto || ''
-        };
-      });
-      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-      itens.forEach(({ cod, desc }) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${cod}</strong> – ${desc}`;
-        li.addEventListener('click', () => {
-          barcodeInput.value = cod;
-          descModal.classList.remove('active');
-        });
-        descList.appendChild(li);
-      });
-    } catch (e) {
-      loading.classList.remove('active');
-      alert('Erro na busca por descrição: ' + e.message);
-    }
-  });
-      const json = await resp.json();
-      loading.classList.remove('active');
-      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
-      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-      itens.forEach(entry => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
-        li.addEventListener('click', () => {
-          barcodeInput.value = entry.codGetin;
-          descModal.classList.remove('active');
-        });
-        descList.appendChild(li);
-      });
-    } catch (e) {
-      loading.classList.remove('active');
-      alert('Erro na busca por descrição: ' + e.message);
-    }
-  });
-});
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href
