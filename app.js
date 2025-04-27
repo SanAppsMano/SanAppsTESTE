@@ -10,6 +10,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
 
+  // Formatter para moeda BRL
+  const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
   // Variável para lista ordenada
   let currentResults = [];
 
@@ -68,17 +71,20 @@ window.addEventListener('DOMContentLoaded', () => {
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
     [menor, maior].forEach((e, i) => {
-      const label    = i === 0 ? 'Menor preço' : 'Maior preço';
-      const icon     = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const when     = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const mapURL   = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL   = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
+      const label      = i === 0 ? 'Menor preço' : 'Maior preço';
+      const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const price      = brlFormatter.format(e.valMinimoVendido);
+      // Green for lowest, red for highest
+      const priceColor = i === 0 ? '#28a745' : '#dc3545';
+      const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const card       = document.createElement('div');
+      card.className   = 'card';
+      card.innerHTML   = `
         <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
-          <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
+          <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
@@ -145,11 +151,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const lista = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
       if (!lista.length) return summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
 
-      const primeiro = lista[0];
+      const primeiro    = lista[0];
       const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
       const productImg  = primeiro.codGetin
         ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
         : '';
+      const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
+      const priceColor  = '#28a745';
 
       summaryContainer.innerHTML = `
         <div class="product-header">
@@ -158,6 +166,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
+          <p><strong>Menor preço:</strong> <span style="color:${priceColor}">${priceMain}</span></p>
         </div>
       `;
 
@@ -178,17 +187,20 @@ window.addEventListener('DOMContentLoaded', () => {
   const modalList     = document.getElementById('modal-list');
 
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) return alert('Não há resultados para exibir. Faça uma busca primeiro.');
+    if (!currentResults.length) return alert('Não há resultados para exibir.');
     modalList.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    sortedAll.forEach(e => {
-      const when   = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const li     = document.createElement('li');
-      li.innerHTML = `
+    sortedAll.forEach((e, i) => {
+      const when      = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const price     = brlFormatter.format(e.valMinimoVendido);
+      // Green for lowest, red for highest
+      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length-1 ? '#dc3545' : '#007bff');
+      const li        = document.createElement('li');
+      li.innerHTML    = `
         <div class="card">
-          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — R$ ${e.valMinimoVendido.toFixed(2)}</div>
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — <span style="color:${priceColor}">${price}</span></div>
           <div class="card-body">
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
