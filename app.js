@@ -1,7 +1,5 @@
 /* app.js */
-
-// URL base das Functions na Vercel
-const API_BASE = 'https://san-apps-teste.vercel.app/api';
+// API_BASE é injetado no HTML (index.html)
 
 window.addEventListener('DOMContentLoaded', () => {
   // — Referências ao DOM —
@@ -102,6 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
+  // Busca principal
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
