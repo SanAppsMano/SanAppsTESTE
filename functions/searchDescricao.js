@@ -1,8 +1,37 @@
 // functions/searchDescricao.js
-// Netlify Function dedicada à busca por descrição de produto
+// Function dedicada à busca por descrição de produto usando HTTPS nativo
+
+const https = require('https');
+
+function postJson(url, headers, payload) {
+  return new Promise((resolve, reject) => {
+    const { hostname, port, pathname, search, protocol } = new URL(url);
+    const options = {
+      hostname,
+      port: port || (protocol === 'https:' ? 443 : 80),
+      path: pathname + (search || ''),
+      method: 'POST',
+      headers,
+    };
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, json: JSON.parse(data) });
+        } catch (e) {
+          reject(new Error('Resposta não é JSON válido'));  
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(JSON.stringify(payload));
+    req.end();
+  });
+}
 
 exports.handler = async function(event) {
-  // Suporte a CORS preflight
+  // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -14,11 +43,11 @@ exports.handler = async function(event) {
     };
   }
 
-  // Faz parse do corpo da requisição
+  // Parse do corpo
   let body;
   try {
     body = JSON.parse(event.body);
-  } catch (err) {
+  } catch {
     return {
       statusCode: 400,
       headers: { 'Access-Control-Allow-Origin': '*' },
@@ -27,13 +56,11 @@ exports.handler = async function(event) {
   }
 
   const { descricao, latitude, longitude, dias = 3, raio = 15 } = body;
-
-  // Valida parâmetros obrigatórios
   if (!descricao || typeof descricao !== 'string') {
     return {
       statusCode: 400,
       headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Parâmetro "descricao" é obrigatório e deve ser string.' }),
+      body: JSON.stringify({ error: 'Parâmetro "descricao" é obrigatório.' }),
     };
   }
   if (typeof latitude !== 'number' || typeof longitude !== 'number') {
@@ -44,8 +71,7 @@ exports.handler = async function(event) {
     };
   }
 
-  // Monta payload para API Economiza Alagoas
-  const apiUrl = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+  const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
   const payload = {
     produto: { descricao: descricao.toUpperCase() },
     estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
@@ -53,26 +79,20 @@ exports.handler = async function(event) {
     pagina: 1,
     registrosPorPagina: 50,
   };
+  const headers = {
+    'Content-Type': 'application/json',
+    'AppToken': process.env.APP_TOKEN,
+  };
 
   try {
-    // Chama endpoint externo
-    const resp = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'AppToken': process.env.APP_TOKEN,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await resp.json();
+    const { status, json } = await postJson(apiUrl, headers, payload);
     return {
-      statusCode: resp.ok ? 200 : resp.status,
+      statusCode: status >= 200 && status < 300 ? 200 : status,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(json),
     };
   } catch (err) {
     return {
