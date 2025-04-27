@@ -1,6 +1,7 @@
 // functions/searchDescricao.js
 // Function dedicada à busca por descrição de produto usando HTTPS nativo
 
+const http = require('http');
 const https = require('https');
 
 function postJson(url, headers, payload) {
@@ -13,7 +14,7 @@ function postJson(url, headers, payload) {
       method: 'POST',
       headers,
     };
-    const req = https.request(options, res => {
+    const req = (protocol === 'https:' ? https : http).request(options, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -71,7 +72,7 @@ exports.handler = async function(event) {
     };
   }
 
-  const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+  const apiUrl = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
   const payload = {
     produto: { descricao: descricao.toUpperCase() },
     estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
