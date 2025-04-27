@@ -212,7 +212,63 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 
-  // Modal descrição
-  document.getElementById('open-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.add('active'));
-  document.getElementById('close-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.remove('active'));
+  // Modal descrição (Buscar por Descrição)
+  const openDescBtn = document.getElementById('open-desc-modal');
+  const descModal = document.getElementById('desc-modal');
+  const closeDescBtn = document.getElementById('close-desc-modal');
+  const btnDescSearch = document.getElementById('btn-desc-search');
+  const descInput = document.getElementById('desc-input');
+  const descList = document.getElementById('desc-list');
+
+  openDescBtn.addEventListener('click', () => {
+    descList.innerHTML = '';
+    descModal.classList.add('active');
+  });
+
+  closeDescBtn.addEventListener('click', () => {
+    descModal.classList.remove('active');
+  });
+
+  btnDescSearch.addEventListener('click', async () => {
+    const termo = descInput.value.trim();
+    if (!termo) return alert('Informe a descrição!');
+    descList.innerHTML = '';
+    loading.classList.add('active');
+    let lat, lng;
+    const locType = document.querySelector('input[name="loc"]:checked').value;
+    if (locType === 'gps') {
+      try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      } catch {
+        loading.classList.remove('active');
+        return alert('Não foi possível obter localização.');
+      }
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+    try {
+      const resp = await fetch(`${API_BASE}/searchDescricao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
+      });
+      const json = await resp.json();
+      loading.classList.remove('active');
+      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
+      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+      itens.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
+        li.addEventListener('click', () => {
+          barcodeInput.value = entry.codGetin;
+          descModal.classList.remove('active');
+        });
+        descList.appendChild(li);
+      });
+    } catch (e) {
+      loading.classList.remove('active');
+      alert('Erro na busca por descrição: ' + e.message);
+    }
+  });
 });
