@@ -1,5 +1,4 @@
-
-// netlify/functions/hello.js
+// functions/hello.js
 exports.handler = async (event, context) => {
   return {
     statusCode: 200,
