@@ -255,6 +255,32 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const json = await resp.json();
       loading.classList.remove('active');
+      // Normaliza array de itens, tratando campo produto
+      const raw = Array.isArray(json.conteudo) ? json.conteudo : [];
+      const itens = raw.map(item => {
+        const prod = item.produto || item;
+        return {
+          cod: prod.codGetin || prod.gtin || prod.CodGetin || '',
+          desc: prod.dscProduto || prod.descricao || prod.DscProduto || prod.descricaoProduto || ''
+        };
+      });
+      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+      itens.forEach(({ cod, desc }) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${cod}</strong> – ${desc}`;
+        li.addEventListener('click', () => {
+          barcodeInput.value = cod;
+          descModal.classList.remove('active');
+        });
+        descList.appendChild(li);
+      });
+    } catch (e) {
+      loading.classList.remove('active');
+      alert('Erro na busca por descrição: ' + e.message);
+    }
+  });
+      const json = await resp.json();
+      loading.classList.remove('active');
       const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
       if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry => {
