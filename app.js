@@ -144,7 +144,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const primeiro = lista[0];
       const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
       const productImg  = primeiro.codGetin
-        ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}.jpg`
+        ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
         : '';
 
       summaryContainer.innerHTML = `
@@ -193,12 +193,12 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const json = await resDesc.json();
       loading.classList.remove('active');
-      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
+      const itens = Array.isArray(json.conteúdo) ? json.conteúdo : [];
       if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry => {
         const li = document.createElement('li');
         li.innerHTML = `
-          <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}.jpg"
+          <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}"
                onerror="this.src='https://via.placeholder.com/40';" />
           <strong>${entry.codGetin || '-'}</strong> – ${entry.dscProduto}
         `;
