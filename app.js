@@ -96,7 +96,15 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const dados = item.dados;
     barcodeInput.value = item.code;
-    summaryContainer.innerHTML = `<p><strong>${dados.length}</strong> estabelecimento(s) no histórico de <em>${item.name}</em>.</p>`;
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
+          <div class="product-name-overlay">${item.name}</div>
+        </div>
+        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+      </div>
+    `;
     renderCards(dados);
   }
 
@@ -123,17 +131,33 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/search`, {
+      const resp = await fetch(`${API_BASE}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
       });
-      const data = await res.json();
+      const data = await resp.json();
       loading.classList.remove('active');
       const lista = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
       if (!lista.length) return summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
-      summaryContainer.innerHTML = `<p><strong>${lista.length}</strong> encontrado(s).</p>`;
-      historyArr.unshift({ code, name: data.dscProduto || lista[0].dscProduto, dados: lista });
+
+      const primeiro = lista[0];
+      const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
+      const productImg  = primeiro.codGetin
+        ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}.jpg`
+        : '';
+
+      summaryContainer.innerHTML = `
+        <div class="product-header">
+          <div class="product-image-wrapper">
+            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+            <div class="product-name-overlay">${productName}</div>
+          </div>
+          <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
+        </div>
+      `;
+
+      historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
       saveHistory(); renderHistory(); renderCards(lista);
     } catch (e) {
       loading.classList.remove('active');
@@ -173,7 +197,11 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry => {
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
+        li.innerHTML = `
+          <img src="https://cdn-cosmos.bluesoft.com.br/products/${entry.codGetin}.jpg"
+               onerror="this.src='https://via.placeholder.com/40';" />
+          <strong>${entry.codGetin || '-'}</strong> – ${entry.dscProduto}
+        `;
         li.addEventListener('click', () => {
           barcodeInput.value = entry.codGetin;
           descList.innerHTML = '';
