@@ -228,5 +228,27 @@
       });
     });
   </script>
+  <!-- TESTE DE API: Botão e área de resultado -->
+<button id="btnHello" style="position:fixed;bottom:1rem;left:1rem;">Testar API</button>
+<pre id="hello-output" style="position:fixed;bottom:4rem;left:1rem;background:#fff;padding:0.5rem;border:1px solid #ccc;"></pre>
+
+<script>
+  // Aguarda o carregamento total do DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btnHello');
+    const out = document.getElementById('hello-output');
+
+    btn.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/hello');
+        const data = await resp.json();
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        out.textContent = 'Erro ao chamar API: ' + err;
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
