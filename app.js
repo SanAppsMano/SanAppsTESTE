@@ -87,6 +87,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
+          <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
           <p style="font-size:0.95rem;">
             <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
             <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
@@ -162,6 +163,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
           <p><strong>Menor preço:</strong> <span style="color:${priceColor}">${priceMain}</span></p>
+          <p><strong>Descrição:</strong> ${data.dscProduto || primeiro.dscProduto || '—'}</p>
         </div>
       `;
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
@@ -198,6 +200,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
+            <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
             <p style="font-size:0.95rem;">
               <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
               <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
