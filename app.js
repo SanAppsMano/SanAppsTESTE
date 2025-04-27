@@ -13,8 +13,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Formatter para moeda BRL
   const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Variável para lista ordenada
-  let currentResults = [];
+  let currentResults = []; // resultados para lista ordenada
 
   // — Histórico —
   const historyListEl   = document.getElementById('history-list');
@@ -75,7 +74,6 @@ window.addEventListener('DOMContentLoaded', () => {
       const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
       const price      = brlFormatter.format(e.valMinimoVendido);
-      // Green for lowest, red for highest
       const priceColor = i === 0 ? '#28a745' : '#dc3545';
       const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
@@ -195,8 +193,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const price     = brlFormatter.format(e.valMinimoVendido);
-      // Green for lowest, red for highest, blue for middle
-      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length-1 ? '#dc3545' : '#007bff');
+      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length - 1 ? '#dc3545' : '#007bff');
       const li        = document.createElement('li');
       li.innerHTML    = `
         <div class="card">
@@ -213,9 +210,6 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
       modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
     });
     modal.classList.add('active');
   });
