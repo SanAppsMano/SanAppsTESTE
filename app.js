@@ -116,7 +116,6 @@ window.addEventListener('DOMContentLoaded', () => {
     currentResults = dados;
     renderCards(dados);
   }
-  }
 
   // Busca principal
   btnSearch.addEventListener('click', async () => {
@@ -165,8 +164,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
-          <p><strong>Menor preço:</strong> <span style="color:${priceColor}">${priceMain}</span></p>
-          <p><strong>Descrição:</strong> ${data.dscProduto || primeiro.dscProduto || '—'}</p>
+          <p style="font-size:0.95rem;"><a href="#" id="open-modal">Ver lista ordenada</a></p>
         </div>
       `;
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
@@ -204,10 +202,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-            <p style="font-size:0.95rem;">
-              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-            </p>
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
           </div>
         </div>
       `;
