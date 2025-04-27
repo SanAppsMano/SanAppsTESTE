@@ -195,13 +195,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
       const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const price     = brlFormatter.format(e.valMinimoVendido);
-      // Green for lowest, red for highest
+      // Green for lowest, red for highest, blue for middle
       const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length-1 ? '#dc3545' : '#007bff');
       const li        = document.createElement('li');
       li.innerHTML    = `
         <div class="card">
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — <span style="color:${priceColor}">${price}</span></div>
           <div class="card-body">
+            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p style="font-size:0.95rem;">
@@ -212,6 +213,9 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
       modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
     });
     modal.classList.add('active');
   });
