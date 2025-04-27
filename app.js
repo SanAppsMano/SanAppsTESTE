@@ -2,7 +2,7 @@
 // API_BASE é injetado no HTML (index.html)
 
 window.addEventListener('DOMContentLoaded', () => {
-  // — Referências ao DOM —
+  // — Elementos do DOM —
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const resultContainer  = document.getElementById('result');
@@ -10,12 +10,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const loading          = document.getElementById('loading');
   const radiusButtons    = document.querySelectorAll('.radius-btn');
 
-  // Formatter para moeda BRL
+  // Formatter moeda BRL
   const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   let currentResults = [];
 
-  // — Histórico —
+  // Histórico
   const historyListEl   = document.getElementById('history-list');
   const clearHistoryBtn = document.getElementById('clear-history');
   let historyArr        = JSON.parse(localStorage.getItem('searchHistory') || '[]');
@@ -55,7 +55,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   renderHistory();
 
-  // — Seleção de raio de busca —
+  // Seleção de raio
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
   radiusButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -65,6 +65,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Render de cards menor/maior
   function renderCards(dados) {
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
@@ -96,11 +97,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Carrega do histórico
   function loadFromCache(item) {
-    if (!item.dados || !Array.isArray(item.dados)) {
-      alert('Sem dados em cache. Faça a busca primeiro.');
-      return;
-    }
     const dados = item.dados;
     barcodeInput.value = item.code;
     summaryContainer.innerHTML = `
@@ -123,7 +121,6 @@ window.addEventListener('DOMContentLoaded', () => {
     loading.classList.add('active');
     resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
-
     let lat, lng;
     const loc = document.querySelector('input[name="loc"]:checked').value;
     if (loc === 'gps') {
@@ -137,7 +134,6 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
-
     try {
       const resp = await fetch(`${API_BASE}/search`, {
         method: 'POST',
@@ -146,9 +142,11 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const data = await resp.json();
       loading.classList.remove('active');
-      const lista = Array.isArray(data) ? data : (Array.isArray(data.dados) ? data.dados : []);
-      if (!lista.length) return summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
-
+      const lista = Array.isArray(data) ? data : data.dados || [];
+      if (!lista.length) {
+        summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
+        return;
+      }
       const primeiro    = lista[0];
       const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
       const productImg  = primeiro.codGetin
@@ -156,7 +154,6 @@ window.addEventListener('DOMContentLoaded', () => {
         : '';
       const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
       const priceColor  = '#28a745';
-
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
@@ -167,7 +164,6 @@ window.addEventListener('DOMContentLoaded', () => {
           <p><strong>Menor preço:</strong> <span style="color:${priceColor}">${priceMain}</span></p>
         </div>
       `;
-
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
       saveHistory(); renderHistory();
       currentResults = lista;
@@ -178,14 +174,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Lista Ordenada (Modal)
+  // Modal lista ordenada
   const openModalBtn  = document.getElementById('open-modal');
   const closeModalBtn = document.getElementById('close-modal');
   const modal         = document.getElementById('modal');
   const modalList     = document.getElementById('modal-list');
 
   openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) return alert('Não há resultados para exibir.');
+    if (!currentResults.length) return alert('Faça uma busca primeiro.');
     modalList.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
     sortedAll.forEach((e, i) => {
@@ -203,4 +199,19 @@ window.addEventListener('DOMContentLoaded', () => {
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p style="font-size:0.95rem;">
-              <a href="${mapURL}" target="_blank"><
+              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+            </p>
+          </div>
+        </div>
+      `;
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Modal descrição
+  document.getElementById('open-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.add('active'));
+  document.getElementById('close-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.remove('active'));
+});
