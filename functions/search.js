@@ -1,110 +1,91 @@
 // functions/search.js
 
-const https = require('https');
+exports.handler = async (event) => {
+  // Log the incoming event for debugging
+  console.log("Received event:", JSON.stringify(event));
 
-// Helper to POST JSON and return parsed JSON
-function postJson(url, headers, payload) {
-  return new Promise((resolve, reject) => {
-    const { hostname, port, pathname, search, protocol } = new URL(url);
-    const options = {
-      hostname,
-      port: port || (protocol === 'https:' ? 443 : 80),
-      path: pathname + (search || ''),
-      method: 'POST',
-      headers,
-    };
-    const req = https.request(options, res => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          resolve({ status: res.statusCode, json });
-        } catch (e) {
-          reject(new Error('Invalid JSON response'));
-        }
-      });
-    });
-    req.on('error', reject);
-    req.write(JSON.stringify(payload));
-    req.end();
-  });
-}
-
-exports.handler = async function(event) {
-  // CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
+  // Handle CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    console.log("Preflight request, returning CORS headers");
     return {
       statusCode: 204,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     };
   }
 
-  // Parse body
-  let body;
   try {
-    body = JSON.parse(event.body);
-  } catch (err) {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'JSON inválido no corpo da requisição.' })
-    };
-  }
+    console.log("Parsing request body");
+    const {
+      codigoDeBarras,
+      latitude,
+      longitude,
+      dias = 3,
+      raio = 15
+    } = JSON.parse(event.body);
+    console.log("Parsed values:", { codigoDeBarras, latitude, longitude, dias, raio });
 
-  const { codigoDeBarras, descricao, latitude, longitude, dias = 3, raio = 15 } = body;
-  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Latitude e longitude devem ser números.' })
-    };
-  }
-  if (!descricao && !codigoDeBarras) {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Informe descrição ou código de barras.' })
-    };
-  }
+    // Validate required params
+    if (
+      typeof codigoDeBarras !== "string" ||
+      typeof latitude !== "number" ||
+      typeof longitude !== "number"
+    ) {
+      console.warn("Invalid parameters");
+      return {
+        statusCode: 400,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: "Parâmetros inválidos" }),
+      };
+    }
 
-  // Build request
-  const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
-  const payload = {
-    produto: descricao ? { descricao: descricao.toUpperCase() } : { gtin: codigoDeBarras },
-    estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
-    dias,
-    pagina: 1,
-    registrosPorPagina: 50
-  };
-  const headers = {
-    'Content-Type': 'application/json',
-    'AppToken': process.env.APP_TOKEN
-  };
+    const apiUrl = "http://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras";
+    console.log("Calling external API at:", apiUrl);
 
-  // Execute POST
-  try {
-    const { status, json } = await postJson(apiUrl, headers, payload);
-    return {
-      statusCode: status >= 200 && status < 300 ? 200 : status,
+    const resp = await fetch(apiUrl, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        "Content-Type": "application/json",
+        "AppToken": process.env.APP_TOKEN,
       },
-      body: JSON.stringify(json)
-    };
-  } catch (err) {
+      body: JSON.stringify({
+        codigoDeBarras,
+        dias,
+        latitude,
+        longitude,
+        raio,
+      }),
+    });
+
+    console.log("External API response status:", resp.status, resp.statusText);
+
+    const data = await resp.json();
+    console.log("External API returned data:", JSON.stringify(data).slice(0, 500) + "...");
+
+    const statusCode = resp.ok ? 200 : resp.status;
+    console.log("Returning status code:", statusCode);
+
     return {
-      statusCode: 502,
+      statusCode,
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({ error: 'Erro ao chamar a API externa', details: err.message })
+      body: JSON.stringify(data),
+    };
+
+  } catch (err) {
+    console.error("Error in handler:", err);
+    return {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
