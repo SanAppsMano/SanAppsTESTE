@@ -1,8 +1,6 @@
-// functions/search.js
-
 const fetch = require('node-fetch');
 
-exports.handler = async (event) => { = async (event) => {
+exports.handler = async function(event) {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -16,9 +14,10 @@ exports.handler = async (event) => { = async (event) => {
   }
 
   try {
+    // Parse request
     const { codigoDeBarras, descricao, latitude, longitude, dias = 3, raio = 15 } = JSON.parse(event.body);
 
-    // Branch: search by product description
+    // If searching by description
     if (descricao) {
       const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
       const payload = {
@@ -33,9 +32,9 @@ exports.handler = async (event) => { = async (event) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'AppToken': process.env.APP_TOKEN,
+          'AppToken': process.env.APP_TOKEN
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       const data = await resp.json();
@@ -43,29 +42,30 @@ exports.handler = async (event) => { = async (event) => {
         statusCode: resp.ok ? 200 : resp.status,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': '*'
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data)
       };
     }
 
-    // Branch: search by barcode (GTIN)
+    // Validate barcode search params
     if (typeof codigoDeBarras !== 'string' || typeof latitude !== 'number' || typeof longitude !== 'number') {
       return {
         statusCode: 400,
         headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Parâmetros inválidos' }),
+        body: JSON.stringify({ error: 'Parâmetros inválidos' })
       };
     }
 
+    // Search by barcode
     const apiUrl = 'https://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras';
     const resp = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'AppToken': process.env.APP_TOKEN,
+        'AppToken': process.env.APP_TOKEN
       },
-      body: JSON.stringify({ codigoDeBarras, dias, latitude, longitude, raio }),
+      body: JSON.stringify({ codigoDeBarras, dias, latitude, longitude, raio })
     });
 
     const data = await resp.json();
@@ -73,9 +73,9 @@ exports.handler = async (event) => { = async (event) => {
       statusCode: resp.ok ? 200 : resp.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     };
 
   } catch (err) {
@@ -83,9 +83,9 @@ exports.handler = async (event) => { = async (event) => {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({ error: err.message })
     };
   }
 };
