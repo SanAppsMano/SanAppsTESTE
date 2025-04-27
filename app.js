@@ -115,7 +115,6 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="product-header">
         <div class="product-image-wrapper">
           <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-          <div class="product-name-overlay">${productName}</div>
         </div>
         <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
@@ -219,6 +218,4 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
           <p><strong>Preço:</strong> R$ ${e.valMinimoVendido.toFixed(2)}</p>
-          ${iconSrcModal ? `<div class="card-icon-right"><img src="${iconSrcModal}" alt=""></div>` : ''}
-          <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-          <p><strong>Quando:</strong> ${when}</p>\``}]}
+          ${iconSrcModal ? `<div class="card-icon
