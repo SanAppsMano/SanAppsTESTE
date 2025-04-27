@@ -269,7 +269,7 @@ document.getElementById('btn-desc-search').addEventListener('click', async () =>
   }
 
   try {
-    const res = await fetch('/.netlify/functions/search', {
+    const res = await fetch('/.netlify/functions/searchDescricao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
