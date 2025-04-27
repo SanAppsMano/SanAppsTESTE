@@ -102,17 +102,20 @@ window.addEventListener('DOMContentLoaded', () => {
   function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
+    const productName = item.name;
+    const productImg = item.image;
     summaryContainer.innerHTML = `
-        <div class="product-header">
-          <div class="product-image-wrapper">
-            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-            <div class="product-name-overlay">${productName}</div>
-          </div>
-          <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+          <div class="product-name-overlay">${productName}</div>
         </div>
-      `;
+        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+      </div>
+    `;
     currentResults = dados;
     renderCards(dados);
+  }
   }
 
   // Busca principal
