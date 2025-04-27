@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Formatter para moeda BRL
   const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  let currentResults = []; // resultados para lista ordenada
+  let currentResults = [];
 
   // — Histórico —
   const historyListEl   = document.getElementById('history-list');
@@ -197,26 +197,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const li        = document.createElement('li');
       li.innerHTML    = `
         <div class="card">
-          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'} — <span style="color:${priceColor}">${price}</span></div>
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
           <div class="card-body">
             <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p style="font-size:0.95rem;">
-              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-            </p>
-          </div>
-        </div>
-      `;
-      modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
-
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-  // Busca Descrição Modal
-  document.getElementById('open-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.add('active'));
-  document.getElementById('close-desc-modal').addEventListener('click', () => document.getElementById('desc-modal').classList.remove('active'));
-});
+              <a href="${mapURL}" target="_blank"><
