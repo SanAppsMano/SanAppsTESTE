@@ -164,7 +164,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
-          <p style="font-size:0.95rem;"><a href="#" id="open-modal">Ver lista ordenada</a></p>
+          
         </div>
       `;
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
