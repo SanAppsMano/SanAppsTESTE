@@ -1,5 +1,7 @@
 /* app.js */
 // API_BASE é injetado no HTML (index.html)
+// Endpoint oficial SEFAZ/AL (precisa do AppToken)
+const SEFAZ_BASE = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public';
 
 window.addEventListener('DOMContentLoaded', () => {
   // — Elementos do DOM —
@@ -138,14 +140,29 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
-      const resp = await fetch(`${API_BASE}/search`, {
+      const resp = await fetch(`${SEFAZ_BASE}/produto/pesquisa`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
+        headers: {
+          'Content-Type': 'application/json',
+          'AppToken': 'SEU_TOKEN_AQUI'
+        },
+        body: JSON.stringify({
+          produto: { gtin: code },
+          estabelecimento: {
+            geolocalizacao: {
+              latitude:  lat,
+              longitude: lng,
+              raio:      Number(selectedRadius)
+            }
+          },
+          dias:               7,
+          pagina:             1,
+          registrosPorPagina: 100
+        })
       });
       const data = await resp.json();
       loading.classList.remove('active');
-      const lista = Array.isArray(data) ? data : data.dados || [];
+      const lista = Array.isArray(data.conteudo) ? data.conteudo : [];
       if (!lista.length) {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
@@ -155,8 +172,6 @@ window.addEventListener('DOMContentLoaded', () => {
       const productImg  = primeiro.codGetin
         ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
         : '';
-      const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
-      const priceColor  = '#28a745';
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
@@ -164,7 +179,6 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
-          
         </div>
       `;
       historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
@@ -248,10 +262,25 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
-      const resp = await fetch(`${API_BASE}/searchDescricao`, {
+      const resp = await fetch(`${SEFAZ_BASE}/produto/pesquisa`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
+        headers: {
+          'Content-Type': 'application/json',
+          'AppToken': 'SEU_TOKEN_AQUI'
+        },
+        body: JSON.stringify({
+          produto: { descricao: termo },
+          estabelecimento: {
+            geolocalizacao: {
+              latitude:  lat,
+              longitude: lng,
+              raio:      Number(selectedRadius)
+            }
+          },
+          dias:               7,
+          pagina:             1,
+          registrosPorPagina: 100
+        })
       });
       const json = await resp.json();
       loading.classList.remove('active');
@@ -259,9 +288,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry => {
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
+        li.innerHTML = `<strong>${entry.produto.gtin}</strong> – ${entry.produto.descricao}`;
         li.addEventListener('click', () => {
-          barcodeInput.value = entry.codGetin;
+          barcodeInput.value = entry.produto.gtin;
           descModal.classList.remove('active');
         });
         descList.appendChild(li);
