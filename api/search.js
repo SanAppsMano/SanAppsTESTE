@@ -22,18 +22,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Parâmetros inválidos' });
     }
 
-    const apiUrl = 'http://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras';
+    // Usando endpoint oficial SEFAZ/AL produto/pesquisa
+    const apiUrl = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+
     const apiResp = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'AppToken': process.env.APP_TOKEN
       },
-      body: JSON.stringify({ codigoDeBarras, dias, latitude, longitude, raio })
+      body: JSON.stringify({
+        produto: { gtin: codigoDeBarras },
+        estabelecimento: {
+          geolocalizacao: {
+            latitude,
+            longitude,
+            raio
+          }
+        },
+        dias,
+        pagina: 1,
+        registrosPorPagina: 100
+      })
     });
-    const data = await apiResp.json();
 
+    const data = await apiResp.json();
     return res.status(apiResp.ok ? 200 : apiResp.status).json(data);
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro ao buscar preços.' });
