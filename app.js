@@ -2,7 +2,7 @@
 // API_BASE é injetado no HTML (index.html)
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Elementos do DOM
+  // — Elementos do DOM —
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const resultContainer  = document.getElementById('result');
@@ -12,6 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Formatter moeda BRL
   const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
   let currentResults = [];
 
   // Histórico
@@ -27,6 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
       const li = document.createElement('li');
+      li.className = 'history-item';
       const btn = document.createElement('button');
       btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
@@ -50,6 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
       renderHistory();
     }
   });
+
   renderHistory();
 
   // Seleção de raio
@@ -62,29 +65,33 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Renderiza cards menor e maior preço
+  // Render de cards menor/maior
   function renderCards(dados) {
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    const menor = sorted[0];
-    const maior = sorted[sorted.length - 1];
-    [menor, maior].forEach((e, idx) => {
-      const label      = idx === 0 ? 'Menor preço' : 'Maior preço';
-      const icon       = idx === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+    [menor, maior].forEach((e, i) => {
+      const label      = i === 0 ? 'Menor preço' : 'Maior preço';
+      const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
       const price      = brlFormatter.format(e.valMinimoVendido);
-      const color      = idx === 0 ? '#28a745' : '#dc3545';
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
+      const priceColor = i === 0 ? '#28a745' : '#dc3545';
+      const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const card       = document.createElement('div');
+      card.className   = 'card';
+      card.innerHTML   = `
         <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
-          <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
+          <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-          <p style="font-size:0.95rem;"><a href="https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+          <p style="font-size:0.95rem;">
+            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+          </p>
         </div>
       `;
       resultContainer.appendChild(card);
@@ -95,11 +102,13 @@ window.addEventListener('DOMContentLoaded', () => {
   function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
+    const productName = item.name;
+    const productImg = item.image;
     summaryContainer.innerHTML = `
       <div class="product-header">
         <div class="product-image-wrapper">
-          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
-          <div class="product-name-overlay">${item.name}</div>
+          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+          <div class="product-name-overlay">${productName}</div>
         </div>
         <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
@@ -108,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // Busca principal por código
+  // Busca principal
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
@@ -141,16 +150,24 @@ window.addEventListener('DOMContentLoaded', () => {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
+      const primeiro    = lista[0];
+      const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
+      const productImg  = primeiro.codGetin
+        ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}`
+        : '';
+      const priceMain   = brlFormatter.format(primeiro.valMinimoVendido);
+      const priceColor  = '#28a745';
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
-            <img src="${lista[0].codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${lista[0].codGetin}` : 'https://via.placeholder.com/150'}" alt="Produto" />
+            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
+            <div class="product-name-overlay">${productName}</div>
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
           <p style="font-size:0.95rem;"><a href="#" id="open-modal">Ver lista ordenada</a></p>
         </div>
       `;
-      historyArr.unshift({ code, name: data.dscProduto || lista[0].dscProduto, image: lista[0].codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${lista[0].codGetin}` : '', dados: lista });
+      historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
       saveHistory(); renderHistory();
       currentResults = lista;
       renderCards(lista);
@@ -160,47 +177,62 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Lista ordenada modal
+  // Modal lista ordenada
   const openModalBtn  = document.getElementById('open-modal');
-  const modal         = document.getElementById('modal');
   const closeModalBtn = document.getElementById('close-modal');
+  const modal         = document.getElementById('modal');
   const modalList     = document.getElementById('modal-list');
+
   openModalBtn.addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     modalList.innerHTML = '';
-    const sorted = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    sorted.forEach((e, i) => {
-      const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const price = brlFormatter.format(e.valMinimoVendido);
-      const color = i === 0 ? '#28a745' : (i === sorted.length - 1 ? '#dc3545' : '#007bff');
-      const li = document.createElement('li');
-      li.innerHTML = `
+    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    sortedAll.forEach((e, i) => {
+      const when      = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const price     = brlFormatter.format(e.valMinimoVendido);
+      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length - 1 ? '#dc3545' : '#007bff');
+      const li        = document.createElement('li');
+      li.innerHTML    = `
         <div class="card">
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
           <div class="card-body">
-            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
+            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-            <p style="font-size:0.95rem;"><a href="https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
           </div>
         </div>
       `;
-      modalList.appendChild(li);  
+      modalList.appendChild(li);
     });
     modal.classList.add('active');
   });
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 
-  // Busca por descrição
-  const btnDesc        = document.getElementById('btn-search-descricao');
-  const descInput      = document.getElementById('descricao');
-  const descResult     = document.getElementById('result-descricao');
-  btnDesc.addEventListener('click', async () => {
+  // Modal descrição (Buscar por Descrição)
+  const openDescBtn = document.getElementById('open-desc-modal');
+  const descModal = document.getElementById('desc-modal');
+  const closeDescBtn = document.getElementById('close-desc-modal');
+  const btnDescSearch = document.getElementById('btn-desc-search');
+  const descInput = document.getElementById('desc-input');
+  const descList = document.getElementById('desc-list');
+
+  openDescBtn.addEventListener('click', () => {
+    descList.innerHTML = '';
+    descModal.classList.add('active');
+  });
+
+  closeDescBtn.addEventListener('click', () => {
+    descModal.classList.remove('active');
+  });
+
+  btnDescSearch.addEventListener('click', async () => {
     const termo = descInput.value.trim();
     if (!termo) return alert('Informe a descrição!');
-    descResult.innerHTML = '';
+    descList.innerHTML = '';
     loading.classList.add('active');
     let lat, lng;
     const locType = document.querySelector('input[name="loc"]:checked').value;
@@ -216,6 +248,27 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
-      const response = await fetch(`${API_BASE}/searchDescricao`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json'},
-        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selected
+      const resp = await fetch(`${API_BASE}/searchDescricao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 3 })
+      });
+      const json = await resp.json();
+      loading.classList.remove('active');
+      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
+      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+      itens.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
+        li.addEventListener('click', () => {
+          barcodeInput.value = entry.codGetin;
+          descModal.classList.remove('active');
+        });
+        descList.appendChild(li);
+      });
+    } catch (e) {
+      loading.classList.remove('active');
+      alert('Erro na busca por descrição: ' + e.message);
+    }
+  });
+});
