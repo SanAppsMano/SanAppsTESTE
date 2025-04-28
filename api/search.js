@@ -18,46 +18,24 @@ export default async function handler(req, res) {
     } = req.body;
 
     // Validação básica
-    if (
-      !codigoDeBarras ||
-      typeof latitude  !== 'number' ||
-      typeof longitude !== 'number'
-    ) {
+    if (!codigoDeBarras || typeof latitude !== 'number' || typeof longitude !== 'number') {
       return res.status(400).json({ error: 'Parâmetros inválidos' });
     }
 
-    // Novo endpoint que retorna endereço completo
-    const apiUrl = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
-    const payload = {
-      produto: { gtin: codigoDeBarras },
-      estabelecimento: {
-        geolocalizacao: { latitude, longitude, raio }
-      },
-      dias,
-      pagina: 1,
-      registrosPorPagina: 100
-    };
-
+    const apiUrl = 'http://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorCodigoDeBarras';
     const apiResp = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'AppToken': process.env.APP_TOKEN
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ codigoDeBarras, dias, latitude, longitude, raio })
     });
-
     const data = await apiResp.json();
 
-    // Retorna exatamente o JSON completo da resposta
-    return res
-      .status(apiResp.ok ? 200 : apiResp.status)
-      .json(data);
-
+    return res.status(apiResp.ok ? 200 : apiResp.status).json(data);
   } catch (err) {
-    console.error('Erro no handler:', err);
-    return res
-      .status(500)
-      .json({ error: 'Erro ao buscar preços.' });
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao buscar preços.' });
   }
 }
