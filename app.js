@@ -63,7 +63,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Render de cards menor/maior
+  // Renderiza cards menor e maior preço
   function renderCards(dados) {
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
@@ -93,17 +93,15 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Carrega do histórico
+  // Carrega item do histórico
   function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
-    const productName = item.name;
-    const productImg = item.image;
     summaryContainer.innerHTML = `
       <div class="product-header">
         <div class="product-image-wrapper">
-          <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-          <div class="product-name-overlay">${productName}</div>
+          <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" />
+          <div class="product-name-overlay">${item.name}</div>
         </div>
         <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
@@ -112,13 +110,14 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // Busca principal
+  // Busca principal por código de barras
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
     loading.classList.add('active');
     resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
+    // Obtém localização
     let lat, lng;
     const loc = document.querySelector('input[name="loc"]:checked').value;
     if (loc === 'gps') {
@@ -145,20 +144,17 @@ window.addEventListener('DOMContentLoaded', () => {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
-      const primeiro = lista[0];
-      const productName = data.dscProduto || primeiro.dscProduto || 'Produto não identificado';
-      const productImg = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
+      // Exibe sumário
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
-            <img src="${productImg || 'https://via.placeholder.com/150'}" alt="${productName}" />
-            <div class="product-name-overlay">${productName}</div>
+            <img src="${lista[0].codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${lista[0].codGetin}` : 'https://via.placeholder.com/150'}" alt="Produto" />
           </div>
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
           <p style="font-size:0.95rem;"><a href="#" id="open-modal">Ver lista ordenada</a></p>
         </div>
       `;
-      historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
+      historyArr.unshift({ code, name: data.dscProduto || lista[0].dscProduto, image: lista[0].codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${lista[0].codGetin}` : '', dados: lista });
       saveHistory(); renderHistory();
       currentResults = lista;
       renderCards(lista);
@@ -203,28 +199,27 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 
-  // Modal descrição (Buscar por Descrição)
-  const openDescBtn     = document.getElementById('open-desc-modal');
-  const descModal       = document.getElementById('desc-modal');
-  const closeDescBtn    = document.getElementById('close-desc-modal');
-  const btnDescSearch   = document.getElementById('btn-desc-search');
-  const descInput       = document.getElementById('desc-input');
-  const descList        = document.getElementById('desc-list');
+  // Modal descrição
+  const openDescBtn   = document.getElementById('open-desc-modal');
+  const descModal     = document.getElementById('desc-modal');
+  const closeDescBtn  = document.getElementById('close-desc-modal');
+  const btnDescSearch = document.getElementById('btn-desc-search');
+  const descInput     = document.getElementById('desc-input');
+  const descList      = document.getElementById('desc-list');
 
   openDescBtn.addEventListener('click', () => {
     descList.innerHTML = '';
     descModal.classList.add('active');
   });
 
-  closeDescBtn.addEventListener('click', () => {
-    descModal.classList.remove('active');
-  });
+  closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
 
   btnDescSearch.addEventListener('click', async () => {
     const termo = descInput.value.trim();
     if (!termo) return alert('Informe a descrição!');
     descList.innerHTML = '';
     loading.classList.add('active');
+    // localização
     let lat, lng;
     const locType = document.querySelector('input[name="loc"]:checked').value;
     if (locType === 'gps') {
@@ -249,36 +244,15 @@ window.addEventListener('DOMContentLoaded', () => {
       const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
       if (!itens.length) {
         descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
-        return;
-      }
-      itens.forEach(entry => {
-        const p = entry.produto || {};
-        const code = p.codGetin || p.gtin || '';
-        const descText = p.dscProduto || p.descricao || '';
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${code}</strong> – ${descText}`;
-        li.addEventListener('click', () => {
-          barcodeInput.value = code;
-          descModal.classList.remove('active');
-        });
-        descList.appendChild(li);
-      });
-    } catch (e) {
-      loading.classList.remove('active');
-      alert('Erro na busca por descrição: ' + e.message);
-    }
-  });
-      const json = await resp.json();
-      loading.classList.remove('active');
-      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
-      if (!itens.length) {
-        descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
       } else {
         itens.forEach(entry => {
+          const p = entry.produto || {};
+          const code = p.codGetin || p.gtin || '';
+          const descText = p.dscProduto || p.descricao || '';
           const li = document.createElement('li');
-          li.innerHTML = `<strong>${entry.codGetin}</strong> – ${entry.dscProduto}`;
+          li.innerHTML = `<strong>${code}</strong> – ${descText}`;
           li.addEventListener('click', () => {
-            barcodeInput.value = entry.codGetin;
+            barcodeInput.value = code;
             descModal.classList.remove('active');
           });
           descList.appendChild(li);
@@ -289,4 +263,5 @@ window.addEventListener('DOMContentLoaded', () => {
       alert('Erro na busca por descrição: ' + e.message);
     }
   });
+});
 });
