@@ -27,7 +27,6 @@ window.addEventListener('DOMContentLoaded', () => {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
       const li = document.createElement('li');
-      li.className = 'history-item';
       const btn = document.createElement('button');
       btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
@@ -67,33 +66,32 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderCards(dados) {
     resultContainer.innerHTML = '';
     const sorted = [...dados].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
-    [menor, maior].forEach((e, i) => {
-      const label      = i === 0 ? 'Menor preço' : 'Maior preço';
-      const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+    const menor = sorted[0];
+    const maior = sorted[sorted.length - 1];
+    [menor, maior].forEach((e, idx) => {
+      const label      = idx === 0 ? 'Menor preço' : 'Maior preço';
+      const icon       = idx === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
       const price      = brlFormatter.format(e.valMinimoVendido);
-      const priceColor = i === 0 ? '#28a745' : '#dc3545';
-      const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const card       = document.createElement('div');
-      card.className   = 'card';
-      card.innerHTML   = `
+      const color      = idx === 0 ? '#28a745' : '#dc3545';
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
         <div class="card-header">${label} — ${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
         <div class="card-body">
-          <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
+          <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-          <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+          <p style="font-size:0.95rem;"><a href="https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
         </div>
       `;
       resultContainer.appendChild(card);
     });
   }
 
-  // Carrega item do histórico
+  // Carrega do histórico
   function loadFromCache(item) {
     const dados = item.dados;
     barcodeInput.value = item.code;
@@ -110,14 +108,13 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // Busca principal por código de barras
+  // Busca principal por código
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
     loading.classList.add('active');
     resultContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
-    // Obtém localização
     let lat, lng;
     const loc = document.querySelector('input[name="loc"]:checked').value;
     if (loc === 'gps') {
@@ -144,7 +141,6 @@ window.addEventListener('DOMContentLoaded', () => {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
-      // Exibe sumário
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
@@ -164,26 +160,62 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Modal lista ordenada
+  // Lista ordenada modal
   const openModalBtn  = document.getElementById('open-modal');
-  const closeModalBtn = document.getElementById('close-modal');
   const modal         = document.getElementById('modal');
+  const closeModalBtn = document.getElementById('close-modal');
   const modalList     = document.getElementById('modal-list');
-
   openModalBtn.addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     modalList.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    sortedAll.forEach((e, i) => {
+    const sorted = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    sorted.forEach((e, i) => {
       const when = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
       const price = brlFormatter.format(e.valMinimoVendido);
-      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length - 1 ? '#dc3545' : '#007bff');
+      const color = i === 0 ? '#28a745' : (i === sorted.length - 1 ? '#dc3545' : '#007bff');
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
           <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
           <div class="card-body">
-            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
-            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${
+            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
+            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
+            <p style="font-size:0.95rem;"><a href="https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+          </div>
+        </div>
+      `;
+      modalList.appendChild(li);  
+    });
+    modal.classList.add('active');
+  });
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Busca por descrição
+  const btnDesc        = document.getElementById('btn-search-descricao');
+  const descInput      = document.getElementById('descricao');
+  const descResult     = document.getElementById('result-descricao');
+  btnDesc.addEventListener('click', async () => {
+    const termo = descInput.value.trim();
+    if (!termo) return alert('Informe a descrição!');
+    descResult.innerHTML = '';
+    loading.classList.add('active');
+    let lat, lng;
+    const locType = document.querySelector('input[name="loc"]:checked').value;
+    if (locType === 'gps') {
+      try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      } catch {
+        loading.classList.remove('active');
+        return alert('Não foi possível obter localização.');
+      }
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+    try {
+      const response = await fetch(`${API_BASE}/searchDescricao`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selected
