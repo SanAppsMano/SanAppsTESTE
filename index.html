@@ -88,6 +88,19 @@
       border-radius: 0.3rem;
       cursor: pointer;
     }
+    /* Days slider control */
+    .days-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .days-control label {
+      font-size: 0.9rem;
+    }
+    .days-control input[type="range"] {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -115,6 +128,10 @@
             <option value="-9.751419,-36.659076">Arapiraca</option>
             <option value="-9.407651,-36.300283">Palmeira dos Índios</option>
           </select>
+        </div>
+        <div class="days-control">
+          <label for="daysRange">Intervalo (dias): <span id="daysValue">3</span></label>
+          <input type="range" id="daysRange" min="1" max="7" value="3" step="1" />
         </div>
         <div class="radius-control">
           <button class="radius-btn" data-value="5">5 km</button>
