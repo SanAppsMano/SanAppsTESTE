@@ -1,5 +1,5 @@
 /* app.js */
-// front-end: chama o proxy interno em /api/search e /api/searchDescricao
+// front-end: chama o proxy interno em /api/search e /api/searchDescricao (Vercel Functions)
 
 window.addEventListener('DOMContentLoaded', () => {
   // — Elementos do DOM —
@@ -73,9 +73,7 @@ window.addEventListener('DOMContentLoaded', () => {
     [menor, maior].forEach((e, i) => {
       const label      = i === 0 ? 'Menor preço' : 'Maior preço';
       const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const when       = e.dthEmissaoUltimaVenda
-                          ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
-                          : '—';
+      const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
       const price      = brlFormatter.format(e.valMinimoVendido);
       const priceColor = i === 0 ? '#28a745' : '#dc3545';
       const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
@@ -119,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // Busca principal via proxy interno
+  // Busca principal via Vercel Functions proxy
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
@@ -163,41 +161,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Modal lista ordenada (permanece igual)
-  const openModalBtn  = document.getElementById('open-modal');
-  const closeModalBtn = document.getElementById('close-modal');
-  const modal         = document.getElementById('modal');
-  const modalList     = document.getElementById('modal-list');
-  openModalBtn.addEventListener('click', () => {
-    if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    modalList.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
-    sortedAll.forEach((e, i) => {
-      const when      = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
-      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
-      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
-      const price     = brlFormatter.format(e.valMinimoVendido);
-      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length - 1 ? '#dc3545' : '#007bff');
-      const li        = document.createElement('li');
-      li.innerHTML    = `
-        <div class="card">
-          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
-          <div class="card-body">
-            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
-            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
-            <p><strong>Quando:</strong> ${when}</p>
-            <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
-            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
-          </div>
-        </div>
-      `;
-      modalList.appendChild(li);
-    });
-    modal.classList.add('active');
-  });
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-  // Busca por descrição via proxy interno
+  // Busca por descrição via Vercel Functions proxy
   const openDescBtn   = document.getElementById('open-desc-modal');
   const descModal     = document.getElementById('desc-modal');
   const closeDescBtn  = document.getElementById('close-desc-modal');
