@@ -194,4 +194,47 @@ window.addEventListener('DOMContentLoaded', () => {
       loading.classList.remove('active'); alert('Erro na busca por descrição: ' + e.message);
     }
   });
+
+  // Modal para lista ordenada
+  const openModalBtn  = document.getElementById('open-modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  const modal         = document.getElementById('modal');
+  const modalList     = document.getElementById('modal-list');
+
+  openModalBtn.addEventListener('click', () => {
+    if (!currentResults.length) return alert('Faça uma busca primeiro.');
+    modalList.innerHTML = '';
+    const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    sortedAll.forEach(e => {
+      const when      = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price     = brlFormatter.format(e.produto.venda.valorVenda);
+      const bairro    = e.estabelecimento.endereco.bairro || '—';
+      const municipio = e.estabelecimento.endereco.municipio || '—';
+      const desc      = e.produto.descricaoSefaz || e.produto.descricao;
+      const lat       = e.estabelecimento.endereco.latitude;
+      const lng       = e.estabelecimento.endereco.longitude;
+      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
+          <div class="card-body">
+            <p><strong>Preço:</strong> ${price}</p>
+            <p><strong>Bairro/Município:</strong> ${bairro} / ${municipio}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p><strong>Descrição:</strong> ${desc}</p>
+            <p style="font-size:0.95rem;">
+              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+            </p>
+          </div>
+        </div>
+      `;
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 });
