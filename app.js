@@ -1,64 +1,55 @@
 /* app.js */
-// front-end: chama o proxy interno em Vercel Functions
+// front-end: proxy interno Vercel Functions
 const API_PROXY = 'https://san-apps-teste.vercel.app';
-// Base para imagens de produto
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Cria overlay de lightbox para imagens
-  (function createLightbox() {
-    if (document.getElementById('lightbox')) return;
+  // Cria lightbox
+  (function() {
     const lb = document.createElement('div');
     lb.id = 'lightbox';
     Object.assign(lb.style, {
-      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.8)', display: 'none', alignItems: 'center', justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out'
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      background: 'rgba(0,0,0,0.8)', display: 'none', alignItems: 'center', justifyContent: 'center', zIndex: 10000, cursor: 'zoom-out'
     });
     const img = document.createElement('img');
     img.id = 'lightbox-img';
     Object.assign(img.style, { maxWidth: '90%', maxHeight: '90%', boxShadow: '0 0 8px #fff' });
     lb.appendChild(img);
-    lb.addEventListener('click', () => { lb.style.display = 'none'; });
+    lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
   })();
 
-  // — Elementos do DOM —
-  const btnSearch        = document.getElementById('btn-search');
-  const barcodeInput     = document.getElementById('barcode');
-  const resultContainer  = document.getElementById('result');
+  // DOM
+  const btnSearch = document.getElementById('btn-search');
+  const barcodeInput = document.getElementById('barcode');
+  const resultContainer = document.getElementById('result');
   const summaryContainer = document.getElementById('summary');
-  const loading          = document.getElementById('loading');
-  const radiusButtons    = document.querySelectorAll('.radius-btn');
-
-  // Formatter moeda BRL
-  const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  let currentResults = [];
-
-  // Histórico
-  const historyListEl   = document.getElementById('history-list');
+  const loading = document.getElementById('loading');
+  const radiusButtons = document.querySelectorAll('.radius-btn');
+  const historyListEl = document.getElementById('history-list');
   const clearHistoryBtn = document.getElementById('clear-history');
-  let historyArr        = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let currentResults = [];
+  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
   }
-
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li = document.createElement('li');
-      li.className = 'history-item';
-      const btn = document.createElement('button');
-      btn.title = item.name;
+      const li = document.createElement('li'); li.className = 'history-item';
+      const btn = document.createElement('button'); btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
         const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
       } else btn.textContent = item.name;
-      li.appendChild(btn);
-      historyListEl.appendChild(li);
+      li.appendChild(btn); historyListEl.appendChild(li);
     });
   }
-
   clearHistoryBtn.addEventListener('click', () => {
     if (confirm('Deseja limpar o histórico de buscas?')) {
       historyArr = []; saveHistory(); renderHistory();
@@ -66,186 +57,116 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   renderHistory();
 
-  // Seleção de raio
-  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
   radiusButtons.forEach(btn => btn.addEventListener('click', () => {
     radiusButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); selectedRadius = btn.dataset.value;
   }));
 
-  // Render de cards menor/maior
-  function renderCards(itens) {
+  function attachLightbox(imgEl) {
+    imgEl.style.cursor = 'zoom-in';
+    imgEl.addEventListener('click', () => {
+      const lb = document.getElementById('lightbox');
+      lb.querySelector('img').src = imgEl.src;
+      lb.style.display = 'flex';
+    });
+    // redução de fonte
+    const overlay = imgEl.parentElement.querySelector('.product-name-overlay');
+    if (overlay) overlay.style.fontSize = '0.6rem';
+  }
+
+  function renderSummary(list) {
+    const first = list[0];
+    const name = first.produto.descricaoSefaz || first.produto.descricao;
+    const imgUrl = first.produto.gtin ? `${COSMOS_BASE}/${first.produto.gtin}` : '';
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${imgUrl}" alt="${name}" />
+          <div class="product-name-overlay">${name}</div>
+        </div>
+        <p><strong>${list.length}</strong> estabelecimento(s) encontrado(s).</p>
+      </div>`;
+    const imgEl = summaryContainer.querySelector('img');
+    if (imgEl) attachLightbox(imgEl);
+  }
+
+  function renderCards(list) {
     resultContainer.innerHTML = '';
-    // ordenar pelo preço de venda
-    const sorted = [...itens].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
-    [menor, maior].forEach((e, i) => {
-      const label = i === 0 ? 'Menor preço' : 'Maior preço';
-      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const price = brlFormatter.format(e.produto.venda.valorVenda);
-      const color = i === 0 ? '#28a745' : '#dc3545';
-      const lat   = e.estabelecimento.endereco.latitude;
-      const lng   = e.estabelecimento.endereco.longitude;
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-      const bairro   = e.estabelecimento.endereco.bairro || '—';
-      const municipio = e.estabelecimento.endereco.municipio || '—';
-      const desc     = e.produto.descricaoSefaz || e.produto.descricao;
-      const card = document.createElement('div'); card.className = 'card';
+    const sorted = [...list].sort((a,b)=>a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    const menor = sorted[0], maior = sorted[sorted.length-1];
+    [menor, maior].forEach((e,i) => {
+      const label = i===0?'Menor preço':'Maior preço';
+      const icon = i===0?'public/images/ai-sim.png':'public/images/eita.png';
+      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const color = i===0?'#28a745':'#dc3545';
+      const end = e.estabelecimento.endereco;
+      const desc = e.produto.descricaoSefaz || e.produto.descricao;
+      const mapURL = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const card = document.createElement('div'); card.className='card';
       card.innerHTML = `
-        <div class="card-header">${label} — ${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
+        <div class="card-header">${label} — ${e.estabelecimento.nomeFantasia||e.estabelecimento.razaoSocial}</div>
         <div class="card-body">
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
-          <p><strong>Bairro/Município:</strong> ${bairro} / ${municipio}</p>
+          <p><strong>Bairro/Município:</strong> ${end.bairro||'—'} / ${end.municipio||'—'}</p>
           <p><strong>Quando:</strong> ${when}</p>
           <p><strong>Descrição:</strong> ${desc}</p>
-          <p style="font-size:0.95rem;">
-            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-          </p>
-        </div>
-      `;
+          <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+        </div>`;
       resultContainer.appendChild(card);
     });
   }
 
-  // Carrega do histórico
-  function loadFromCache(item) {
-    const dados = item.dados;
-    barcodeInput.value = item.code;
-    const primeiro = dados[0];
-    const prodName = primeiro.produto.descricaoSefaz || primeiro.produto.descricao;
-    const imgUrl = primeiro.produto.gtin
-      ? `${COSMOS_BASE}/${primeiro.produto.gtin}`
-      : 'https://via.placeholder.com/150';
-
-    // Render summary
-    summaryContainer.innerHTML = `
-      <div class="product-header">
-        <div class="product-image-wrapper">
-          <img src="${imgUrl}" alt="${prodName}" />
-          <div class="product-name-overlay">${prodName}</div>
-        </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
-      </div>
-    `;
-              // Attach lightbox to summary image
-      const summaryImgNew = summaryContainer.querySelector('.product-image-wrapper img');
-      if (summaryImgNew) {
-        summaryImgNew.style.cursor = 'zoom-in';
-        // Reduzir fonte do overlay abaixo da imagem
-        const overlayNew = summaryContainer.querySelector('.product-name-overlay');
-        if (overlayNew) overlayNew.style.fontSize = '0.75rem';
-        summaryImgNew.addEventListener('click', () => {
-          const lb = document.getElementById('lightbox');
-          lb.querySelector('img').src = summaryImgNew.src;
-          lb.style.display = 'flex';
-        });
-      }
-
-      historyArr.unshift({ code, name: prodName, image: imgUrl, dados: lista }); saveHistory(); renderHistory(); currentResults = lista; renderCards(lista);
-      renderCards(lista);
-    } catch (e) {
-      loading.classList.remove('active'); alert('Erro na busca.');
-    }
-  });
-
-  // Busca por descrição via Vercel Functions proxy
-  const openDescBtn    = document.getElementById('open-desc-modal');
-  const descModal      = document.getElementById('desc-modal');
-  const closeDescBtn   = document.getElementById('close-desc-modal');
-  const btnDescSearch  = document.getElementById('btn-desc-search');
-  const descInput      = document.getElementById('desc-input');
-  const descList       = document.getElementById('desc-list');
-  openDescBtn.addEventListener('click', () => { descList.innerHTML = ''; descModal.classList.add('active'); });
-  closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
-  btnDescSearch.addEventListener('click', async () => {
-    const termo = descInput.value.trim(); if (!termo) return alert('Informe a descrição!');
-    descList.innerHTML = ''; loading.classList.add('active');
-    let lat, lng; const locType = document.querySelector('input[name="loc"]:checked').value;
-    if (locType === 'gps') {
-      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; }
+  async function searchByCode() {
+    const code = barcodeInput.value.trim();
+    if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active'); resultContainer.innerHTML=''; summaryContainer.innerHTML='';
+    let lat, lng;
+    if (document.querySelector('input[name="loc"]:checked').value==='gps') {
+      try { const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej)); lat=pos.coords.latitude; lng=pos.coords.longitude; }
       catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
-    } else { [lat, lng] = document.getElementById('city').value.split(',').map(Number); }
-    try {
-      const resp = await fetch(`${API_PROXY}/api/searchDescricao`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 7 })
-      });
-      const json = await resp.json(); loading.classList.remove('active');
-      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
-      if (!itens.length) { return descList.innerHTML = '<li>Nenhum produto encontrado.</li>'; }
-      itens.forEach(entry => {
-        const li = document.createElement('li');
-        const code = entry.produto.gtin;
-        const name = entry.produto.descricaoSefaz || entry.produto.descricao;
-        li.innerHTML = `<strong>${code}</strong> – ${name}`;
-        li.addEventListener('click', () => {
-          barcodeInput.value = code;
-          descModal.classList.remove('active');
-        });
-        descList.appendChild(li);
-      });
-    } catch (e) {
-      loading.classList.remove('active'); alert('Erro na busca por descrição: ' + e.message);
+    } else {
+      [lat,lng]=document.getElementById('city').value.split(',').map(Number);
     }
-  });
+    try {
+      const resp = await fetch(`${API_PROXY}/api/search`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias:7 })
+      });
+      const data = await resp.json(); loading.classList.remove('active');
+      const list = Array.isArray(data.conteudo)?data.conteudo:[];
+      if (!list.length) return summaryContainer.innerHTML=`<p>Nenhum estabelecimento encontrado.</p>`;
+      searchByCode.results = list;
+      historyArr.unshift({ code, name: data.dscProduto||list[0].produto.descricao, image:`${COSMOS_BASE}/${list[0].produto.gtin}`, dados:list });
+      saveHistory(); renderHistory();
+      renderSummary(list); currentResults=list; renderCards(list);
+    } catch(e) { loading.classList.remove('active'); alert('Erro na busca.'); }
+  }
 
-    // Modal para lista ordenada
-  const openModalBtn  = document.getElementById('open-modal');
-  const closeModalBtn = document.getElementById('close-modal');
-  const modal         = document.getElementById('modal');
-  const modalList     = document.getElementById('modal-list');
+  btnSearch.addEventListener('click', searchByCode);
 
-  openModalBtn.addEventListener('click', () => {
+  // Modal lista ordenada
+  document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    modalList.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    sortedAll.forEach((e, i) => {
-      const price      = brlFormatter.format(e.produto.venda.valorVenda);
-      const priceColor = i === 0
-        ? '#28a745'           // menor - verde
-        : i === sortedAll.length - 1
-          ? '#dc3545'         // maior - vermelho
-          : '#007bff';        // intermediário - azul
-      const when        = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const bairro      = e.estabelecimento.endereco.bairro || '—';
-      const municipio   = e.estabelecimento.endereco.municipio || '—';
-      const desc        = e.produto.descricaoSefaz || e.produto.descricao;
-      const lat         = e.estabelecimento.endereco.latitude;
-      const lng         = e.estabelecimento.endereco.longitude;
-      const mapURL      = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const dirURL      = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="card">
-          <div class="card-header">${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
-          <div class="card-body">
-            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
-            <p><strong>Bairro/Município:</strong> ${bairro} / ${municipio}</p>
-            <p><strong>Quando:</strong> ${when}</p>
-            <p><strong>Descrição:</strong> ${desc}</p>
-            <p style="font-size:0.95rem;">
-              <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-              <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-            </p>
-          </div>
-        </div>
-      `;
-      modalList.appendChild(li);
+    const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list');
+    listEl.innerHTML = '';
+    const sortedAll = [...currentResults].sort((a,b)=>a.produto.venda.valorVenda-b.produto.venda.valorVenda);
+    sortedAll.forEach((e,i)=>{
+      const price = brl.format(e.produto.venda.valorVenda);
+      const color = i===0?'#28a745': i===sortedAll.length-1?'#dc3545':'#007bff';
+      const when = e.produto.venda.dataVenda?new Date(e.produto.venda.dataVenda).toLocaleString():'—';
+      const end = e.estabelecimento.endereco;
+      const desc=e.produto.descricaoSefaz||e.produto.descricao;
+      const mapURL=`https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirURL=`https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const li=document.createElement('li');
+      li.innerHTML=`<div class="card"><div class="card-header">${e.estabelecimento.nomeFantasia||e.estabelecimento.razaoSocial}</div><div class="card-body"><p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p><p><strong>Bairro/Município:</strong> ${end.bairro||'—'} / ${end.municipio||'—'}</p><p><strong>Quando:</strong> ${when}</p><p><strong>Descrição:</strong> ${desc}</p><p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p></div></div>`;
+      listEl.appendChild(li);
     });
     modal.classList.add('active');
   });
-
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-  // Fecha modal ao clicar fora do conteúdo
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('active');
-    }
-  });
+  document.getElementById('close-modal').addEventListener('click', ()=>document.getElementById('modal').classList.remove('active'));
+  document.getElementById('modal').addEventListener('click',e=>{ if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('active'); });
 });
