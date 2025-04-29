@@ -243,4 +243,11 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Fecha modal ao clicar fora do conteúdo
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
 });
