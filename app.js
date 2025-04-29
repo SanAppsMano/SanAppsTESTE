@@ -135,6 +135,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const summaryImg = summaryContainer.querySelector('.product-image-wrapper img');
     if (summaryImg) {
       summaryImg.style.cursor = 'zoom-in';
+      summaryImg.style.fontSize = '0.85rem';
       summaryImg.addEventListener('click', () => {
         const lb = document.getElementById('lightbox');
         lb.querySelector('img').src = summaryImg.src;
@@ -188,6 +189,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const summaryImgNew = summaryContainer.querySelector('.product-image-wrapper img');
       if (summaryImgNew) {
         summaryImgNew.style.cursor = 'zoom-in';
+        summaryImgNew.style.fontSize = '0.85rem';
         summaryImgNew.addEventListener('click', () => {
           const lb = document.getElementById('lightbox');
           lb.querySelector('img').src = summaryImgNew.src;
