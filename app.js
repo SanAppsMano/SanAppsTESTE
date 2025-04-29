@@ -131,79 +131,21 @@ window.addEventListener('DOMContentLoaded', () => {
         <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
       </div>
     `;
-    // Attach lightbox to summary image
-    const summaryImg = summaryContainer.querySelector('.product-image-wrapper img');
-    if (summaryImg) {
-      summaryImg.style.cursor = 'zoom-in';
-      // Reduzir fonte do overlay abaixo da imagem
-      const overlay = summaryContainer.querySelector('.product-name-overlay');
-      if (overlay) overlay.style.fontSize = '0.75rem';
-      summaryImg.addEventListener('click', () => {('click', () => {
-        const lb = document.getElementById('lightbox');
-        lb.querySelector('img').src = summaryImg.src;
-        lb.style.display = 'flex';
-      });
-    }
-    currentResults = dados;
-    renderCards(dados);
-  }
-
-  // Busca principal via Vercel Functions proxy
-  btnSearch.addEventListener('click', async () => {
-    const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
-    loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
-    let lat, lng; const loc = document.querySelector('input[name="loc"]:checked').value;
-    if (loc === 'gps') {
-      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; }
-      catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
-    }
-    try {
-            const resp = await fetch(`${API_PROXY}/api/search`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 7 })
-      });
-      const data = await resp.json();
-      loading.classList.remove('active');
-      const lista = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!lista.length) {
-        summaryContainer.innerHTML = '<p>Nenhum estabelecimento encontrado.</p>';
-        return;
-      }
-      const primeiro = lista[0];
-      const prodName = primeiro.produto.descricaoSefaz || primeiro.produto.descricao;
-      const imgUrl = primeiro.produto.gtin
-        ? `${COSMOS_BASE}/${primeiro.produto.gtin}`
-        : 'https://via.placeholder.com/150';
-
-      // Render summary
-      summaryContainer.innerHTML = `
-        <div class="product-header">
-          <div class="product-image-wrapper">
-            <img src="${imgUrl}" alt="${prodName}" />
-            <div class="product-name-overlay">${prodName}</div>
-          </div>
-          <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
-        </div>
-      `;
-      // Attach lightbox to summary image
+              // Attach lightbox to summary image
       const summaryImgNew = summaryContainer.querySelector('.product-image-wrapper img');
       if (summaryImgNew) {
         summaryImgNew.style.cursor = 'zoom-in';
         // Reduzir fonte do overlay abaixo da imagem
         const overlayNew = summaryContainer.querySelector('.product-name-overlay');
         if (overlayNew) overlayNew.style.fontSize = '0.75rem';
-        summaryImgNew.addEventListener('click', () => {('click', () => {
+        summaryImgNew.addEventListener('click', () => {
           const lb = document.getElementById('lightbox');
           lb.querySelector('img').src = summaryImgNew.src;
           lb.style.display = 'flex';
         });
       }
 
-      historyArr.unshift({ code, name: prodName, image: imgUrl, dados: lista });
-      saveHistory(); renderHistory();
-      currentResults = lista;
+      historyArr.unshift({ code, name: prodName, image: imgUrl, dados: lista }); saveHistory(); renderHistory(); currentResults = lista; renderCards(lista);
       renderCards(lista);
     } catch (e) {
       loading.classList.remove('active'); alert('Erro na busca.');
