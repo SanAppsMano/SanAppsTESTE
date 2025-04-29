@@ -195,7 +195,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Modal para lista ordenada
+    // Modal para lista ordenada
   const openModalBtn  = document.getElementById('open-modal');
   const closeModalBtn = document.getElementById('close-modal');
   const modal         = document.getElementById('modal');
@@ -205,22 +205,28 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     modalList.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    sortedAll.forEach(e => {
-      const when      = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const price     = brlFormatter.format(e.produto.venda.valorVenda);
-      const bairro    = e.estabelecimento.endereco.bairro || '—';
-      const municipio = e.estabelecimento.endereco.municipio || '—';
-      const desc      = e.produto.descricaoSefaz || e.produto.descricao;
-      const lat       = e.estabelecimento.endereco.latitude;
-      const lng       = e.estabelecimento.endereco.longitude;
-      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    sortedAll.forEach((e, i) => {
+      const price      = brlFormatter.format(e.produto.venda.valorVenda);
+      const priceColor = i === 0
+        ? '#28a745'           // menor - verde
+        : i === sortedAll.length - 1
+          ? '#dc3545'         // maior - vermelho
+          : '#007bff';        // intermediário - azul
+      const when        = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const bairro      = e.estabelecimento.endereco.bairro || '—';
+      const municipio   = e.estabelecimento.endereco.municipio || '—';
+      const desc        = e.produto.descricaoSefaz || e.produto.descricao;
+      const lat         = e.estabelecimento.endereco.latitude;
+      const lng         = e.estabelecimento.endereco.longitude;
+      const mapURL      = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirURL      = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
           <div class="card-header">${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
           <div class="card-body">
-            <p><strong>Preço:</strong> ${price}</p>
+            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
             <p><strong>Bairro/Município:</strong> ${bairro} / ${municipio}</p>
             <p><strong>Quando:</strong> ${when}</p>
             <p><strong>Descrição:</strong> ${desc}</p>
