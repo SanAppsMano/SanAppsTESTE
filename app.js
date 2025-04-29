@@ -113,14 +113,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Carrega do histórico
   function loadFromCache(item) {
-    const dados = item.dados; barcodeInput.value = item.code;
+    const dados = item.dados;
+    barcodeInput.value = item.code;
     const primeiro = dados[0];
     const prodName = primeiro.produto.descricaoSefaz || primeiro.produto.descricao;
-    const imgUrl   = primeiro.produto.gtin ?
-                     `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.produto.gtin}` :
-                     'https://via.placeholder.com/150';
-    summaryContainer.innerHTML = `$1`;
-    // lightbox click on summary image
+    const imgUrl = primeiro.produto.gtin
+      ? `${COSMOS_BASE}/${primeiro.produto.gtin}`
+      : 'https://via.placeholder.com/150';
+
+    // Render summary
+    summaryContainer.innerHTML = `
+      <div class="product-header">
+        <div class="product-image-wrapper">
+          <img src="${imgUrl}" alt="${prodName}" />
+          <div class="product-name-overlay">${prodName}</div>
+        </div>
+        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
+      </div>
+    `;
+    // Attach lightbox to summary image
     const summaryImg = summaryContainer.querySelector('.product-image-wrapper img');
     if (summaryImg) {
       summaryImg.style.cursor = 'zoom-in';
@@ -132,6 +143,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     currentResults = dados;
     renderCards(dados);
+  }
   }
 
   // Busca principal via Vercel Functions proxy
@@ -146,18 +158,24 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
-      const resp = await fetch(`${API_PROXY}/api/search`, {
+            const resp = await fetch(`${API_PROXY}/api/search`, {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 7 })
       });
-      const data = await resp.json(); loading.classList.remove('active');
+      const data = await resp.json();
+      loading.classList.remove('active');
       const lista = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!lista.length) { summaryContainer.innerHTML = '<p>Nenhum estabelecimento encontrado.</p>'; return; }
+      if (!lista.length) {
+        summaryContainer.innerHTML = '<p>Nenhum estabelecimento encontrado.</p>';
+        return;
+      }
       const primeiro = lista[0];
       const prodName = primeiro.produto.descricaoSefaz || primeiro.produto.descricao;
-      const imgUrl   = primeiro.produto.gtin ?
-                       `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.produto.gtin}` :
-                       'https://via.placeholder.com/150';
+      const imgUrl = primeiro.produto.gtin
+        ? `${COSMOS_BASE}/${primeiro.produto.gtin}`
+        : 'https://via.placeholder.com/150';
+
+      // Render summary
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
@@ -167,7 +185,21 @@ window.addEventListener('DOMContentLoaded', () => {
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
         </div>
       `;
-      historyArr.unshift({ code, name: prodName, image: imgUrl, dados: lista }); saveHistory(); renderHistory(); currentResults = lista; renderCards(lista);
+      // Attach lightbox to summary image
+      const summaryImgNew = summaryContainer.querySelector('.product-image-wrapper img');
+      if (summaryImgNew) {
+        summaryImgNew.style.cursor = 'zoom-in';
+        summaryImgNew.addEventListener('click', () => {
+          const lb = document.getElementById('lightbox');
+          lb.querySelector('img').src = summaryImgNew.src;
+          lb.style.display = 'flex';
+        });
+      }
+
+      historyArr.unshift({ code, name: prodName, image: imgUrl, dados: lista });
+      saveHistory(); renderHistory();
+      currentResults = lista;
+      renderCards(lista);
     } catch (e) {
       loading.classList.remove('active'); alert('Erro na busca.');
     }
