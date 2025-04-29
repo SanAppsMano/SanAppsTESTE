@@ -144,7 +144,6 @@ window.addEventListener('DOMContentLoaded', () => {
     currentResults = dados;
     renderCards(dados);
   }
-  }
 
   // Busca principal via Vercel Functions proxy
   btnSearch.addEventListener('click', async () => {
