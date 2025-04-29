@@ -2,7 +2,7 @@
 // front-end: chama o proxy interno em /api/search e /api/searchDescricao (Vercel Functions)
 // Usamos window.location.origin para apontar ao deploy Vercel correto
 
-const API_PROXY = window.location.origin;
+
 
 window.addEventListener('DOMContentLoaded', () => {
   // — Elementos do DOM —
@@ -108,7 +108,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let lat,lng; const loc=document.querySelector('input[name="loc"]:checked').value;
     if(loc==='gps'){try{const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));lat=pos.coords.latitude;lng=pos.coords.longitude;}catch{loading.classList.remove('active');return alert('Não foi possível obter localização.');}}else{[lat,lng]=document.getElementById('city').value.split(',').map(Number);}    
     try{
-      const resp=await fetch(`${API_PROXY}/api/search`,{
+      const resp=await fetch('/api/search',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({codigoDeBarras:code,latitude:lat,longitude:lng,raio:Number(selectedRadius),dias:7})
       });
@@ -144,7 +144,7 @@ window.addEventListener('DOMContentLoaded', () => {
     descList.innerHTML='';loading.classList.add('active');
     let lat,lng;const locType=document.querySelector('input[name="loc"]:checked').value;
     if(locType==='gps'){try{const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));lat=pos.coords.latitude;lng=pos.coords.longitude;}catch{loading.classList.remove('active');return alert('Não foi possível obter localização.');}}else{[lat,lng]=document.getElementById('city').value.split(',').map(Number);}    
-    try{const resp=await fetch(`${API_PROXY}/api/searchDescricao`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({descricao:termo,latitude:lat,longitude:lng,raio:Number(selectedRadius),dias:7})});
+    try{const resp=await fetch('/api/searchDescricao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({descricao:termo,latitude:lat,longitude:lng,raio:Number(selectedRadius),dias:7})});
       const json=await resp.json();loading.classList.remove('active'); const itens=Array.isArray(json.conteudo)?json.conteudo:[];if(!itens.length)return descList.innerHTML='<li>Nenhum produto encontrado.</li>';
       itens.forEach(entry=>{ const li=document.createElement('li');li.innerHTML=`<strong>${entry.produto.gtin}</strong> – ${entry.produto.descricao}`;li.addEventListener('click',()=>{barcodeInput.value=entry.produto.gtin;descModal.classList.remove('active');});descList.appendChild(li);});
     }catch(e){loading.classList.remove('active');alert('Erro na busca por descrição: '+e.message);}  
