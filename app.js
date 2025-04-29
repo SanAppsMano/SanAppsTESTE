@@ -5,6 +5,23 @@ const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Cria overlay de lightbox para imagens
+  (function createLightbox() {
+    if (document.getElementById('lightbox')) return;
+    const lb = document.createElement('div');
+    lb.id = 'lightbox';
+    Object.assign(lb.style, {
+      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+      background: 'rgba(0,0,0,0.8)', display: 'none', alignItems: 'center', justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out'
+    });
+    const img = document.createElement('img');
+    img.id = 'lightbox-img';
+    Object.assign(img.style, { maxWidth: '90%', maxHeight: '90%', boxShadow: '0 0 8px #fff' });
+    lb.appendChild(img);
+    lb.addEventListener('click', () => { lb.style.display = 'none'; });
+    document.body.appendChild(lb);
+  })();
+
   // — Elementos do DOM —
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
@@ -102,15 +119,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const imgUrl   = primeiro.produto.gtin ?
                      `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.produto.gtin}` :
                      'https://via.placeholder.com/150';
-    summaryContainer.innerHTML = `
-      <div class="product-header">
-        <div class="product-image-wrapper">
-          <img src="${imgUrl}" alt="${prodName}" />
-          <div class="product-name-overlay">${prodName}</div>
-        </div>
-        <p><strong>${dados.length}</strong> estabelecimento(s) no histórico.</p>
-      </div>
-    `;
+    summaryContainer.innerHTML = `$1`;
+    // lightbox click on summary image
+    const summaryImg = summaryContainer.querySelector('.product-image-wrapper img');
+    if (summaryImg) {
+      summaryImg.style.cursor = 'zoom-in';
+      summaryImg.addEventListener('click', () => {
+        const lb = document.getElementById('lightbox');
+        lb.querySelector('img').src = summaryImg.src;
+        lb.style.display = 'flex';
+      });
+    }
     currentResults = dados;
     renderCards(dados);
   }
