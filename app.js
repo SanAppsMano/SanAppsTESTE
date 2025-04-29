@@ -1,7 +1,5 @@
 /* app.js */
-// API_BASE é injetado no HTML (index.html)
-// Endpoint oficial SEFAZ/AL (precisa do AppToken)
-const SEFAZ_BASE = 'http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public';
+// front-end: chama o proxy interno em /api/search e /api/searchDescricao
 
 window.addEventListener('DOMContentLoaded', () => {
   // — Elementos do DOM —
@@ -75,7 +73,9 @@ window.addEventListener('DOMContentLoaded', () => {
     [menor, maior].forEach((e, i) => {
       const label      = i === 0 ? 'Menor preço' : 'Maior preço';
       const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
-      const when       = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const when       = e.dthEmissaoUltimaVenda
+                          ? new Date(e.dthEmissaoUltimaVenda).toLocaleString()
+                          : '—';
       const price      = brlFormatter.format(e.valMinimoVendido);
       const priceColor = i === 0 ? '#28a745' : '#dc3545';
       const mapURL     = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
@@ -105,7 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const dados = item.dados;
     barcodeInput.value = item.code;
     const productName = item.name;
-    const productImg = item.image;
+    const productImg  = item.image;
     summaryContainer.innerHTML = `
       <div class="product-header">
         <div class="product-image-wrapper">
@@ -119,50 +119,34 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(dados);
   }
 
-  // Busca principal
+  // Busca principal via proxy interno
   btnSearch.addEventListener('click', async () => {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
     loading.classList.add('active');
     resultContainer.innerHTML = '';
-    summaryContainer.innerHTML = '';      
+    summaryContainer.innerHTML = '';
+
     let lat, lng;
     const loc = document.querySelector('input[name="loc"]:checked').value;
     if (loc === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active');
-        return alert('Não foi possível obter localização.');
-      }
+      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; } catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
     } else {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
-      const resp = await fetch(`${SEFAZ_BASE}/produto/pesquisa`, {
+      const resp = await fetch('/api/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'AppToken': process.env.APP_TOKEN },
-        body: JSON.stringify({
-          produto: { gtin: code },
-          estabelecimento: {
-            geolocalizacao: { latitude: lat, longitude: lng, raio: Number(selectedRadius) }
-          },
-          dias: 7,
-          pagina: 1,
-          registrosPorPagina: 100
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 7 })
       });
-      const data = await resp.json();
+      const data  = await resp.json();
       loading.classList.remove('active');
       const lista = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!lista.length) {
-        summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
-        return;
-      }
-      const primeiro = lista[0];
+      if (!lista.length) { summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`; return; }
+      const primeiro    = lista[0];
       const productName = primeiro.dscProduto || 'Produto não identificado';
-      const productImg = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
+      const productImg  = primeiro.codGetin ? `https://cdn-cosmos.bluesoft.com.br/products/${primeiro.codGetin}` : '';
       summaryContainer.innerHTML = `
         <div class="product-header">
           <div class="product-image-wrapper">
@@ -172,15 +156,81 @@ window.addEventListener('DOMContentLoaded', () => {
           <p><strong>${lista.length}</strong> estabelecimento(s) encontrado(s).</p>
         </div>
       `;
-      historyArr.unshift({ code, name: productName, image: productImg, dados: lista });
-      saveHistory(); renderHistory();
-      currentResults = lista;
-      renderCards(lista);
+      historyArr.unshift({ code, name: productName, image: productImg, dados: lista }); saveHistory(); renderHistory(); currentResults = lista; renderCards(lista);
     } catch (e) {
       loading.classList.remove('active');
       alert('Erro na busca.');
     }
   });
 
-  // Resto do código permanece inalterado...
+  // Modal lista ordenada (permanece igual)
+  const openModalBtn  = document.getElementById('open-modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  const modal         = document.getElementById('modal');
+  const modalList     = document.getElementById('modal-list');
+  openModalBtn.addEventListener('click', () => {
+    if (!currentResults.length) return alert('Faça uma busca primeiro.');
+    modalList.innerHTML = '';
+    const sortedAll = [...currentResults].sort((a, b) => a.valMinimoVendido - b.valMinimoVendido);
+    sortedAll.forEach((e, i) => {
+      const when      = e.dthEmissaoUltimaVenda ? new Date(e.dthEmissaoUltimaVenda).toLocaleString() : '—';
+      const mapURL    = `https://www.google.com/maps/search/?api=1&query=${e.numLatitude},${e.numLongitude}`;
+      const dirURL    = `https://www.google.com/maps/dir/?api=1&destination=${e.numLatitude},${e.numLongitude}`;
+      const price     = brlFormatter.format(e.valMinimoVendido);
+      const priceColor = i === 0 ? '#28a745' : (i === sortedAll.length - 1 ? '#dc3545' : '#007bff');
+      const li        = document.createElement('li');
+      li.innerHTML    = `
+        <div class="card">
+          <div class="card-header">${e.nomFantasia || e.nomRazaoSocial || '—'}</div>
+          <div class="card-body">
+            <p><strong>Preço:</strong> <span style="color:${priceColor}">${price}</span></p>
+            <p><strong>Bairro/Município:</strong> ${e.nomBairro || '—'} / ${e.nomMunicipio || '—'}</p>
+            <p><strong>Quando:</strong> ${when}</p>
+            <p><strong>Descrição:</strong> ${e.dscProduto || '—'}</p>
+            <p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p>
+          </div>
+        </div>
+      `;
+      modalList.appendChild(li);
+    });
+    modal.classList.add('active');
+  });
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+  // Busca por descrição via proxy interno
+  const openDescBtn   = document.getElementById('open-desc-modal');
+  const descModal     = document.getElementById('desc-modal');
+  const closeDescBtn  = document.getElementById('close-desc-modal');
+  const btnDescSearch = document.getElementById('btn-desc-search');
+  const descInput     = document.getElementById('desc-input');
+  const descList      = document.getElementById('desc-list');
+
+  openDescBtn.addEventListener('click', () => { descList.innerHTML = ''; descModal.classList.add('active'); });
+  closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
+
+  btnDescSearch.addEventListener('click', async () => {
+    const termo = descInput.value.trim(); if (!termo) return alert('Informe a descrição!');
+    descList.innerHTML = ''; loading.classList.add('active');
+    let lat, lng;
+    const locType = document.querySelector('input[name="loc"]:checked').value;
+    if (locType === 'gps') {
+      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; } catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
+    } else { [lat, lng] = document.getElementById('city').value.split(',').map(Number); }
+    try {
+      const resp = await fetch('/api/searchDescricao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descricao: termo, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: 7 })
+      });
+      const json = await resp.json(); loading.classList.remove('active');
+      const itens = Array.isArray(json.conteudo) ? json.conteudo : [];
+      if (!itens.length) return descList.innerHTML = '<li>Nenhum produto encontrado.</li>';
+      itens.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${entry.produto.gtin}</strong> – ${entry.produto.descricao}`;
+        li.addEventListener('click', () => { barcodeInput.value = entry.produto.gtin; descModal.classList.remove('active'); });
+        descList.appendChild(li);
+      });
+    } catch (e) { loading.classList.remove('active'); alert('Erro na busca por descrição: ' + e.message); }
+  });
 });
