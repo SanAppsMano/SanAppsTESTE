@@ -135,8 +135,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const summaryImg = summaryContainer.querySelector('.product-image-wrapper img');
     if (summaryImg) {
       summaryImg.style.cursor = 'zoom-in';
-      summaryImg.style.fontSize = '0.85rem';
-      summaryImg.addEventListener('click', () => {
+      // Reduzir fonte do overlay abaixo da imagem
+      const overlay = summaryContainer.querySelector('.product-name-overlay');
+      if (overlay) overlay.style.fontSize = '0.75rem';
+      summaryImg.addEventListener('click', () => {('click', () => {
         const lb = document.getElementById('lightbox');
         lb.querySelector('img').src = summaryImg.src;
         lb.style.display = 'flex';
@@ -189,8 +191,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const summaryImgNew = summaryContainer.querySelector('.product-image-wrapper img');
       if (summaryImgNew) {
         summaryImgNew.style.cursor = 'zoom-in';
-        summaryImgNew.style.fontSize = '0.85rem';
-        summaryImgNew.addEventListener('click', () => {
+        // Reduzir fonte do overlay abaixo da imagem
+        const overlayNew = summaryContainer.querySelector('.product-name-overlay');
+        if (overlayNew) overlayNew.style.fontSize = '0.75rem';
+        summaryImgNew.addEventListener('click', () => {('click', () => {
           const lb = document.getElementById('lightbox');
           lb.querySelector('img').src = summaryImgNew.src;
           lb.style.display = 'flex';
