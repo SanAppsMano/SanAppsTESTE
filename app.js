@@ -91,7 +91,38 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderCards(list) {
-    // existing code...
+    resultContainer.innerHTML = '';
+    // Ordenar resultados para destacar menor e maior preço
+    const sorted = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+    [menor, maior].forEach((e, i) => {
+      const label      = i === 0 ? 'Menor preço' : 'Maior preço';
+      const icon       = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const when       = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price      = brl.format(e.produto.venda.valorVenda);
+      const color      = i === 0 ? '#28a745' : '#dc3545';
+      const end        = e.estabelecimento.endereco;
+      const desc       = e.produto.descricaoSefaz || e.produto.descricao;
+      const mapURL     = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirURL     = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const card       = document.createElement('div');
+      card.className   = 'card';
+      card.innerHTML   = `
+        <div class="card-header">${label} — ${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
+        <div class="card-body">
+          <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
+          <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
+          <p><strong>Bairro/Município:</strong> ${end.bairro || '—'} / ${end.municipio || '—'}</p>
+          <p><strong>Quando:</strong> ${when}</p>
+          <p><strong>Descrição:</strong> ${desc}</p>
+          <p style="font-size:0.95rem;">
+            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
+            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
+          </p>
+        </div>
+      `;
+      resultContainer.appendChild(card);
+    });
   }
 
   // Carrega do histórico
