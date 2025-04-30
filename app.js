@@ -1,28 +1,23 @@
 // app.js
-// Mantém toda lógica original, alterando apenas o card para exibir endereço, CEP e telefone no lugar da descrição
+// Mantém toda lógica original, alterando apenas o card para exibir logradouro, número, bairro, município, CEP e telefone
 
 // front-end: proxy interno Vercel Functions
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Cria lightbox
+  // Cria lightbox...
   (function() {
-    const lb = document.createElement('div');
-    lb.id = 'lightbox';
-    Object.assign(lb.style, {
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.8)', display: 'none', alignItems: 'center', justifyContent: 'center', zIndex: 10000, cursor: 'zoom-out'
-    });
-    const img = document.createElement('img');
-    img.id = 'lightbox-img';
-    Object.assign(img.style, { maxWidth: '90%', maxHeight: '90%', boxShadow: '0 0 8px #fff' });
+    const lb = document.createElement('div'); lb.id = 'lightbox';
+    Object.assign(lb.style, {position:'fixed',top:0,left:0,width:'100%',height:'100%',background:'rgba(0,0,0,0.8)',display:'none',alignItems:'center',justifyContent:'center',zIndex:10000,cursor:'zoom-out'});
+    const img = document.createElement('img'); img.id = 'lightbox-img';
+    Object.assign(img.style, {maxWidth:'90%',maxHeight:'90%',boxShadow:'0 0 8px #fff'});
     lb.appendChild(img);
     lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
   })();
 
-  // DOM
+  // DOM Elements
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const daysRange        = document.getElementById('daysRange');
@@ -36,18 +31,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Atualiza label de dias
   daysValue.textContent = daysRange.value;
-  daysRange.addEventListener('input', () => {
-    daysValue.textContent = daysRange.value;
-  });
+  daysRange.addEventListener('input', () => { daysValue.textContent = daysRange.value; });
 
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
   let currentResults = [];
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 
-  function saveHistory() {
-    localStorage.setItem('searchHistory', JSON.stringify(historyArr));
-  }
+  function saveHistory() { localStorage.setItem('searchHistory', JSON.stringify(historyArr)); }
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
@@ -57,7 +48,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (item.image) {
         const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
       } else btn.textContent = item.name;
-      li.appendChild(btn); historyListEl.appendChild(li);
+      li.appendChild(btn);
+      historyListEl.appendChild(li);
     });
   }
   clearHistoryBtn.addEventListener('click', () => {
@@ -117,6 +109,8 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="card-body">
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
           <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
+          <p><strong>Bairro:</strong> ${end.bairro || '—'}</p>
+          <p><strong>Município:</strong> ${est.municipio || end.municipio || '—'}</p>
           <p><strong>CEP:</strong> ${end.cep || '—'}</p>
           <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
           <p><strong>Menor Preço:</strong> <span style="color:${color}">${price}</span></p>
@@ -135,47 +129,23 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function searchByCode() {
-    const code = barcodeInput.value.trim();
-    if (!code) return alert('Digite um código de barras.');
-    loading.classList.add('active');
-    resultContainer.innerHTML = '';
-    summaryContainer.innerHTML = '';
+    const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active');
-        return alert('Não foi possível obter localização.');
-      }
+      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; }
+      catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
     } else {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
     try {
       const diasEscolhidos = Number(daysRange.value);
-      const resp = await fetch(`${API_PROXY}/api/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: diasEscolhidos })
-      });
-      const data = await resp.json();
-      loading.classList.remove('active');
+      const resp = await fetch(`${API_PROXY}/api/search`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: diasEscolhidos }) });
+      const data = await resp.json(); loading.classList.remove('active');
       const list = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!list.length) {
-        summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
-        return;
-      }
-      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list });
-      saveHistory();
-      renderHistory();
-      renderSummary(list);
-      currentResults = list;
-      renderCards(list);
-    } catch (e) {
-      loading.classList.remove('active');
-      alert('Erro na busca.');
-    }
+      if (!list.length) { summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`; return; }
+      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list }); saveHistory(); renderHistory(); renderSummary(list); currentResults = list; renderCards(list);
+    } catch { loading.classList.remove('active'); alert('Erro na busca.'); }
   }
 
   btnSearch.addEventListener('click', searchByCode);
@@ -183,8 +153,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Modal lista ordenada
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list');
-    listEl.innerHTML = '';
+    const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     sortedAll.forEach((e, i) => {
       const price = brl.format(e.produto.venda.valorVenda);
@@ -198,6 +167,8 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
           <div class="card-body">
             <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
+            <p><strong>Bairro:</strong> ${end.bairro || '—'}</p>
+            <p><strong>Município:</strong> ${est.municipio || end.municipio || '—'}</p>
             <p><strong>CEP:</strong> ${end.cep || '—'}</p>
             <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
             <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
