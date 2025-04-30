@@ -206,11 +206,39 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada
+    // Modal lista ordenada
   const openModalBtn = document.getElementById('open-modal');
   const modal = document.getElementById('modal');
   const closeModalBtn = document.getElementById('close-modal');
-  openModalBtn.addEventListener('click', () => modal.classList.add('show'));
+  openModalBtn.addEventListener('click', () => {
+    if (!currentResults.length) return alert('Faça uma busca primeiro.');
+    const listEl = document.getElementById('modal-list');
+    listEl.innerHTML = '';
+    // Monta lista ordenada completa
+    const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    sortedAll.forEach((e, i) => {
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
+      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const color = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
+      const lat = end.latitude, lng = end.longitude;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
+          <div class="card-body">
+            <p><strong>Local:</strong> ${end.nomeLogradouro}, ${end.numeroImovel}, ${end.bairro} — ${est.municipio || end.municipio} (CEP: ${end.cep})</p>
+            <p><strong>Telefone:</strong> ${est.telefone}</p>
+            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span> — Quando: ${when}</p>
+            <p><a href="${mapLink}" target="_blank">📍 Ver no mapa</a> | <a href="${dirLink}" target="_blank">🚗 Como chegar</a></p>
+          </div>
+        </div>`;
+      listEl.appendChild(li);
+    });
+    modal.classList.add('show');
+  });
   closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
-});
