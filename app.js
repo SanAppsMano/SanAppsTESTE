@@ -1,11 +1,11 @@
 // app.js
-// Mantém toda lógica original, melhorando UX dos cards: layout mais limpo, agrupamentos claros e botões para ações
+// Mantém lógica original, atualiza links “Ver no mapa” e “Como chegar” para usar latitude/longitude do objeto de endereço
 
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Lightbox de imagens (sem alterações)
+  // Lightbox de imagem
   (function() {
     const lb = document.createElement('div'); lb.id = 'lightbox';
     Object.assign(lb.style, {position:'fixed',top:0,left:0,width:'100%',height:'100%',background:'rgba(0,0,0,0.8)',display:'none',alignItems:'center',justifyContent:'center',zIndex:10000,cursor:'zoom-out'});
@@ -28,7 +28,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
 
-  // Atualiza label de dias
   daysValue.textContent = daysRange.value;
   daysRange.addEventListener('input', () => { daysValue.textContent = daysRange.value; });
 
@@ -37,7 +36,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentResults = [];
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 
-  // Historico
   function saveHistory() { localStorage.setItem('searchHistory', JSON.stringify(historyArr)); }
   function renderHistory() {
     historyListEl.innerHTML = '';
@@ -75,7 +73,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (overlay) overlay.style.fontSize = '0.6rem';
   }
 
-  // Resumo do produto
   function renderSummary(list) {
     const first = list[0];
     const name = first.produto.descricaoSefaz || first.produto.descricao;
@@ -92,7 +89,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (imgEl) attachLightbox(imgEl);
   }
 
-  // Cards com UX aprimorada
   function renderCards(list) {
     resultContainer.innerHTML = '';
     const sorted = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
@@ -103,8 +99,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${est.latitude},${est.longitude}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${est.latitude},${est.longitude}`;
+      // Usa latitude/longitude do endereço conforme manual
+      const lat = end.latitude;
+      const lng = end.longitude;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
       const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
@@ -128,8 +127,8 @@ window.addEventListener('DOMContentLoaded', () => {
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
-            <a href="${mapLink}" target="_blank" class="btn btn-map">Ver no mapa</a>
-            <a href="${dirLink}" target="_blank" class="btn btn-directions">Como chegar</a>
+            <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+            <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
           </div>
         </div>`;
       resultContainer.appendChild(card);
@@ -144,7 +143,6 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(list);
   }
 
-  // Busca por código
   async function searchByCode() {
     const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
     loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
@@ -167,7 +165,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada (sem alterações UX além de mesmo template)
+  // Modal lista ordenada (mesma lógica com links atualizados)
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
@@ -178,8 +176,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${est.latitude},${est.longitude}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${est.latitude},${est.longitude}`;
+      const lat = end.latitude;
+      const lng = end.longitude;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
@@ -201,8 +201,8 @@ window.addEventListener('DOMContentLoaded', () => {
               <p class="price-date">Quando: ${when}</p>
             </div>
             <div class="action-buttons">
-              <a href="${mapLink}" target="_blank" class="btn btn-map">Ver no mapa</a>
-              <a href="${dirLink}" target="_blank" class="btn btn-directions">Como chegar</a>
+              <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+              <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
             </div>
           </div>
         </div>`;
