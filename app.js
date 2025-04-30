@@ -242,3 +242,5 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+
+}); // Fecha DOMContentLoaded listener
