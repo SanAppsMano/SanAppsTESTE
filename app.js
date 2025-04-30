@@ -127,7 +127,7 @@ window.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <div class="card-header">
           <span class="price-label" style="color:${color};">
-            <img src="${icon}" alt="${i===0?'Ai sim':'Eita'}" class="price-icon" />
+            <img src="${icon}" alt="${i===0?'Ai sim':'Eita'}" class="price-icon" style="width:24px; height:auto; vertical-align:middle; margin-right:4px;" />
             ${i === 0 ? 'Menor preço' : 'Maior preço'}
           </span>
           <span class="estabelecimento-name"> — ${est.nomeFantasia || est.razaoSocial}</span>
