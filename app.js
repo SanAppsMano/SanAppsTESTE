@@ -1,4 +1,6 @@
-/* app.js */
+// app.js
+// Mantém toda lógica original, alterando apenas o card para exibir endereço, CEP e telefone no lugar da descrição
+
 // front-end: proxy interno Vercel Functions
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
@@ -32,7 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
 
-  // Atualiza label de dias ao mover o slider
+  // Atualiza label de dias
   daysValue.textContent = daysRange.value;
   daysRange.addEventListener('input', () => {
     daysValue.textContent = daysRange.value;
@@ -108,22 +110,17 @@ window.addEventListener('DOMContentLoaded', () => {
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
       const end   = e.estabelecimento.endereco;
-      const desc  = e.produto.descricaoSefaz || e.produto.descricao;
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const est   = e.estabelecimento;
       const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
-        <div class="card-header">${label} — ${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div>
+        <div class="card-header">${label} — ${est.nomeFantasia || est.razaoSocial}</div>
         <div class="card-body">
           <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
-          <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
-          <p><strong>Bairro/Município:</strong> ${end.bairro || '—'} / ${end.municipio || '—'}</p>
+          <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
+          <p><strong>CEP:</strong> ${end.cep || '—'}</p>
+          <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
+          <p><strong>Menor Preço:</strong> <span style="color:${color}">${price}</span></p>
           <p><strong>Quando:</strong> ${when}</p>
-          <p><strong>Descrição:</strong> ${desc}</p>
-          <p style="font-size:0.95rem;">
-            <a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> |
-            <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a>
-          </p>
         </div>`;
       resultContainer.appendChild(card);
     });
@@ -194,11 +191,19 @@ window.addEventListener('DOMContentLoaded', () => {
       const color = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
       const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const end = e.estabelecimento.endereco;
-      const desc = e.produto.descricaoSefaz || e.produto.descricao;
-      const mapURL = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-      const dirURL = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const est = e.estabelecimento;
       const li = document.createElement('li');
-      li.innerHTML = `<div class="card"><div class="card-header">${e.estabelecimento.nomeFantasia || e.estabelecimento.razaoSocial}</div><div class="card-body"><p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p><p><strong>Bairro/Município:</strong> ${end.bairro || '—'} / ${end.municipio || '—'}</p><p><strong>Quando:</strong> ${when}</p><p><strong>Descrição:</strong> ${desc}</p><p style="font-size:0.95rem;"><a href="${mapURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Ver no mapa</a> | <a href="${dirURL}" target="_blank"><i class="fas fa-map-marker-alt"></i> Como chegar</a></p></div></div>`;
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
+          <div class="card-body">
+            <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
+            <p><strong>CEP:</strong> ${end.cep || '—'}</p>
+            <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
+            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
+            <p><strong>Quando:</strong> ${when}</p>
+          </div>
+        </div>`;
       listEl.appendChild(li);
     });
     document.getElementById('modal').classList.add('active');
