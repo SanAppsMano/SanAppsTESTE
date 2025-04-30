@@ -1,5 +1,8 @@
 // app.js
-// Mantém toda lógica original, alterando apenas o template dos cards para exibir endereço, CEP e telefone
+// Mantém toda lógica original, alterando apenas o template dos cards e corrigindo variável de base URL
+
+// Defina aqui a URL base das suas Functions no Vercel
+const API_BASE_URL = window.API_BASE_URL || 'https://seu-app-vercel.vercel.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   const locRadios = document.querySelectorAll('input[name="loc"]');
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     daysValue.textContent = daysRange.value;
   });
 
-  // Seleciona radio Municipio/GPS
+  // Seleciona radio Município/GPS
   locRadios.forEach(radio => {
     radio.addEventListener('change', () => {
       cityBlock.style.display = radio.value === 'city' ? 'block' : 'none';
@@ -81,14 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let url;
     if (document.querySelector('input[name="loc"]:checked').value === 'city') {
       const [lat, lon] = citySel.value.split(',');
-      url = `${process.env.VITE_API_BASE_URL}/api/precos?lat=${lat}&lon=${lon}&days=${days}&radius=${radius}`;
+      url = `${API_BASE_URL}/api/precos?lat=${lat}&lon=${lon}&days=${days}&radius=${radius}`;
     } else {
       if (!navigator.geolocation) {
         alert('Geolocalização não suportada');
         return;
       }
       const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-      url = `${process.env.VITE_API_BASE_URL}/api/precos?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&days=${days}&radius=${radius}`;
+      url = `${API_BASE_URL}/api/precos?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&days=${days}&radius=${radius}`;
     }
 
     document.getElementById('loading').style.display = 'flex';
