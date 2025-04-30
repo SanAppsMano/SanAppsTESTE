@@ -1,12 +1,11 @@
 // app.js
-// Mantém toda lógica original, alterando apenas o card para exibir logradouro, número, bairro, município, CEP e telefone
+// Mantém toda lógica original, melhorando UX dos cards: layout mais limpo, agrupamentos claros e botões para ações
 
-// front-end: proxy interno Vercel Functions
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Cria lightbox...
+  // Lightbox de imagens (sem alterações)
   (function() {
     const lb = document.createElement('div'); lb.id = 'lightbox';
     Object.assign(lb.style, {position:'fixed',top:0,left:0,width:'100%',height:'100%',background:'rgba(0,0,0,0.8)',display:'none',alignItems:'center',justifyContent:'center',zIndex:10000,cursor:'zoom-out'});
@@ -17,7 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(lb);
   })();
 
-  // DOM Elements
+  // DOM elements
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const daysRange        = document.getElementById('daysRange');
@@ -38,6 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentResults = [];
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 
+  // Historico
   function saveHistory() { localStorage.setItem('searchHistory', JSON.stringify(historyArr)); }
   function renderHistory() {
     historyListEl.innerHTML = '';
@@ -75,6 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (overlay) overlay.style.fontSize = '0.6rem';
   }
 
+  // Resumo do produto
   function renderSummary(list) {
     const first = list[0];
     const name = first.produto.descricaoSefaz || first.produto.descricao;
@@ -85,36 +86,51 @@ window.addEventListener('DOMContentLoaded', () => {
           <img src="${imgUrl}" alt="${name}" />
           <div class="product-name-overlay">${name}</div>
         </div>
-        <p><strong>${list.length}</strong> estabelecimento(s) encontrado(s).</p>
+        <p class="summary-count"><strong>${list.length}</strong> estabelecimento(s) encontrado(s).</p>
       </div>`;
     const imgEl = summaryContainer.querySelector('img');
     if (imgEl) attachLightbox(imgEl);
   }
 
+  // Cards com UX aprimorada
   function renderCards(list) {
     resultContainer.innerHTML = '';
     const sorted = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
     [menor, maior].forEach((e, i) => {
-      const label = i === 0 ? 'Menor preço' : 'Maior preço';
-      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
-      const end   = e.estabelecimento.endereco;
-      const est   = e.estabelecimento;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${est.latitude},${est.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${est.latitude},${est.longitude}`;
+
       const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
-        <div class="card-header">${label} — ${est.nomeFantasia || est.razaoSocial}</div>
+        <div class="card-header ${i === 0 ? 'highlight-green' : 'highlight-red'}">
+          ${i === 0 ? 'Menor preço' : 'Maior preço'} — ${est.nomeFantasia || est.razaoSocial}
+        </div>
         <div class="card-body">
-          <div class="card-icon-right"><img src="${icon}" alt="${label}"></div>
-          <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
-          <p><strong>Bairro:</strong> ${end.bairro || '—'}</p>
-          <p><strong>Município:</strong> ${est.municipio || end.municipio || '—'}</p>
-          <p><strong>CEP:</strong> ${end.cep || '—'}</p>
-          <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
-          <p><strong>Menor Preço:</strong> <span style="color:${color}">${price}</span></p>
-          <p><strong>Quando:</strong> ${when}</p>
+          <div class="info-group">
+            <h4>Localização</h4>
+            <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+            <p>${end.bairro} — ${est.municipio || end.municipio}</p>
+            <p>CEP: ${end.cep}</p>
+          </div>
+          <div class="info-group">
+            <h4>Contato</h4>
+            <p>📞 ${est.telefone}</p>
+          </div>
+          <div class="info-group price-section">
+            <h4>Preço</h4>
+            <p><span class="price-value" style="color:${color}">${price}</span></p>
+            <p class="price-date">Quando: ${when}</p>
+          </div>
+          <div class="action-buttons">
+            <a href="${mapLink}" target="_blank" class="btn btn-map">Ver no mapa</a>
+            <a href="${dirLink}" target="_blank" class="btn btn-directions">Como chegar</a>
+          </div>
         </div>`;
       resultContainer.appendChild(card);
     });
@@ -128,6 +144,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(list);
   }
 
+  // Busca por código
   async function searchByCode() {
     const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
     loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
@@ -150,29 +167,43 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada
+  // Modal lista ordenada (sem alterações UX além de mesmo template)
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     sortedAll.forEach((e, i) => {
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
+      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
-      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const end = e.estabelecimento.endereco;
-      const est = e.estabelecimento;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${est.latitude},${est.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${est.latitude},${est.longitude}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
           <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
           <div class="card-body">
-            <p><strong>Logradouro:</strong> ${end.nomeLogradouro || '—'}, ${end.numeroImovel || '—'}</p>
-            <p><strong>Bairro:</strong> ${end.bairro || '—'}</p>
-            <p><strong>Município:</strong> ${est.municipio || end.municipio || '—'}</p>
-            <p><strong>CEP:</strong> ${end.cep || '—'}</p>
-            <p><strong>Telefone:</strong> ${est.telefone || '—'}</p>
-            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span></p>
-            <p><strong>Quando:</strong> ${when}</p>
+            <div class="info-group">
+              <h4>Localização</h4>
+              <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+              <p>${end.bairro} — ${est.municipio || end.municipio}</p>
+              <p>CEP: ${end.cep}</p>
+            </div>
+            <div class="info-group">
+              <h4>Contato</h4>
+              <p>📞 ${est.telefone}</p>
+            </div>
+            <div class="info-group price-section">
+              <h4>Preço</h4>
+              <p><span class="price-value" style="color:${color}">${price}</span></p>
+              <p class="price-date">Quando: ${when}</p>
+            </div>
+            <div class="action-buttons">
+              <a href="${mapLink}" target="_blank" class="btn btn-map">Ver no mapa</a>
+              <a href="${dirLink}" target="_blank" class="btn btn-directions">Como chegar</a>
+            </div>
           </div>
         </div>`;
       listEl.appendChild(li);
