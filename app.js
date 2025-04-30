@@ -205,4 +205,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   btnSearch.addEventListener('click', searchByCode);
+
+  // Modal lista ordenada
+  const openModalBtn = document.getElementById('open-modal');
+  const modal = document.getElementById('modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  openModalBtn.addEventListener('click', () => modal.classList.add('show'));
+  closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
 });
