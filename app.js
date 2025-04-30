@@ -1,5 +1,5 @@
 // app.js
-// Mantém lógica original e reposiciona corretamente os ícones "ai-sim" e "eita" ao lado do label no header dos cards
+// Mantém lógica original, atualiza UX dos cards reintroduzindo ícones "ai-sim" e "eita" para menor/maior preço, e links de mapa
 
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
@@ -16,7 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(lb);
   })();
 
-  // Elementos DOM
+  // DOM
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const daysRange        = document.getElementById('daysRange');
@@ -94,8 +94,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const end   = est.endereco;
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
-      // Ícone correto extraído da pasta /public/images
-      const icon  = i === 0 ? '/public/images/ai-sim.png' : '/public/images/eita.png';
+      const icon  = i === 0 ? 'public/images/ai-sim.png' : 'public/images/eita.png';
       const color = i === 0 ? '#28a745' : '#dc3545';
       const lat = end.latitude, lng = end.longitude;
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -103,12 +102,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
-        <div class="card-header">
-          <span class="price-label" style="color:${color};">
-            <img src="${icon}" alt="${i===0?'Ai sim':'Eita'}" class="price-icon" />
-            ${i === 0 ? 'Menor preço' : 'Maior preço'}
-          </span>
-          <span class="estabelecimento-name"> — ${est.nomeFantasia || est.razaoSocial}</span>
+        <div class="card-header ${i === 0 ? 'highlight-green' : 'highlight-red'}">
+          <img src="${icon}" alt="${i===0?'Menor preço':'Maior preço'}" class="price-icon" />
+          ${i === 0 ? 'Menor preço' : 'Maior preço'} — ${est.nomeFantasia || est.razaoSocial}
         </div>
         <div class="card-body">
           <div class="info-group">
@@ -135,8 +131,32 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Funções de cache e busca permanecem inalteradas
-  function loadFromCache(item) { /*...*/ }
-  async function searchByCode() { /*...*/ }
+  function loadFromCache(item) {
+    const list = item.dados;
+    barcodeInput.value = item.code;
+    renderSummary(list);
+    currentResults = list;
+    renderCards(list);
+  }
+
+  async function searchByCode() {
+    const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
+    let lat, lng;
+    if (document.querySelector('input[name="loc"]:checked").value === 'gps') {
+      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; }
+      catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+    try {
+      const resp = await fetch(`${API_PROXY}/api/search`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: Number(daysRange.value) }) });
+      const data = await resp.json(); loading.classList.remove('active');
+      const list = Array.isArray(data.conteudo) ? data.conteudo : [];
+      if (!list.length) { summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`; return; }
+      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list }); saveHistory(); renderHistory(); renderSummary(list); currentResults = list; renderCards(list);
+    } catch { loading.classList.remove('active'); alert('Erro na busca.'); }
+  }
+
   btnSearch.addEventListener('click', searchByCode);
 });
