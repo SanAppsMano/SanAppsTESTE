@@ -1,5 +1,5 @@
 // app.js
-// Código completo com lógica original e cards atualizados (ícones, localização, CORS etc.)
+// Código com lógica original, cards e lista ordenada funcionando corretamente
 
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
@@ -16,7 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(lb);
   })();
 
-  // Elementos DOM
+  // DOM elements
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const daysRange        = document.getElementById('daysRange');
@@ -27,15 +27,19 @@ window.addEventListener('DOMContentLoaded', () => {
   const radiusButtons    = document.querySelectorAll('.radius-btn');
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
+  const openModalBtn     = document.getElementById('open-modal');
+  const modal            = document.getElementById('modal');
+  const closeModalBtn    = document.getElementById('close-modal');
+  const modalList        = document.getElementById('modal-list');
 
-  // Atualiza label de dias
+  // Dias
   daysValue.textContent = daysRange.value;
   daysRange.addEventListener('input', () => daysValue.textContent = daysRange.value);
 
-  // Formatação de moeda
+  // Moeda
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Histórico em localStorage
+  // Histórico
   let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
   let currentResults = [];
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
@@ -47,19 +51,12 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li = document.createElement('li');
-      li.className = 'history-item';
-      const btn = document.createElement('button');
-      btn.title = item.name;
+      const li = document.createElement('li'); li.className = 'history-item';
+      const btn = document.createElement('button'); btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = item.name;
-        btn.appendChild(img);
-      } else {
-        btn.textContent = item.name;
-      }
+        const img = document.createElement('img'); img.src = item.image; img.alt = item.name; btn.appendChild(img);
+      } else btn.textContent = item.name;
       li.appendChild(btn);
       historyListEl.appendChild(li);
     });
@@ -76,8 +73,8 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHistory();
 
   radiusButtons.forEach(btn => btn.addEventListener('click', () => {
-    radiusButtons.forEach(b => b.classList.remove('show'));
-    btn.classList.add('show');
+    radiusButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     selectedRadius = btn.dataset.value;
   }));
 
@@ -110,6 +107,7 @@ window.addEventListener('DOMContentLoaded', () => {
     resultContainer.innerHTML = '';
     const sorted = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     const [menor, maior] = [sorted[0], sorted[sorted.length - 1]];
+
     [menor, maior].forEach((e, i) => {
       const est    = e.estabelecimento;
       const end    = est.endereco;
@@ -122,13 +120,12 @@ window.addEventListener('DOMContentLoaded', () => {
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
-      const card = document.createElement('div');
-      card.className = 'card';
+      const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
         <div class="card-header">
           <span class="price-label" style="color:${color};">
-            <img src="${icon}" alt="${i===0?'Ai sim':'Eita'}" class="price-icon" style="width:24px; height:auto; vertical-align:middle; margin-right:4px;" />
-            ${i === 0 ? 'Menor preço' : 'Maior preço'}
+            <img src="${icon}" alt="${i===0?'Ai sim':'Eita'}" class="price-icon" style="width:24px;vertical-align:middle;margin-right:4px;" />
+            ${i===0?'Menor preço':'Maior preço'}
           </span>
           <span class="estabelecimento-name"> — ${est.nomeFantasia || est.razaoSocial}</span>
         </div>
@@ -166,81 +163,46 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function searchByCode() {
-    const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
-    loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
+    const code = barcodeInput.value.trim();
+    if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active'); resultContainer.innerHTML=''; summaryContainer.innerHTML='';
     let lat, lng;
-    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active');
-        return alert('Não foi possível obter localização.');
-      }
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
-    }
-
+    if (document.querySelector('input[name="loc"]:checked').value==='gps') {
+      try { const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej)); lat=pos.coords.latitude; lng=pos.coords.longitude; }
+      catch{ loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
+    } else { [lat,lng]=document.getElementById('city').value.split(',').map(Number); }
     try {
-      const resp = await fetch(`${API_PROXY}/api/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: Number(daysRange.value) })
-      });
-      const data = await resp.json();
-      loading.classList.remove('active');
-      const list = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!list.length) {
-        summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
-        return;
-      }
-      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list });
-      saveHistory(); renderHistory(); renderSummary(list);
-      currentResults = list; renderCards(list);
-    } catch {
-      loading.classList.remove('active');
-      alert('Erro na busca.');
-    }
+      const resp=await fetch(`${API_PROXY}/api/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigoDeBarras:code,latitude:lat,longitude:lng,raio:Number(selectedRadius),dias:Number(daysRange.value)})});
+      const data=await resp.json(); loading.classList.remove('active');
+      const list=Array.isArray(data.conteudo)?data.conteudo:[];
+      if(!list.length){summaryContainer.innerHTML=`<p>Nenhum estabelecimento encontrado.</p>`;return;}
+      historyArr.unshift({code,name:data.dscProduto||list[0].produto.descricao,image:`${COSMOS_BASE}/${list[0].produto.gtin}`,dados:list}); saveHistory(); renderHistory(); renderSummary(list); currentResults=list; renderCards(list);
+    } catch{ loading.classList.remove('active'); alert('Erro na busca.'); }
   }
 
   btnSearch.addEventListener('click', searchByCode);
 
-    // Modal lista ordenada
-  const openModalBtn = document.getElementById('open-modal');
-  const modal = document.getElementById('modal');
-  const closeModalBtn = document.getElementById('close-modal');
+  // Modal lista ordenada
   openModalBtn.addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    const listEl = document.getElementById('modal-list');
-    listEl.innerHTML = '';
-    // Monta lista ordenada completa
-    const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    sortedAll.forEach((e, i) => {
-      const est   = e.estabelecimento;
-      const end   = est.endereco;
-      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const price = brl.format(e.produto.venda.valorVenda);
-      const color = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
-      const lat = end.latitude, lng = end.longitude;
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="card">
-          <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
-          <div class="card-body">
-            <p><strong>Local:</strong> ${end.nomeLogradouro}, ${end.numeroImovel}, ${end.bairro} — ${est.municipio || end.municipio} (CEP: ${end.cep})</p>
-            <p><strong>Telefone:</strong> ${est.telefone}</p>
-            <p><strong>Preço:</strong> <span style="color:${color}">${price}</span> — Quando: ${when}</p>
-            <p><a href="${mapLink}" target="_blank">📍 Ver no mapa</a> | <a href="${dirLink}" target="_blank">🚗 Como chegar</a></p>
-          </div>
-        </div>`;
-      listEl.appendChild(li);
+    modalList.innerHTML = '';
+    const sortedAll=[...currentResults].sort((a,b)=>a.produto.venda.valorVenda-b.produto.venda.valorVenda);
+    sortedAll.forEach((e,i)=>{
+      const est=e.estabelecimento; const end=est.endereco;
+      const when=e.produto.venda.dataVenda?new Date(e.produto.venda.dataVenda).toLocaleString():'—';
+      const price=brl.format(e.produto.venda.valorVenda);
+      const color=i===0?'#28a745':i===sortedAll.length-1?'#dc3545':'#007bff';
+      const lat=end.latitude, lng=end.longitude;
+      const mapLink=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirLink=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const li=document.createElement('li');
+      li.innerHTML=`<div class="card"><div class="card-header">${est.nomeFantasia||est.razaoSocial}</div><div class="card-body"><p><strong>Local:</strong> ${end.nomeLogradouro}, ${end.numeroImovel}, ${end.bairro} — ${est.municipio||end.municipio} (CEP: ${end.cep})</p><p><strong>Telefone:</strong> ${est.telefone}</p><p><strong>Preço:</strong> <span style="color:${color}">${price}</span> — Quando: ${when}</p><p><a href="${mapLink}" target="_blank">📍 Ver no mapa</a> | <a href="${dirLink}" target="_blank">🚗 Como chegar</a></p></div></div>`;
+      modalList.appendChild(li);
     });
     modal.classList.add('show');
   });
-  closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
 
-}); // Fecha DOMContentLoaded listener
+  closeModalBtn.addEventListener('click', ()=>modal.classList.remove('show'));
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show');});
+
+});
