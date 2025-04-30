@@ -2,7 +2,7 @@
 // Mantém toda lógica original, alterando apenas o template dos cards e corrigindo variável de base URL
 
 // Defina aqui a URL base das suas Functions no Vercel
-const API_BASE_URL = window.API_BASE_URL || 'https://seu-app-vercel.vercel.app';
+const API_BASE_URL = window.API_BASE_URL || 'https://san-apps-teste.vercel.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   const locRadios = document.querySelectorAll('input[name="loc"]');
