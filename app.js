@@ -76,8 +76,8 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHistory();
 
   radiusButtons.forEach(btn => btn.addEventListener('click', () => {
-    radiusButtons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    radiusButtons.forEach(b => b.classList.remove('show'));
+    btn.classList.add('show');
     selectedRadius = btn.dataset.value;
   }));
 
