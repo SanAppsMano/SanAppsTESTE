@@ -280,7 +280,7 @@ body {
   border-radius: 0.5rem;  
   width: 90%;  
   max-width: 90vw;            /* mesma largura do modal do QRCode */  
-  max-height: 80vh;           /* limite em viewport height */  
+  width: auto;                /* limite em viewport height */  
   overflow-y: auto;           /* permite scroll interno */  
   position: relative;  
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);  
