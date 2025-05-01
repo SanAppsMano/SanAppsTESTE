@@ -25,57 +25,6 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    /* --- ADICIONADO --- */
-    /* wrapper geral entre input+scan e botão pesquisar */
-    .barcode-wrap {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    /* grupo input + scan */
-    .barcode-group {
-      display: flex;
-      align-items: center;
-      border: 1px solid #ccc;
-      border-radius: 0.25rem;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .barcode-group:focus-within {
-      border-color: #007bff;
-    }
-    .barcode-group input {
-      border: none;
-      padding: 0.5rem 0.75rem;
-      width: 12rem;
-      outline: none;
-    }
-    .barcode-group button {
-      background: #f0f0f0;
-      border: none;
-      padding: 0 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .barcode-group button:hover,
-    .barcode-group button:focus {
-      background: #e0e0e0;
-    }
-    .barcode-group i {
-      font-size: 1.25rem;
-      color: #555;
-    }
-    /* mantém o botão Pesquisar com mesma altura */
-    #btn-search {
-      display: flex;
-      align-items: center;
-      height: 2.5rem;
-    }
-    /* --- FIM DAS ADIÇÕES --- */
-
     /* Floating share button */
     #share-btn { /* original styles */ }
     /* Modal reutilizado */
@@ -138,23 +87,18 @@
         </div>
         <!-- Campo de código de barras com botão para abrir modal -->
         <div class="barcode-wrap">
-          <div class="barcode-group">
-            <input
-              id="barcode"
-              type="tel"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              placeholder="Código de barras"
-            />
-            <button
-              type="button"
-              id="scan-barcode"
-              class="btn-secondary"
-              title="Escanear código"
-            >
-              <i class="fas fa-barcode-scan"></i>
-            </button>
-          </div>
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
+          <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">
+            -            <i class="fas fa-barcode"></i>
+            +            <i class="fas fa-barcode-scan"></i>
+                      </button>
+            
           <button id="btn-search" class="btn-primary">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
