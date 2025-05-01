@@ -92,7 +92,7 @@ body {
 }
 .barcode-wrap {
   display: flex;
-align-items: center;
+  gap: 0.5rem;
 }
 #barcode {
   flex: 1;
@@ -368,91 +368,20 @@ align-items: center;
     width: auto;
     justify-self: start;
   }
-/* ===== Alinhamento vertical e mesma altura ===== */
+  /* ========== Ajuste mínimo para centralizar o scan-button ========== */
 .barcode-wrap {
-  display: flex;
-  align-items: center;
-}
-
-.barcode-wrap input,
-.barcode-wrap button#scan-barcode {
-  height: 2.4rem;         /* mesma altura do input */
+  display: flex;        /* já existia, apenas reforça */
+  align-items: center;  /* alinha input + scan + pesquisar verticalmente */
 }
 
 #scan-barcode {
-  padding: 0 0.75rem;     /* apenas padding horizontal */
-  display: flex;          
+  display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius);
 }
 
 #scan-barcode i {
-  font-size: 1.2rem;      /* tamanho semelhante aos outros ícones */
-  line-height: 1;         /* garante centralização perfeita */
+  font-size: 1.2rem;  /* ajusta tamanho para ficar em pé de igualdade com os outros ícones */
 }
-
-  /* ========== Overlay de marcação para celular & desktop ========== */
-#barcode-scanner {
-  position: relative;
-}
-
-/* Overlay geral */
-.scanner-overlay {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 80%;
-  height: 30%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  display: block;
-}
-
-/* Cantos da moldura */
-.scanner-overlay::before,
-.scanner-overlay::after,
-.scanner-overlay span::before,
-.scanner-overlay span::after {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 3px solid #fff;
-}
-
-/* Top-Left */
-.scanner-overlay::before {
-  top: 0; left: 0;
-  border-right: none;
-  border-bottom: none;
-}
-/* Top-Right */
-.scanner-overlay::after {
-  top: 0; right: 0;
-  border-left: none;
-  border-bottom: none;
-}
-/* Bottom-Left */
-.scanner-overlay span::before {
-  bottom: 0; left: 0;
-  border-right: none;
-  border-top: none;
-}
-/* Bottom-Right */
-.scanner-overlay span::after {
-  bottom: 0; right: 0;
-  border-left: none;
-  border-top: none;
-}
-
-/* (Opcional) Ajuste fino no mobile */
-@media (max-width: 767px) {
-  .scanner-overlay {
-    width: 90%;
-    height: 40%;
-  }
-}
-
-
 
 }
