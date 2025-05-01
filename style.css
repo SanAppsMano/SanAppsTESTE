@@ -374,22 +374,22 @@ body {
   z-index: 9;
 }
 
-/* Floating share button — restored */
+/* Botão de Compartilhamento Personalizado */
 #share-btn {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  background: var(--color-primary);
+  background: #3b82f6; /* Azul vibrante (moderno e agradável) */
   color: var(--color-white);
   border: none;
   padding: 0.75rem;
   border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
   cursor: pointer;
   z-index: 1000;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
-#share-btn i {
-  font-size: 1.2rem;
+
+#share-btn:hover {
+  background: #2563eb; /* Azul mais escuro no hover */
+  transform: scale(1.1);
 }
 
 /* Share modal adjustments */
