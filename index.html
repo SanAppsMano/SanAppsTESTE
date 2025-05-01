@@ -34,9 +34,9 @@
     .modal.show { display: flex; }
     .modal .modal-content { position: relative; background: #fff; padding: 1rem;
                               border-radius: 0.5rem; max-width: 90vw; width: 100%; text-align: center; }
-    .modal .close { position: absolute; top: 0.5rem; right: 0.75rem;
+    .modal .close { position: absolute; top: 0.5rem; right: 2.5rem;
                     font-size: 1.5rem; cursor: pointer; }
-    /* Ajustes do scanner no modal */
+    /* Scanner GTIN dentro do modal */
     #barcode-scanner { width: 100%; max-width: 400px; margin: 1rem auto;
                         border: 1px solid #ccc; border-radius: 4px; }
   </style>
@@ -92,7 +92,6 @@
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
-        <!-- Demais botões originais... -->
         <button id="open-modal" class="open-modal-btn" title="Ver Lista Ordenada">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
