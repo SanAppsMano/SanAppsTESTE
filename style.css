@@ -374,9 +374,12 @@ body {
   z-index: 9;
 }
 
-/* Botão de Compartilhamento Personalizado */
+/* Botão de Compartilhamento Personalizado (direita inferior) */
 #share-btn {
-  background: #3b82f6; /* Azul vibrante (moderno e agradável) */
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem; /* garante posição à direita */
+  background: #3b82f6; /* Azul vibrante */
   color: var(--color-white);
   border: none;
   padding: 0.75rem;
@@ -388,7 +391,7 @@ body {
 }
 
 #share-btn:hover {
-  background: #2563eb; /* Azul mais escuro no hover */
+  background: #2563eb; /* Azul mais escuro ao passar o mouse */
   transform: scale(1.1);
 }
 
