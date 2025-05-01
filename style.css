@@ -263,28 +263,36 @@ body {
 }
 .open-modal-btn i { margin-right: 0.5rem; }
 
-.modal {
-  display: none;
+#modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: fixed;
-  z-index: 1000;
-  inset: 0;
-  background-color: rgba(0,0,0,0.6);
-  /* permite scroll do modal em telas pequenas */
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+#modal.show {
+  display: flex;
+}
+
+#modal .modal-content {
+  max-width: 90vw;
+  width: auto;
+  max-height: 80vh;
   overflow-y: auto;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
-.modal.active { display: block; }
-\.modal-content {  
-  background-color: #fff;  
-  margin: 5% auto;  
-  padding: 1.5rem;  
-  border-radius: 0.5rem;  
-  width: 90%;  
-  max-width: 90vw;            /* mesma largura do modal do QRCode */  
-  width: auto;                /* limite em viewport height */  
-  overflow-y: auto;           /* permite scroll interno */  
-  position: relative;  
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);  
-}
+
 .modal-content h2 {
   margin-top: 0;
   text-align: center;
