@@ -250,24 +250,27 @@ window.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
-  scanBtn.addEventListener('click', () => {
-    modal.classList.add('show');
-    qrReader.start({ facingMode: 'environment' }, config,
-      decodedText => {
-        // Se inválido, avisa e mantém modal aberto
-        if (!validateGTIN(decodedText)) {
-          alert('❌ Leitura inválida. Tente novamente.');
-          navigator.vibrate?.(200);
-          return;
-        }
-        // Válido: preenche e fecha
-        input.value = decodedText;
-        qrReader.stop();
-        modal.classList.remove('show');
-      },
-      () => {}
-    );
-  });
+ scanBtn.addEventListener('click', () => {
+  modal.classList.add('show');
+  qrReader.start({ facingMode: 'environment' }, config,
+    decodedText => {
+      // se GTIN inválido, aviso e modal permanece aberto
+      if (!validateGTIN(decodedText)) {
+        alert('❌ Leitura inválida. Tente novamente.');
+        navigator.vibrate?.(200);
+        return;
+      }
+      // leitura válida: preenche, para o leitor e fecha o modal
+      input.value = decodedText;
+      qrReader.stop().catch(() => {});
+      modal.classList.remove('show');
+    },
+    error => {
+      // (opcional) tratar erros de leitura aqui
+    }
+  );
+});
+
 
   closeBtn.addEventListener('click', () => {
     qrReader.stop().catch(() => {});
