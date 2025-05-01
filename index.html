@@ -87,30 +87,23 @@
         </div>
         <!-- Campo de código de barras com botão para abrir modal -->
         <div class="barcode-wrap">
-  <input
-    id="barcode"
-    type="tel"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    placeholder="Digite ou escaneie o código"
-    aria-label="Digite ou escaneie o código de barras"
-  />
-  <button
-    type="button"
-    id="scan-barcode"
-    class="btn-secondary"
-    title="Digitalizar código"
-    aria-label="Digitalizar código de barras"
-  >
-    <i class="fas fa-barcode-scan"></i>
-  </button>
-  <button id="btn-search" class="btn-primary">
-    <i class="fas fa-magnifying-glass-barcode"></i>
-    <span class="btn-text">Pesquisar</span>
-  </button>
-</div>
-
-        
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
+          <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">
+            -            <i class="fas fa-barcode"></i>
+            +            <i class="fas fa-barcode-scan"></i>
+                      </button>
+            
+          <button id="btn-search" class="btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Pesquisar</span>
+          </button>
+        </div>
         <button id="open-modal" class="open-modal-btn" title="Ver Lista Ordenada">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
@@ -173,11 +166,7 @@
     <div class="modal-content">
       <span class="close" id="close-barcode-modal">&times;</span>
       <h2>Escanear Código de Barras</h2>
-      <div id="barcode-scanner">
-  <!-- html5-qrcode injeta aqui o vídeo/canvas -->
-  <div class="scanner-overlay"><span></span></div>
-</div>
-
+      <div id="barcode-scanner"></div>
     </div>
   </div>
 
