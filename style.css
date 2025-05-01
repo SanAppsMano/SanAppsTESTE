@@ -404,6 +404,13 @@ body {
   text-align: center; /* Segurança extra caso o QR code seja inline ou img */
 }
 
+/* Centraliza QRCode no modal de compartilhamento */
+#share-modal #qrcode {
+  margin: 1rem auto;
+  width: 200px;          
+  height: 200px;         
+}
+
 #share-modal .close-btn {
   background: var(--color-primary);
   color: var(--color-white);
