@@ -269,7 +269,8 @@ body {
   z-index: 1000;
   inset: 0;
   background-color: rgba(0,0,0,0.6);
-  overflow: hidden;           /* evite overflow fullscreen */
+  /* permite scroll do modal em telas pequenas */
+  overflow-y: auto;
 }
 .modal.active { display: block; }
 \.modal-content {  
