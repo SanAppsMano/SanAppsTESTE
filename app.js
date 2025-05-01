@@ -240,7 +240,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('barcode-modal');
   const input = document.getElementById('barcode');
   const config = {
-    fps: 10,
+    fps: 20,
     qrbox: { width: 300, height: 100 },
     supportedFormats: [
       Html5QrcodeSupportedFormats.EAN_13,
