@@ -392,5 +392,67 @@ align-items: center;
   line-height: 1;         /* garante centralização perfeita */
 }
 
+  /* ========== Overlay de marcação para celular & desktop ========== */
+#barcode-scanner {
+  position: relative;
+}
+
+/* Overlay geral */
+.scanner-overlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 80%;
+  height: 30%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: block;
+}
+
+/* Cantos da moldura */
+.scanner-overlay::before,
+.scanner-overlay::after,
+.scanner-overlay span::before,
+.scanner-overlay span::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+}
+
+/* Top-Left */
+.scanner-overlay::before {
+  top: 0; left: 0;
+  border-right: none;
+  border-bottom: none;
+}
+/* Top-Right */
+.scanner-overlay::after {
+  top: 0; right: 0;
+  border-left: none;
+  border-bottom: none;
+}
+/* Bottom-Left */
+.scanner-overlay span::before {
+  bottom: 0; left: 0;
+  border-right: none;
+  border-top: none;
+}
+/* Bottom-Right */
+.scanner-overlay span::after {
+  bottom: 0; right: 0;
+  border-left: none;
+  border-top: none;
+}
+
+/* (Opcional) Ajuste fino no mobile */
+@media (max-width: 767px) {
+  .scanner-overlay {
+    width: 90%;
+    height: 40%;
+  }
+}
+
+
 
 }
