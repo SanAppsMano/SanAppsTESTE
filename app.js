@@ -4,26 +4,6 @@
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
-/**
- * Valida GTIN-8, 12, 13 ou 14 dígitos via dígito de controle (módulo 10).
- * @param {string} code — sequência numérica lida
- * @returns {boolean} — true se for GTIN válido
- */
-function validateGTIN(code) {
-  // aceita apenas 8, 12, 13 ou 14 dígitos
-  if (!/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(code)) {
-    return false;
-  }
-  const digits = code.split('').map(d => +d);
-  const checkDigit = digits.pop();
-  const sum = digits
-    .reverse()
-    .map((d, idx) => d * (idx % 2 === 0 ? 3 : 1))
-    .reduce((a, b) => a + b, 0);
-  const calculated = (10 - (sum % 10)) % 10;
-  return calculated === checkDigit;
-}
-
 window.addEventListener('DOMContentLoaded', () => {
   // Lightbox de imagem
   (function() {
@@ -119,6 +99,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
+      // Usa latitude/longitude do endereço conforme manual
       const lat = end.latitude;
       const lng = end.longitude;
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -187,8 +168,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Modal lista ordenada (mesma lógica com links atualizados)
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    const modalList = document.getElementById('modal-list');
-    modalList.innerHTML = '';
+    const modal = document.getElementById('modal'), listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     sortedAll.forEach((e, i) => {
       const est   = e.estabelecimento;
@@ -226,68 +206,10 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         </div>`;
-      modalList.appendChild(li);
+      listEl.appendChild(li);
     });
     document.getElementById('modal').classList.add('active');
   });
   document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
   document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
-
-  // Inicialização do leitor GTIN
-  const qrReader = new Html5Qrcode('barcode-scanner');
-  const scanBtn = document.getElementById('scan-barcode');
-  const closeBtn = document.getElementById('close-barcode-modal');
-  const modal = document.getElementById('barcode-modal');
-  const input = document.getElementById('barcode');
-  const config = {
-    fps: 20,
-    qrbox: { width: 300, height: 100 },
-    supportedFormats: [
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-      Html5QrcodeSupportedFormats.EAN_8
-    ]
-  };
-
-scanBtn.addEventListener('click', async () => {
-  modal.classList.add('show');
-  // remove qualquer QR já existente
-  
-if (qrReader.clear && typeof qrReader.clear() === 'object' && typeof qrReader.clear().catch === 'function') {
-  await qrReader.clear().catch(() => {});
-}
-    
-  // então inicia o scanner de fato
-  qrReader.start({ facingMode: 'environment' }, config,
-    decodedText => {
-      if (!validateGTIN(decodedText)) {
-        alert('❌ Leitura inválida. Tente novamente.');
-        navigator.vibrate?.(200);
-        return;
-      }
-      input.value = decodedText;
-      
-if (qrReader.stop && typeof qrReader.stop() === 'object' && typeof qrReader.stop().catch === 'function') {
-  qrReader.stop().catch(() => {});
-}
-    
-      modal.classList.remove('show');
-    },
-    error => {
-      // opcional: console.warn(error);
-    }
-  );
-});
-
-
-
-  closeBtn.addEventListener('click', () => {
-    
-if (qrReader.stop && typeof qrReader.stop() === 'object' && typeof qrReader.stop().catch === 'function') {
-  qrReader.stop().catch(() => {});
-}
-    
-    modal.classList.remove('show');
-  });
 });
