@@ -356,3 +356,20 @@ body {
   box-sizing: border-box;
   pointer-events: none;
   display: block !important;
+  z-index: 11;
+}
+
+/* Constrain scanner video and canvas inside container */
+#barcode-scanner .html5-qrcode,
+#barcode-scanner video,
+#barcode-scanner canvas {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  max-width: none;
+  max-height: none;
+  z-index: 9;
+}
