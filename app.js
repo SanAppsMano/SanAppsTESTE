@@ -250,26 +250,28 @@ window.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
- scanBtn.addEventListener('click', () => {
+scanBtn.addEventListener('click', async () => {
   modal.classList.add('show');
+  // remove qualquer QR já existente
+  await qrReader.clear().catch(() => {});
+  // então inicia o scanner de fato
   qrReader.start({ facingMode: 'environment' }, config,
     decodedText => {
-      // se GTIN inválido, aviso e modal permanece aberto
       if (!validateGTIN(decodedText)) {
         alert('❌ Leitura inválida. Tente novamente.');
         navigator.vibrate?.(200);
         return;
       }
-      // leitura válida: preenche, para o leitor e fecha o modal
       input.value = decodedText;
       qrReader.stop().catch(() => {});
       modal.classList.remove('show');
     },
     error => {
-      // (opcional) tratar erros de leitura aqui
+      // opcional: console.warn(error);
     }
   );
 });
+
 
 
   closeBtn.addEventListener('click', () => {
