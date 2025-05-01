@@ -153,7 +153,6 @@ body {
 .card-body {
   position: relative;
   padding: 1rem;
-  /* espaçamento dinâmico para o ícone */
   padding-right: clamp(4rem, 12%, 8rem);
   flex: 1;
 }
@@ -167,7 +166,6 @@ body {
 }
 .card-body a:hover { text-decoration: underline; }
 
-/* Ícone à direita responsivo */
 .card-icon-right {
   position: absolute;
   top: 50%;
@@ -181,7 +179,6 @@ body {
   display: block;
 }
 
-/* ========== Product Header Overlay ======= */
 .product-header {
   text-align: center;
   margin-bottom: 1rem;
@@ -208,7 +205,6 @@ body {
   text-align: center;
 }
 
-/* ========== History Panel ========== */
 .history-panel {
   background: var(--color-white);
   padding: 1.5rem;
@@ -254,7 +250,6 @@ body {
 }
 .btn-secondary:hover { opacity: 0.8; }
 
-/* ===== Botão e Modal de Lista Ordenada ===== */
 .open-modal-btn {
   display: block;
   margin: 0 auto 1rem;
@@ -309,90 +304,30 @@ body {
 }
 #modal-list li { list-style: none; }
 
-/* ===== Responsividade ===== */
-/* Mobile (até 767px) */
 @media (max-width: 767px) {
-  .search-panel {
-    padding: 1rem;
-    margin: 0 auto 1rem auto;
-  }
-  .controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .barcode-wrap {
-    flex-direction: column;
-  }
+  .search-panel { padding: 1rem; margin: 0 auto 1rem auto; }
+  .controls { display: flex; flex-direction: column; gap: 0.75rem; }
+  .barcode-wrap { flex-direction: column; }
   .barcode-wrap #barcode,
-  .barcode-wrap .btn-primary {
-    width: 100%;
-  }
-  .open-modal-btn {
-    width: 100%;
-    text-align: center;
-    margin: 0;
-  }
-  .controls > * {
-    width: 100%;
-  }
-  /* Ajustes só para o modal de scan */
-  #barcode-modal .modal-content {
-    padding-top: 2.5rem;
-  }
-  #barcode-modal .close {
-    top: 0.75rem;
-    right: 1rem;
-    z-index: 20;
-  }
+  .barcode-wrap .btn-primary { width: 100%; }
+  .open-modal-btn { width: 100%; text-align: center; margin: 0; }
+  .controls > * { width: 100%; }
+  #barcode-modal .modal-content { padding-top: 2.5rem; }
+  #barcode-modal .close { top: 0.75rem; right: 1rem; z-index: 20; }
 }
 
-/* Desktop (a partir de 768px) */
 @media (min-width: 768px) {
-  .search-panel {
-    padding: 2rem;
-    margin: 1rem auto 2rem auto;
-  }
-  .controls {
-    display: grid;
-    grid-template-columns: auto auto auto 1fr auto;
-    align-items: center;
-    gap: 1.5rem;
-  }
-  .location-choice {
-    grid-column: 1;
-  }
-  #city-block {
-    grid-column: 2;
-  }
-  .radius-control {
-    grid-column: 3;
-    display: flex;
-    gap: 1rem;
-  }
-  .barcode-wrap {
-    grid-column: 4;
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  .open-modal-btn {
-    grid-column: 5;
-    margin: 0;
-    width: auto;
-    justify-self: start;
-  }
-  #scan-barcode {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #scan-barcode i {
-    font-size: 1.2rem;
-  }
+  .search-panel { padding: 2rem; margin: 1rem auto 2rem auto; }
+  .controls { display: grid; grid-template-columns: auto auto auto 1fr auto; align-items: center; gap: 1.5rem; }
+  .location-choice { grid-column: 1; }
+  #city-block { grid-column: 2; }
+  .radius-control { grid-column: 3; display: flex; gap: 1rem; }
+  .barcode-wrap { grid-column: 4; display: flex; gap: 0.5rem; align-items: center; }
+  .open-modal-btn { grid-column: 5; margin: 0; width: auto; justify-self: start; }
+  #scan-barcode { display: flex; align-items: center; justify-content: center; }
+  #scan-barcode i { font-size: 1.2rem; }
 }
 
-/* ===== Overlay de cantos no scanner – GLOBAL ===== */
 #barcode-scanner {
   position: relative;
   overflow: hidden;
@@ -401,30 +336,22 @@ body {
   margin: 1rem auto;
   min-height: 100px;
 }
-#barcode-scanner .corner {
-  position: absolute;
-  z-index: 10;
-  width: 30px;
-  height: 30px;
-  border: 4px solid #fff;
-  pointer-events: none;
-}
-#barcode-scanner .top-left    { top: 0;    left: 0;    border-right: none; border-bottom: none; }
-#barcode-scanner .top-right   { top: 0;    right: 0;   border-left: none;  border-bottom: none; }
-#barcode-scanner .bottom-left { bottom: 0; left: 0;    border-right: none; border-top:    none; }
-#barcode-scanner .bottom-right{ bottom: 0; right: 0;   border-left: none;  border-top:    none; }
+#barcode-scanner .corner { position: absolute; z-index: 10; width: 30px; height: 30px; border: 4px solid #fff; pointer-events: none; }
+#barcode-scanner .top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
+#barcode-scanner .top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
+#barcode-scanner .bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
+#barcode-scanner .bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
 
-/* Ajustes para mobile – apenas tamanhos dos cantos */
-@media (max-width: 768px) {
-  #barcode-scanner .corner {
-    width: 20px;
-    height: 20px;
-    border-width: 3px;
-  }
-}
-
-/* Estilo para o qrbox do html5-qrcode */
-#barcode-scanner .html5-qrcode-region-selection {
+#barcode-scanner .html5-qrcode-region-selection,
+#barcode-scanner .html5-qrcode-region-selection__viewport {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
   border: 2px dashed var(--color-accent) !important;
   box-sizing: border-box;
+  pointer-events: none;
+  display: block !important;
+  z-index: 11;
 }
