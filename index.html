@@ -92,12 +92,11 @@
             type="tel"
             inputmode="numeric"
             pattern="[0-9]*"
-            placeholder="Código de barras: capture ou digite""
+            placeholder="Código de barras"
           />
-          <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">            
-                         <i class="fas fa-barcode"></i>
-                      </button>
-            
+          <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">
+            <i class="fas fa-barcode"></i>
+          </button>
           <button id="btn-search" class="btn-primary">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
@@ -165,13 +164,7 @@
     <div class="modal-content">
       <span class="close" id="close-barcode-modal">&times;</span>
       <h2>Escanear Código de Barras</h2>
-      <div id="barcode-scanner">
-  <div class="corner top-left"></div>
-  <div class="corner top-right"></div>
-  <div class="corner bottom-left"></div>
-  <div class="corner bottom-right"></div>
-</div>
-
+      <div id="barcode-scanner"></div>
     </div>
   </div>
 
@@ -202,7 +195,7 @@
       const modal = document.getElementById('barcode-modal');
       const input = document.getElementById('barcode');
       const config = {
-        fps: 20,
+        fps: 10,
         qrbox: { width: 300, height: 100 },
         supportedFormats: [
           Html5QrcodeSupportedFormats.EAN_13,
