@@ -25,49 +25,70 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    /* Floating share button */
-    #share-btn { /* ... original styles ... */ }
-    /* Modal overlay reuse for multiple modals */
-    .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; padding:1rem; box-sizing:border-box; z-index:9999; }
-    .modal.show { display:flex; }
-    .modal .modal-content { background:#fff; padding:1rem; border-radius:0.5rem; max-width:90vw; width:100%; text-align:center; position:relative; }
-    .modal .close { position:absolute; top:0.5rem; right:0.75rem; font-size:1.5rem; cursor:pointer; }
-    /* Barcode input group */
-    .barcode-wrap { display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
-    /* Scanner container inside modal */
-    #barcode-scanner { width:100%; border:1px solid #ccc; border-radius:4px; }
+    /* Modal comum reutilizado */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+             background: rgba(0,0,0,0.85); justify-content: center; align-items: center;
+             padding: 1rem; box-sizing: border-box; z-index: 9999; }
+    .modal.show { display: flex; }
+    .modal .modal-content { position: relative; background: #fff; padding: 1rem;
+                              border-radius: 0.5rem; max-width: 90vw; width: 100%; text-align: center; }
+    .modal .close { position: absolute; top: 0.5rem; right: 0.75rem;
+                    font-size: 1.5rem; cursor: pointer; }
+    /* Scanner GTIN dentro do modal */
+    #barcode-scanner { width: 100%; max-width: 400px; margin: 1rem auto;
+                        border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
   <!-- Topbar -->
-  <header class="topbar"> ... <!-- original content --> </header>
+  <header class="topbar">
+    <div class="container">
+      <h1 class="brand">
+        <i class="fas fa-tags"></i>
+        ConsultaPreço <span class="highlight">AL</span>
+      </h1>
+    </div>
+  </header>
+
   <main class="container">
+    <!-- Busca -->
     <section class="search-panel">
       <div class="controls">
-        <!-- existing controls -->
+        <!-- Outras controls originais... -->
         <div class="barcode-wrap">
-          <input id="barcode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Código de barras" />
+          <input
+            id="barcode"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Código de barras"
+          />
+          <!-- Botão para abrir modal de scanner -->
           <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">
             <i class="fas fa-barcode"></i>
           </button>
-          <button id="btn-search" class="btn-primary"> <i class="fas fa-search"></i> <span class="btn-text">Pesquisar</span> </button>
+          <button id="btn-search" class="btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="btn-text">Pesquisar</span>
+          </button>
         </div>
-        <!-- other buttons -->
+        <!-- Demais botões originais... -->
       </div>
-      <div id="loading" class="loading-overlay"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+      <div id="loading" class="loading-overlay">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+      </div>
     </section>
 
-    <!-- Resultado e outros modals ... original content ... -->
-
+    <!-- Resultado e outros modals originais... -->
   </main>
 
-  <!-- Modal de compartilhamento ... original ... -->
+  <!-- Modal de compartilhamento original... -->
 
   <!-- Modal de Scanner de GTIN -->
   <div id="barcode-modal" class="modal">
     <div class="modal-content">
       <span class="close" id="close-barcode-modal">&times;</span>
-      <h2>Escanear Código</h2>
+      <h2>Escanear Código de Barras</h2>
       <div id="barcode-scanner"></div>
     </div>
   </div>
@@ -76,32 +97,43 @@
   <script src="app.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Instância do leitor
+      // Inicializa leitor
       const qrReader = new Html5Qrcode('barcode-scanner');
       const scanBtn = document.getElementById('scan-barcode');
-      const closeBarcode = document.getElementById('close-barcode-modal');
-      const barcodeModal = document.getElementById('barcode-modal');
-      const inputBarcode = document.getElementById('barcode');
-      const config = { fps:10, qrbox:{width:300,height:100}, supportedFormats:[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.EAN_8] };
+      const closeBtn = document.getElementById('close-barcode-modal');
+      const modal = document.getElementById('barcode-modal');
+      const input = document.getElementById('barcode');
+      const config = {
+        fps: 10,
+        qrbox: { width: 300, height: 100 },
+        supportedFormats: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.EAN_8
+        ]
+      };
 
+      // Abre o modal e inicia scanner
       scanBtn.addEventListener('click', () => {
-        barcodeModal.classList.add('show');
-        qrReader.start({facingMode:'environment'}, config,
+        modal.classList.add('show');
+        qrReader.start({ facingMode: 'environment' }, config,
           decodedText => {
-            inputBarcode.value = decodedText;
+            input.value = decodedText;
             qrReader.stop();
-            barcodeModal.classList.remove('show');
+            modal.classList.remove('show');
           },
-          () => {});
+          () => {} // ignora falhas
+        ).catch(console.error);
       });
 
-      closeBarcode.addEventListener('click', () => {
-        qrReader.stop().catch(()=>{});
-        barcodeModal.classList.remove('show');
+      // Fecha modal e para scanner
+      closeBtn.addEventListener('click', () => {
+        qrReader.stop().catch(() => {});
+        modal.classList.remove('show');
       });
     });
-
-    // Scripts de compartilhamento e outros modals originais ...
+    // Scripts de compartilhamento e demais scripts originais...
   </script>
 </body>
 </html>
