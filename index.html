@@ -34,17 +34,11 @@
     .modal.show { display: flex; }
     .modal .modal-content { position: relative; background: #fff; padding: 1rem;
                               border-radius: 0.5rem; max-width: 90vw; width: 100%; text-align: center; }
-    .modal .close { position: absolute; top: 0.5rem; right: 2.5rem;
+    .modal .close { position: absolute; top: 0.5rem; right: 0.75rem;
                     font-size: 1.5rem; cursor: pointer; }
-    /* Scanner GTIN dentro do modal */
+    /* Ajustes do scanner no modal */
     #barcode-scanner { width: 100%; max-width: 400px; margin: 1rem auto;
                         border: 1px solid #ccc; border-radius: 4px; }
-    /* Grupo de input de barcode com botão */
-    .barcode-wrap { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-    /* Botão de tocha */
-    #toggle-torch { position: absolute; top: 0.5rem; right: 0.75rem; background: none; border: none;
-                    font-size: 1.5rem; color: #444; cursor: pointer; }
-    #toggle-torch.active { color: #f0ad4e; }
   </style>
 </head>
 <body>
@@ -98,6 +92,7 @@
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
+        <!-- Demais botões originais... -->
         <button id="open-modal" class="open-modal-btn" title="Ver Lista Ordenada">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
@@ -159,7 +154,6 @@
   <div id="barcode-modal" class="modal">
     <div class="modal-content">
       <span class="close" id="close-barcode-modal">&times;</span>
-      <button id="toggle-torch" title="Flash"><i class="fas fa-bolt"></i></button>
       <h2>Escanear Código de Barras</h2>
       <div id="barcode-scanner"></div>
     </div>
@@ -191,9 +185,6 @@
       const closeBtn = document.getElementById('close-barcode-modal');
       const modal = document.getElementById('barcode-modal');
       const input = document.getElementById('barcode');
-      const torchBtn = document.getElementById('toggle-torch');
-      let torchTrack = null;
-      let torchOn = false;
       const config = {
         fps: 10,
         qrbox: { width: 300, height: 100 },
@@ -210,35 +201,14 @@
         qrReader.start({ facingMode: 'environment' }, config,
           decodedText => {
             input.value = decodedText;
-            qrReader.stop().then(() => {
-              modal.classList.remove('show');
-            });
-          }, () => {})
-        .then(() => {
-          // ativa botão torch se suportado
-          const video = document.querySelector('#barcode-scanner video');
-          if (video && video.srcObject) {
-            const [track] = video.srcObject.getVideoTracks();
-            if (track.getCapabilities && track.getCapabilities().torch) {
-              torchTrack = track;
-              torchBtn.style.display = 'block';
-            }
-          }
-        })
-        .catch(console.error);
+            qrReader.stop();
+            modal.classList.remove('show');
+          }, () => {});
       });
 
       closeBtn.addEventListener('click', () => {
         qrReader.stop().catch(() => {});
         modal.classList.remove('show');
-      });
-
-      torchBtn.addEventListener('click', () => {
-        if (torchTrack) {
-          torchOn = !torchOn;
-          torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
-          torchBtn.classList.toggle('active', torchOn);
-        }
       });
     });
   </script>
