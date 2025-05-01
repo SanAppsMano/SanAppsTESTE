@@ -21,6 +21,9 @@
   />
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Biblioteca html5-qrcode para leitura de GTIN -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
   <style>
     /* Floating share button */
     #share-btn {
@@ -101,6 +104,22 @@
     .days-control input[type="range"] {
       flex: 1;
     }
+    /* Estilo do scanner GTIN */
+    #barcode-scanner {
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem auto;
+      display: none;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    /* Grupo de input de barcode com botão */
+    .barcode-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -145,11 +164,15 @@
             pattern="[0-9]*"
             placeholder="Código de barras"
           />
+          <button type="button" id="scan-barcode" class="btn-secondary" title="Escanear Código">
+            <i class="fas fa-camera"></i>
+          </button>
           <button id="btn-search" class="btn-primary">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
+
         <!-- Ver lista ordenada -->
         <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
           <i class="fas fa-list"></i>
@@ -164,6 +187,9 @@
       <div id="loading" class="loading-overlay">
         <i class="fas fa-spinner fa-spin fa-2x"></i>
       </div>
+
+      <!-- Scanner container GTIN -->
+      <div id="barcode-scanner"></div>
     </section>
 
     <!-- Resultado -->
@@ -216,6 +242,40 @@
   <!-- Scripts originais -->
   <script src="app.js" defer></script>
   <script>
+    // Inicialização do leitor GTIN
+    document.addEventListener('DOMContentLoaded', () => {
+      const qrReader = new Html5Qrcode("barcode-scanner");
+      const scanBtn = document.getElementById("scan-barcode");
+      const inputBarcode = document.getElementById("barcode");
+      const scannerDiv = document.getElementById("barcode-scanner");
+      const config = {
+        fps: 10,
+        qrbox: { width: 300, height: 100 },
+        supportedFormats: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.EAN_8
+        ]
+      };
+
+      scanBtn.addEventListener("click", () => {
+        scannerDiv.style.display = 'block';
+        qrReader.start(
+          { facingMode: 'environment' },
+          config,
+          decodedText => {
+            inputBarcode.value = decodedText;
+            qrReader.stop();
+            scannerDiv.style.display = 'none';
+          },
+          errorMessage => {
+            // ignorar leituras falhadas
+          }
+        ).catch(err => console.error('Erro ao iniciar scanner:', err));
+      });
+    });
+
     // Geração do QR Code para compartilhamento
     document.addEventListener('DOMContentLoaded', () => {
       new QRCode(document.getElementById('qrcode'), {
