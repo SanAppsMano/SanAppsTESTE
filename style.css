@@ -368,20 +368,22 @@ body {
     width: auto;
     justify-self: start;
   }
-  /* ========== Ajuste mínimo para centralizar o scan-button ========== */
+/* ========== Ajuste mínimo para scan-button ========== */
 .barcode-wrap {
-  display: flex;        /* já existia, apenas reforça */
-  align-items: center;  /* alinha input + scan + pesquisar verticalmente */
+  display: flex;
+  align-items: center; /* alinha input + scan + pesquisar verticalmente */
 }
 
 #scan-barcode {
+  padding: 0.6rem 0.75rem;       /* mesmo padding vertical/horizontal do input */
+  border-radius: var(--radius); /* mesma borda arredondada */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 #scan-barcode i {
-  font-size: 1.2rem;  /* ajusta tamanho para ficar em pé de igualdade com os outros ícones */
+  font-size: 1.1rem;            /* igual ao ícone de busca */
 }
 
 }
