@@ -92,7 +92,7 @@ body {
 }
 .barcode-wrap {
   display: flex;
-  gap: 0.5rem;
+align-items: center;
 }
 #barcode {
   flex: 1;
@@ -375,15 +375,15 @@ body {
 }
 
 #scan-barcode {
-  padding: 0.6rem 0.75rem;       /* mesmo padding vertical/horizontal do input */
-  border-radius: var(--radius); /* mesma borda arredondada */
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius);
 }
 
 #scan-barcode i {
-  font-size: 1.1rem;            /* igual ao ícone de busca */
+  font-size: 1.2rem; /* ajusta pro tamanho ficar igual aos outros ícones */
 }
 
 }
