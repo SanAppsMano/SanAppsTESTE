@@ -373,3 +373,43 @@ body {
   max-height: none;
   z-index: 9;
 }
+
+/* Floating share button — restored */
+#share-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--color-accent);
+  color: var(--color-white);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 1000;
+}
+#share-btn i {
+  font-size: 1.2rem;
+}
+
+/* Share modal adjustments */
+#share-modal .modal-content {
+  max-width: 90vw;
+  width: auto;
+  padding: 1rem;
+}
+#share-modal #qrcode {
+  margin: 1rem 0;
+}
+#share-modal .close-btn {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+#share-modal .close-btn:hover {
+  opacity: 0.9;
+}
