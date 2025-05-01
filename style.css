@@ -14,7 +14,11 @@
 }
 
 /* ========== Reset & Global ========== */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 body {
   font-family: var(--font-base);
   background: var(--color-bg);
@@ -361,6 +365,7 @@ body {
     grid-column: 4;
     display: flex;
     gap: 0.5rem;
+    align-items: center;       /* reforça centralização vertical */
   }
   .open-modal-btn {
     grid-column: 5;
@@ -368,70 +373,42 @@ body {
     width: auto;
     justify-self: start;
   }
-  /* ========== Ajuste mínimo para centralizar o scan-button ========== */
-.barcode-wrap {
-  display: flex;        /* já existia, apenas reforça */
-  align-items: center;  /* alinha input + scan + pesquisar verticalmente */
+  #scan-barcode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #scan-barcode i {
+    font-size: 1.2rem;
+  }
 }
 
-#scan-barcode {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#scan-barcode i {
-  font-size: 1.2rem;  /* ajusta tamanho para ficar em pé de igualdade com os outros ícones */
-}
-  /* Overlay de cantos no scanner */
+/* ===== Overlay de cantos no scanner – GLOBAL ===== */
 #barcode-scanner {
   position: relative;
-  /* mantém o tamanho atual */
+  overflow: hidden;
   width: 100%;
   max-width: 400px;
   margin: 1rem auto;
 }
-
 #barcode-scanner .corner {
   position: absolute;
+  z-index: 10;
   width: 30px;
   height: 30px;
   border: 4px solid #fff;
+  pointer-events: none;
 }
+#barcode-scanner .top-left    { top: 0;    left: 0;    border-right: none; border-bottom: none; }
+#barcode-scanner .top-right   { top: 0;    right: 0;   border-left: none;  border-bottom: none; }
+#barcode-scanner .bottom-left { bottom: 0; left: 0;    border-right: none; border-top:    none; }
+#barcode-scanner .bottom-right{ bottom: 0; right: 0;   border-left: none;  border-top:    none; }
 
-/* Cantos separados: só duas bordas por elemento */
-#barcode-scanner .top-left {
-  top: 0; left: 0;
-  border-right: none;
-  border-bottom: none;
-}
-#barcode-scanner .top-right {
-  top: 0; right: 0;
-  border-left: none;
-  border-bottom: none;
-}
-#barcode-scanner .bottom-left {
-  bottom: 0; left: 0;
-  border-right: none;
-  border-top: none;
-}
-#barcode-scanner .bottom-right {
-  bottom: 0; right: 0;
-  border-left: none;
-  border-top: none;
-}
-
-/* Ajustes para mobile */
+/* Ajustes para mobile – apenas tamanhos dos cantos */
 @media (max-width: 768px) {
-  #barcode-scanner {
-    max-width: 100%; /* ocupa toda a largura disponível */
-  }
   #barcode-scanner .corner {
     width: 20px;
     height: 20px;
     border-width: 3px;
   }
-}
-
-
 }
