@@ -281,10 +281,9 @@ body {
 }
 
 #modal .modal-content {
-  max-width: 90vw;
-  width: auto;
-  max-height: 80vh;
-  overflow-y: auto;
+  width: 60vw;               /* largura = 60% da viewport */
+  height: 60vh;              /* altura = 60% da viewport */
+  overflow-y: auto;          /* ativa rolagem vertical quando necessário */
   background: #fff;
   padding: 1.5rem;
   border-radius: 0.5rem;
