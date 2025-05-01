@@ -336,6 +336,15 @@ body {
   .controls > * {
     width: 100%;
   }
+  /* Ajustes só para o modal de scan */
+  #barcode-modal .modal-content {
+    padding-top: 2.5rem;
+  }
+  #barcode-modal .close {
+    top: 0.75rem;
+    right: 1rem;
+    z-index: 20;
+  }
 }
 
 /* Desktop (a partir de 768px) */
@@ -365,7 +374,7 @@ body {
     grid-column: 4;
     display: flex;
     gap: 0.5rem;
-    align-items: center;       /* reforça centralização vertical */
+    align-items: center;
   }
   .open-modal-btn {
     grid-column: 5;
@@ -390,6 +399,7 @@ body {
   width: 100%;
   max-width: 400px;
   margin: 1rem auto;
+  min-height: 100px;
 }
 #barcode-scanner .corner {
   position: absolute;
@@ -411,18 +421,10 @@ body {
     height: 20px;
     border-width: 3px;
   }
-  /* Ajustes só para o modal de scan, em mobile */
-@media (max-width: 767px) {
-  /* Dá mais espaço acima do conteúdo, empurrando o <h2> pra baixo */
-  #barcode-modal .modal-content {
-    padding-top: 2.5rem; /* ou ajuste o valor até ficar bom */
-  }
-  /* Garante que o “×” continue colado ao topo */
-  #barcode-modal .close {
-    top: 0.75rem;  /* você já tinha esse valor, pode manter */
-    right: 1rem;
-    z-index: 20;   /* acima de tudo */
-  }
 }
 
+/* Estilo para o qrbox do html5-qrcode */
+#barcode-scanner .html5-qrcode-region-selection {
+  border: 2px dashed var(--color-accent) !important;
+  box-sizing: border-box;
 }
