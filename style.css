@@ -411,4 +411,18 @@ body {
     height: 20px;
     border-width: 3px;
   }
+  /* Ajustes só para o modal de scan, em mobile */
+@media (max-width: 767px) {
+  /* Dá mais espaço acima do conteúdo, empurrando o <h2> pra baixo */
+  #barcode-modal .modal-content {
+    padding-top: 2.5rem; /* ou ajuste o valor até ficar bom */
+  }
+  /* Garante que o “×” continue colado ao topo */
+  #barcode-modal .close {
+    top: 0.75rem;  /* você já tinha esse valor, pode manter */
+    right: 1rem;
+    z-index: 20;   /* acima de tudo */
+  }
+}
+
 }
