@@ -399,8 +399,11 @@ body {
   padding: 1rem;
 }
 #share-modal #qrcode {
-  margin: 1rem 0;
+  margin: 1rem auto; /* Adiciona auto nas laterais para centralizar */
+  display: block;    /* Garante que o elemento seja exibido como bloco */
+  text-align: center; /* Segurança extra caso o QR code seja inline ou img */
 }
+
 #share-modal .close-btn {
   background: var(--color-primary);
   color: var(--color-white);
