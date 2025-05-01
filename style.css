@@ -253,11 +253,7 @@ window.addEventListener('DOMContentLoaded', () => {
 scanBtn.addEventListener('click', async () => {
   modal.classList.add('show');
   // remove qualquer QR já existente
-  
-if (qrReader.clear && typeof qrReader.clear() === 'object' && typeof qrReader.clear().catch === 'function') {
   await qrReader.clear().catch(() => {});
-}
-    
   // então inicia o scanner de fato
   qrReader.start({ facingMode: 'environment' }, config,
     decodedText => {
@@ -267,11 +263,7 @@ if (qrReader.clear && typeof qrReader.clear() === 'object' && typeof qrReader.cl
         return;
       }
       input.value = decodedText;
-      
-if (qrReader.stop && typeof qrReader.stop() === 'object' && typeof qrReader.stop().catch === 'function') {
-  qrReader.stop().catch(() => {});
-}
-    
+      qrReader.stop().catch(() => {});
       modal.classList.remove('show');
     },
     error => {
@@ -283,11 +275,7 @@ if (qrReader.stop && typeof qrReader.stop() === 'object' && typeof qrReader.stop
 
 
   closeBtn.addEventListener('click', () => {
-    
-if (qrReader.stop && typeof qrReader.stop() === 'object' && typeof qrReader.stop().catch === 'function') {
-  qrReader.stop().catch(() => {});
-}
-    
+    qrReader.stop().catch(() => {});
     modal.classList.remove('show');
   });
 });
