@@ -272,17 +272,17 @@ body {
   overflow: hidden;           /* evite overflow fullscreen */
 }
 .modal.active { display: block; }
-.modal-content {
-  background-color: #fff;
-  margin: 5% auto;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;           /* limite em viewport height */
-  overflow: hidden;           /* esconde overflow de vídeo */
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+\.modal-content {  
+  background-color: #fff;  
+  margin: 5% auto;  
+  padding: 1.5rem;  
+  border-radius: 0.5rem;  
+  width: 90%;  
+  max-width: 600px;  
+  max-height: 80vh;           /* limite em viewport height */  
+  overflow-y: auto;           /* permite scroll interno */  
+  position: relative;  
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);  
 }
 .modal-content h2 {
   margin-top: 0;
