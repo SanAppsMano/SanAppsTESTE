@@ -1,5 +1,5 @@
 // app.js
-// Mantém lógica original, atualiza links “Ver no mapa” e “Como chegar” para usar latitude/longitude do objeto de endereço
+// Mantém lógica original, com captura de foto e busca por barcode
 
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
@@ -11,13 +11,10 @@ window.addEventListener('DOMContentLoaded', () => {
     Object.assign(lb.style, {
       position: 'fixed', top:0, left:0, width:'100%', height:'100%',
       background:'rgba(0,0,0,0.8)', display:'none',
-      alignItems:'center', justifyContent:'center',
-      zIndex:10000, cursor:'zoom-out'
+      alignItems:'center', justifyContent:'center', zIndex:10000, cursor:'zoom-out'
     });
     const img = document.createElement('img'); img.id = 'lightbox-img';
-    Object.assign(img.style, {
-      maxWidth:'90%', maxHeight:'90%', boxShadow:'0 0 8px #fff'
-    });
+    Object.assign(img.style, { maxWidth:'90%', maxHeight:'90%', boxShadow:'0 0 8px #fff' });
     lb.appendChild(img);
     lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
@@ -35,12 +32,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
 
-  // NOVAS LINHAS: Botão de scan e captura de foto
+  // Botão de scan e captura de foto
   const btnScan    = document.getElementById('btn-scan');
   const photoInput = document.getElementById('photo-input');
-  // Dispara câmera para capturar foto
   btnScan.addEventListener('click', () => photoInput.click());
-  // Processa a foto, extrai o GTIN e dispara a busca
   photoInput.addEventListener('change', async () => {
     if (!photoInput.files?.length) return;
     const file = photoInput.files[0];
@@ -56,21 +51,16 @@ window.addEventListener('DOMContentLoaded', () => {
         code = c?.rawValue || '';
       } catch (e) { console.warn('BarcodeDetector falhou:', e); }
     }
-    // 2) QuaggaJS fallback
+    // 2) QuaggaJS
     if (!code) {
       await new Promise(res => {
-        Quagga.decodeSingle({
-          src: imgUrl,
-          numOfWorkers: 0,
-          locate: true,
-          decoder: { readers: ['ean_reader'] }
-        }, result => {
+        Quagga.decodeSingle({ src: imgUrl, numOfWorkers: 0, locate: true, decoder: { readers: ['ean_reader'] } }, result => {
           code = result?.codeResult?.code || '';
           res();
         });
       });
     }
-    // 3) ZXing.js fallback
+    // 3) ZXing.js
     if (!code) {
       await new Promise(res => {
         const img = new Image(); img.src = imgUrl;
@@ -90,6 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
     btnSearch.click();
   });
 
+  // Atualiza valor do slider de dias
   daysValue.textContent = daysRange.value;
   daysRange.addEventListener('input', () => { daysValue.textContent = daysRange.value; });
 
@@ -184,7 +175,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="info-group price-section">
             <h4>Preço</h4>
-            <p><span class="price-value" style="color:${color}">${price}</span></p>
+            <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
@@ -241,21 +232,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada com preço
+  // Modal lista ordenada com cores e preço em negrito
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     const modal = document.getElementById('modal');
     const listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    sortedAll.forEach(e => {
+    sortedAll.forEach((e, i) => {
       const est   = e.estabelecimento;
       const end   = est.endereco;
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
-      const lat   = end.latitude;
-      const lng   = end.longitude;
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      // Cor: verde(menor), azul(intermediário), vermelho(maior)
+      const color = i === 0
+        ? '#28a745'
+        : i === sortedAll.length - 1
+          ? '#dc3545'
+          : '#007bff';
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
@@ -269,7 +264,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="info-group price-section">
               <h4>Preço</h4>
-              <p><span class="price-value">${price}</span></p>
+              <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
               <p class="price-date">Quando: ${when}</p>
             </div>
             <div class="action-buttons">
