@@ -161,8 +161,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
-      const lat = end.latitude;
-      const lng = end.longitude;
+      const lat   = end.latitude;
+      const lng   = end.longitude;
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
@@ -241,18 +241,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada
+  // Modal lista ordenada com preço
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    const modal  = document.getElementById('modal');
+    const modal = document.getElementById('modal');
     const listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    sortedAll.forEach((e) => {
-      const est = e.estabelecimento;
-      const end = est.endereco;
-      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const lat = end.latitude;
-      const lng = end.longitude;
+    sortedAll.forEach(e => {
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
+      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const lat   = end.latitude;
+      const lng   = end.longitude;
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
       const li = document.createElement('li');
@@ -265,6 +266,11 @@ window.addEventListener('DOMContentLoaded', () => {
               <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
               <p>${end.bairro} — ${est.municipio || end.municipio}</p>
               <p>CEP: ${end.cep}</p>
+            </div>
+            <div class="info-group price-section">
+              <h4>Preço</h4>
+              <p><span class="price-value">${price}</span></p>
+              <p class="price-date">Quando: ${when}</p>
             </div>
             <div class="action-buttons">
               <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
