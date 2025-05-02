@@ -10,12 +10,13 @@ export default async function handler(req, res) {
 
   try {
     const {
-      descricao,
-      latitude,
-      longitude,
-      dias = 3,
-      raio = 15
+    descricao,
+    latitude = -9.6432331,
+    longitude = -35.7190686,
+    dias = 3,
+    raio = 15
     } = req.body;
+
 
     if (!descricao || typeof descricao !== 'string') {
       return res.status(400).json({ error: 'Parâmetro "descricao" é obrigatório.' });
