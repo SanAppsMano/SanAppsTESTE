@@ -394,5 +394,9 @@ body {
 .history-list li {
   flex: 0 0 auto;
 }
+/* Esconde o botão “Buscar Descrição” */
+#open-desc-modal {
+  display: none !important;
+}
 
 }
