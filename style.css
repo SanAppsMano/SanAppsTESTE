@@ -25,36 +25,15 @@ body {
   color: var(--color-gray);
   line-height: 1.5;
 }
-ul {
-  list-style: none;
-}
-a {
-  text-decoration: none;
-  color: inherit;
-}
-img {
-  max-width: 100%;
-  display: block;
-}
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-  font: inherit;
-}
-input, select, textarea {
-  font: inherit;
-}
+ul { list-style: none; }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+button { cursor: pointer; border: none; background: none; font: inherit; }
+input, select, textarea { font: inherit; }
 
 /* ========== Utility Classes ========== */
-.hidden {
-  display: none !important;
-}
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.hidden { display: none !important; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
 .mt-1 { margin-top: 1rem; }
 .mb-1 { margin-bottom: 1rem; }
 .mx-auto { margin-left: auto; margin-right: auto; }
@@ -97,12 +76,21 @@ input, select, textarea {
   margin-bottom: 1rem;
 }
 .controls {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 1rem;
 }
+.location-choice,
+#city-block,
+.days-control,
+.radius-control,
+.barcode-wrap,
+.open-modal-btn,
+.open-desc-modal {
+  flex: 1 1 120px;
+}
 .location-choice {
-  grid-column: 1 / 3;
   display: flex;
   gap: 0.5rem;
 }
@@ -110,17 +98,10 @@ input, select, textarea {
   font-size: 0.9rem;
   color: var(--color-gray);
 }
-#city-block {
-  grid-column: 3 / 5;
-}
-.select-field {
+#city-block .select-field {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: var(--radius);
 }
 .days-control {
-  grid-column: 1 / 4;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -132,7 +113,6 @@ input, select, textarea {
   flex: 1;
 }
 .radius-control {
-  grid-column: 4 / 7;
   display: flex;
   gap: 0.5rem;
 }
@@ -150,12 +130,10 @@ input, select, textarea {
   color: #fff;
 }
 
-/* =======================
-   Botão de scan junto ao input
-   ======================= */
+/* ========== Barcode Wrap & Buttons ========== */
 .barcode-wrap {
-  grid-column: 4;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 #barcode {
@@ -190,7 +168,7 @@ input, select, textarea {
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-white);
   border: none;
   padding: 0.6rem;
   border-radius: var(--radius);
@@ -204,19 +182,20 @@ input, select, textarea {
   font-size: 1.2rem;
 }
 
-/* List View Buttons */
-.open-modal-btn {
-  grid-column: 5;
+/* List & Desc Buttons */
+.open-modal-btn,
+.open-desc-modal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.6rem;
   background: var(--color-primary);
   color: var(--color-white);
   border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   transition: opacity var(--transition);
 }
-.open-modal-btn:hover {
+.open-modal-btn:hover,
+.open-desc-modal:hover {
   opacity: 0.9;
 }
 
@@ -247,18 +226,32 @@ input, select, textarea {
   border-radius: var(--radius);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.card h3 {
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-}
-.card p {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-.card a {
-  color: var(--color-primary);
+.card-header {
   font-weight: bold;
-  text-decoration: underline;
+  margin-bottom: 0.5rem;
+}
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.card-body .price-section {
+  margin-top: 0.5rem;
+}
+.card-body .action-buttons a {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+.card-body .btn-map {
+  background: #e7f3ff;
+  color: var(--color-primary);
+}
+.card-body .btn-directions {
+  background: #f5f5f5;
+  color: var(--color-gray);
 }
 
 /* Modal */
@@ -298,15 +291,20 @@ input, select, textarea {
   margin-bottom: 0.5rem;
 }
 .history-list {
-  max-height: 200px;
-  overflow-y: auto;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
 }
 .history-list li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #eee;
+  flex: 0 0 auto;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
 }
 .history-list li:last-child {
-  border-bottom: none;
+  margin-right: 0;
 }
 .btn-secondary {
   margin-top: 0.5rem;
@@ -411,24 +409,14 @@ input, select, textarea {
   color: var(--color-gray);
 }
 
-/* Cards Inner Elements */
-.card .price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-.card .meta {
-  font-size: 0.8rem;
-  color: #999;
+/* Modal List Ordered */
+#modal-list li {
+  margin-bottom: 1rem;
 }
 
 /* Media Queries */
 @media (max-width: 768px) {
   .controls {
-    grid-template-columns: 1fr;
-  }
-  .open-modal-btn {
-    width: 100%;
-    justify-self: stretch;
+    flex-direction: column;
   }
 }
