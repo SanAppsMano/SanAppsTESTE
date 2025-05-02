@@ -18,9 +18,17 @@
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    integrity="sha512-…"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
   />
+
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Bibliotecas de leitura de código de barras -->
+  <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
+
   <style>
     /* Floating share button */
     #share-btn {
@@ -40,17 +48,14 @@
       cursor: pointer;
       z-index: 10000;
     }
-    #share-btn i {
-      font-size: 1.5rem;
-    }
+    #share-btn i { font-size: 1.5rem; }
+
     /* Modal Overlay */
     #share-modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.85);
       justify-content: center;
       align-items: center;
@@ -59,9 +64,7 @@
       box-sizing: border-box;
       z-index: 9999;
     }
-    #share-modal.show {
-      display: flex;
-    }
+    #share-modal.show { display: flex; }
     #share-modal .modal-content {
       background: #fff;
       padding: 1rem;
@@ -69,16 +72,8 @@
       text-align: center;
       max-width: 90vw;
     }
-    #share-modal h2 {
-      margin-top: 0;
-      font-size: 1.25rem;
-      color: #333;
-    }
-    #share-modal #qrcode {
-      margin: 1rem auto;
-      width: 200px;
-      height: 200px;
-    }
+    #share-modal h2 { margin-top: 0; font-size: 1.25rem; color: #333; }
+    #share-modal #qrcode { margin: 1rem auto; width: 200px; height: 200px; }
     #share-modal .close-btn {
       margin-top: 1rem;
       padding: 0.5rem 1rem;
@@ -88,6 +83,7 @@
       border-radius: 0.3rem;
       cursor: pointer;
     }
+
     /* Days slider control */
     .days-control {
       display: flex;
@@ -95,12 +91,24 @@
       gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
-    .days-control label {
-      font-size: 0.9rem;
+    .days-control label { font-size: 0.9rem; }
+    .days-control input[type="range"] { flex: 1; }
+
+    /* Botão de scan junto ao input */
+    .btn-scan {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-accent);
+      color: #fff;
+      border: none;
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity var(--transition);
     }
-    .days-control input[type="range"] {
-      flex: 1;
-    }
+    .btn-scan:hover { opacity: 0.9; }
+    .btn-scan i { font-size: 1.2rem; }
   </style>
 </head>
 <body>
@@ -145,17 +153,26 @@
             pattern="[0-9]*"
             placeholder="Código de barras"
           />
+          <!-- Novo botão de scan -->
+          <button id="btn-scan" class="btn-primary btn-scan" title="Escanear código">
+            <i class="fas fa-camera"></i>
+          </button>
+          <!-- Input oculto para foto -->
+          <input
+            type="file"
+            id="photo-input"
+            accept="image/*;capture=camera"
+            style="display:none"
+          />
           <button id="btn-search" class="btn-primary">
             <i class="fas fa-search"></i>
             <span class="btn-text">Pesquisar</span>
           </button>
         </div>
-        <!-- Ver lista ordenada -->
         <button id="open-modal" class="open-modal-btn" title="Ver todos em lista">
           <i class="fas fa-list"></i>
           <span class="btn-text">Ver Lista Ordenada</span>
         </button>
-
         <button id="open-desc-modal" class="open-modal-btn" title="Buscar por descrição">
           <i class="fas fa-search"></i>
           <span class="btn-text">Buscar Descrição</span>
@@ -216,8 +233,8 @@
   <!-- Scripts originais -->
   <script src="app.js" defer></script>
   <script>
-    // Geração do QR Code para compartilhamento
     document.addEventListener('DOMContentLoaded', () => {
+      // Geração do QR Code para compartilhamento
       new QRCode(document.getElementById('qrcode'), {
         text: 'https://sanappsprice.netlify.app',
         width: 200,
@@ -229,13 +246,8 @@
       const shareModal = document.getElementById('share-modal');
       const closeShare = document.getElementById('close-share');
 
-      shareBtn.addEventListener('click', () => {
-        shareModal.classList.add('show');
-      });
-      closeShare.addEventListener('click', () => {
-        shareModal.classList.remove('show');
-      });
-      // Fechar com ESC
+      shareBtn.addEventListener('click', () => shareModal.classList.add('show'));
+      closeShare.addEventListener('click', () => shareModal.classList.remove('show'));
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') shareModal.classList.remove('show');
       });
