@@ -130,5 +130,3 @@ document.getElementById('modal').addEventListener('click', e => { if (e.target =
       alert('Erro ao buscar por descrição.');
     }
   });
-
-});
