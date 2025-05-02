@@ -1,6 +1,3 @@
-// app.js
-// Mantém lógica original, atualiza links “Ver no mapa” e “Como chegar” para usar latitude/longitude do objeto de endereço
-... [TRUNCADO PARA DEMONSTRAÇÃO]
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
 
   // Abrir e fechar o modal da descrição
