@@ -5,9 +5,10 @@ const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // --- INÍCIO: adições para live-scan no iOS ---
+  // --- INÍCIO: adições para live-scan otimizado no iOS ---
   /**
-   * Faz leitura de código de barras em tempo real via câmera (iOS).
+   * Lê código de barras em tempo real com ZXing no iOS,
+   * aplicando resolução maior, espera de foco, timeout e fallback.
    */
   async function startLiveScan() {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -15,36 +16,61 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     let stream;
     try {
+      // 1) Solicita câmera com resolução ideal (1280×720)
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
       });
+      // 2) Prepara <video> oculto para escanear
       const video = document.createElement('video');
       video.setAttribute('playsinline', true);
+      video.style.display = 'none';
       video.srcObject = stream;
       document.body.appendChild(video);
       await video.play();
 
+      // 3) Aguarda foco automático (~500 ms)
+      await new Promise(r => setTimeout(r, 500));
+
+      // 4) Inicia ZXing para decodificar do vídeo
       const codeReader = new ZXing.BrowserMultiFormatReader();
-      codeReader.decodeFromVideoDevice(
-        /* deviceId */ null,
-        /* video element */ video,
-        (result, err) => {
-          if (result) {
-            const code = result.getText();
-            // encerra stream e leitor
-            stream.getTracks().forEach(t => t.stop());
-            codeReader.reset();
-            document.body.removeChild(video);
-            // preenche e busca
-            barcodeInput.value = code;
-            btnSearch.click();
+      const resultPromise = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('timeout')), 3000);
+        codeReader.decodeFromVideoDevice(
+          /* deviceId */ null,
+          /* video element */ video,
+          (result, err) => {
+            if (result && result.getText()) {
+              clearTimeout(timer);
+              resolve(result.getText());
+            }
           }
-        }
-      );
+        );
+      });
+
+      // 5) Aguarda leitura ou timeout
+      const code = await resultPromise.catch(() => null);
+
+      // 6) Finaliza câmera e leitor
+      codeReader.reset();
+      stream.getTracks().forEach(t => t.stop());
+      document.body.removeChild(video);
+
+      if (code) {
+        // 7a) Se leu, preenche e busca
+        barcodeInput.value = code;
+        btnSearch.click();
+      } else {
+        // 7b) Se não leu, cai no fluxo de foto
+        photoInput.click();
+      }
     } catch (e) {
       console.error(e);
-      alert('Erro ao acessar câmera.');
       if (stream) stream.getTracks().forEach(t => t.stop());
+      photoInput.click();
     }
   }
   // --- FIM das adições ---
@@ -106,7 +132,12 @@ window.addEventListener('DOMContentLoaded', () => {
     // 2) QuaggaJS
     if (!code) {
       await new Promise(res => {
-        Quagga.decodeSingle({ src: imgUrl, numOfWorkers: 0, locate: true, decoder: { readers: ['ean_reader'] } }, result => {
+        Quagga.decodeSingle({
+          src: imgUrl,
+          numOfWorkers: 0,
+          locate: true,
+          decoder: { readers: ['ean_reader'] }
+        }, result => {
           code = result?.codeResult?.code || '';
           res();
         });
@@ -199,7 +230,45 @@ window.addEventListener('DOMContentLoaded', () => {
     const sortedAll = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     const [menor, maior] = [sortedAll[0], sortedAll[sortedAll.length - 1]];
     [menor, maior].forEach((e, i) => {
-      // ... resto exatamente igual ao original ...
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
+      const when  = e.produto.venda.dataVenda
+        ? new Date(e.produto.venda.dataVenda).toLocaleString()
+        : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const color = i === 0 ? '#28a745' : '#dc3545';
+      const lat   = end.latitude;
+      const lng   = end.longitude;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+      const card = document.createElement('div'); card.className = 'card';
+      card.innerHTML = `
+        <div class="card-header ${i === 0 ? 'highlight-green' : 'highlight-red'}">
+          ${i === 0 ? 'Menor preço' : 'Maior preço'} — ${est.nomeFantasia || est.razaoSocial}
+        </div>
+        <div class="card-body">
+          <div class="info-group">
+            <h4>Localização</h4>
+            <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+            <p>${end.bairro} — ${est.municipio || end.municipio}</p>
+            <p>CEP: ${end.cep}</p>
+          </div>
+          <div class="info-group">
+            <h4>Contato</h4>
+            <p>📞 ${est.telefone}</p>
+          </div>
+          <div class="info-group price-section">
+            <h4>Preço</h4>
+            <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
+            <p class="price-date">Quando: ${when}</p>
+          </div>
+          <div class="action-buttons">
+            <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+            <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
+          </div>
+        </div>`;
+      resultContainer.appendChild(card);
     });
   }
 
@@ -212,14 +281,117 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function searchByCode() {
-    // ... lógica idêntica ao original ...
+    const code = barcodeInput.value.trim();
+    if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active');
+    resultContainer.innerHTML = '';
+    summaryContainer.innerHTML = '';
+    let lat, lng;
+    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
+      try {
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej)
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch {
+        loading.classList.remove('active');
+        return alert('Não foi possível obter localização.');
+      }
+    } else {
+      [lat, lng] = document.getElementById('city').value
+        .split(',')
+        .map(Number);
+    }
+
+    try {
+      const diasEscolhidos = Number(daysRange.value);
+      const resp = await fetch(`${API_PROXY}/api/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigoDeBarras: code,
+          latitude: lat,
+          longitude: lng,
+          raio: Number(selectedRadius),
+          dias: diasEscolhidos
+        })
+      });
+      const data = await resp.json();
+      loading.classList.remove('active');
+      const list = Array.isArray(data.conteudo) ? data.conteudo : [];
+      if (!list.length) {
+        summaryContainer.innerHTML =
+          `<p>Nenhum estabelecimento encontrado.</p>`;
+        return;
+      }
+      historyArr.unshift({
+        code,
+        name: data.dscProduto || list[0].produto.descricao,
+        image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
+        dados: list
+      });
+      saveHistory();
+      renderHistory();
+      renderSummary(list);
+      currentResults = list;
+      renderCards(list);
+    } catch {
+      loading.classList.remove('active');
+      alert('Erro na busca.');
+    }
   }
 
   btnSearch.addEventListener('click', searchByCode);
 
   // Modal lista ordenada
   document.getElementById('open-modal').addEventListener('click', () => {
-    // ... idêntico ao original, com cores e bold já implementados ...
+    if (!currentResults.length) return alert('Faça uma busca primeiro.');
+    const modal = document.getElementById('modal');
+    const listEl = document.getElementById('modal-list');
+    listEl.innerHTML = '';
+    const sortedAll = [...currentResults].sort(
+      (a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda
+    );
+    sortedAll.forEach((e, i) => {
+      const est   = e.estabelecimento;
+      const end   = est.endereco;
+      const when  = e.produto.venda.dataVenda
+        ? new Date(e.produto.venda.dataVenda).toLocaleString()
+        : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const color = i === 0
+        ? '#28a745'
+        : i === sortedAll.length - 1
+          ? '#dc3545'
+          : '#007bff';
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h4>Localização</h4>
+              <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+              <p>${end.bairro} — ${est.municipio || end.municipio}</p>
+              <p>CEP: ${end.cep}</p>
+            </div>
+            <div class="info-group price-section">
+              <h4>Preço</h4>
+              <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
+              <p class="price-date">Quando: ${when}</p>
+            </div>
+            <div class="action-buttons">
+              <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+              <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
+            </div>
+          </div>
+        </div>`;
+      listEl.appendChild(li);
+    });
+    modal.classList.add('active');
   });
   document.getElementById('close-modal').addEventListener('click', () =>
     document.getElementById('modal').classList.remove('active')
