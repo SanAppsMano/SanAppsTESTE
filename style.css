@@ -398,5 +398,10 @@ body {
 #open-desc-modal {
   display: none !important;
 }
+@media (max-width: 768px) {
+  #open-desc-modal {
+    display: none !important;
+  }
+}
 
 }
