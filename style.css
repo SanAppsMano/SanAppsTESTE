@@ -394,14 +394,10 @@ body {
 .history-list li {
   flex: 0 0 auto;
 }
-/* Esconde o botão “Buscar Descrição” */
+
+/* Esconde o botão “Buscar Descrição” em qualquer viewport */
 #open-desc-modal {
   display: none !important;
-}
-@media (max-width: 768px) {
-  #open-desc-modal {
-    display: none !important;
-  }
 }
 
 }
