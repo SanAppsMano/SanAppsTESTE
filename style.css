@@ -394,5 +394,12 @@ body {
 .history-list li {
   flex: 0 0 auto;
 }
+/* Destacar o input de código de barras */
+#barcode {
+  font-size: 1.25rem;           /* já definido para ~20px */
+  line-height: 1.4;
+  font-weight: 600;             /* negrito suave */
+  color: var(--color-primary);  /* sua cor primária, ex.: #005aaf */
+}
 
 }
