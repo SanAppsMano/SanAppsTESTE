@@ -5,76 +5,6 @@ const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // --- INÍCIO: adições para live-scan otimizado no iOS ---
-  /**
-   * Lê código de barras em tempo real com ZXing no iOS,
-   * aplicando resolução maior, espera de foco, timeout e fallback.
-   */
-  async function startLiveScan() {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      return alert('Câmera não suportada neste dispositivo.');
-    }
-    let stream;
-    try {
-      // 1) Solicita câmera com resolução ideal (1280×720)
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-      // 2) Prepara <video> oculto para escanear
-      const video = document.createElement('video');
-      video.setAttribute('playsinline', true);
-      video.style.display = 'none';
-      video.srcObject = stream;
-      document.body.appendChild(video);
-      await video.play();
-
-      // 3) Aguarda foco automático (~500 ms)
-      await new Promise(r => setTimeout(r, 500));
-
-      // 4) Inicia ZXing para decodificar do vídeo
-      const codeReader = new ZXing.BrowserMultiFormatReader();
-      const resultPromise = new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('timeout')), 3000);
-        codeReader.decodeFromVideoDevice(
-          /* deviceId */ null,
-          /* video element */ video,
-          (result, err) => {
-            if (result && result.getText()) {
-              clearTimeout(timer);
-              resolve(result.getText());
-            }
-          }
-        );
-      });
-
-      // 5) Aguarda leitura ou timeout
-      const code = await resultPromise.catch(() => null);
-
-      // 6) Finaliza câmera e leitor
-      codeReader.reset();
-      stream.getTracks().forEach(t => t.stop());
-      document.body.removeChild(video);
-
-      if (code) {
-        // 7a) Se leu, preenche e busca
-        barcodeInput.value = code;
-        btnSearch.click();
-      } else {
-        // 7b) Se não leu, cai no fluxo de foto
-        photoInput.click();
-      }
-    } catch (e) {
-      console.error(e);
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      photoInput.click();
-    }
-  }
-  // --- FIM das adições ---
-
   // Lightbox de imagem
   (function() {
     const lb = document.createElement('div'); lb.id = 'lightbox';
@@ -105,15 +35,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Botão de scan e captura de foto
   const btnScan    = document.getElementById('btn-scan');
   const photoInput = document.getElementById('photo-input');
-
-  // AQUI: detecção de iOS vs Android e atribuição de fluxo
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isIOS) {
-    btnScan.addEventListener('click', () => startLiveScan());
-  } else {
-    btnScan.addEventListener('click', () => photoInput.click());
-  }
-
+  btnScan.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', async () => {
     if (!photoInput.files?.length) return;
     const file = photoInput.files[0];
@@ -132,12 +54,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // 2) QuaggaJS
     if (!code) {
       await new Promise(res => {
-        Quagga.decodeSingle({
-          src: imgUrl,
-          numOfWorkers: 0,
-          locate: true,
-          decoder: { readers: ['ean_reader'] }
-        }, result => {
+        Quagga.decodeSingle({ src: imgUrl, numOfWorkers: 0, locate: true, decoder: { readers: ['ean_reader'] } }, result => {
           code = result?.codeResult?.code || '';
           res();
         });
@@ -232,9 +149,7 @@ window.addEventListener('DOMContentLoaded', () => {
     [menor, maior].forEach((e, i) => {
       const est   = e.estabelecimento;
       const end   = est.endereco;
-      const when  = e.produto.venda.dataVenda
-        ? new Date(e.produto.venda.dataVenda).toLocaleString()
-        : '—';
+      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const color = i === 0 ? '#28a745' : '#dc3545';
       const lat   = end.latitude;
@@ -281,29 +196,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function searchByCode() {
-    const code = barcodeInput.value.trim();
-    if (!code) return alert('Digite um código de barras.');
-    loading.classList.add('active');
-    resultContainer.innerHTML = '';
-    summaryContainer.innerHTML = '';
+    const code = barcodeInput.value.trim(); if (!code) return alert('Digite um código de barras.');
+    loading.classList.add('active'); resultContainer.innerHTML = ''; summaryContainer.innerHTML = '';
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-      try {
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej)
-        );
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-      } catch {
-        loading.classList.remove('active');
-        return alert('Não foi possível obter localização.');
-      }
+      try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej)); lat = pos.coords.latitude; lng = pos.coords.longitude; }
+      catch { loading.classList.remove('active'); return alert('Não foi possível obter localização.'); }
     } else {
-      [lat, lng] = document.getElementById('city').value
-        .split(',')
-        .map(Number);
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
-
     try {
       const diasEscolhidos = Number(daysRange.value);
       const resp = await fetch(`${API_PROXY}/api/search`, {
@@ -320,22 +221,9 @@ window.addEventListener('DOMContentLoaded', () => {
       const data = await resp.json();
       loading.classList.remove('active');
       const list = Array.isArray(data.conteudo) ? data.conteudo : [];
-      if (!list.length) {
-        summaryContainer.innerHTML =
-          `<p>Nenhum estabelecimento encontrado.</p>`;
-        return;
-      }
-      historyArr.unshift({
-        code,
-        name: data.dscProduto || list[0].produto.descricao,
-        image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
-        dados: list
-      });
-      saveHistory();
-      renderHistory();
-      renderSummary(list);
-      currentResults = list;
-      renderCards(list);
+      if (!list.length) { summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`; return; }
+      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list });
+      saveHistory(); renderHistory(); renderSummary(list); currentResults = list; renderCards(list);
     } catch {
       loading.classList.remove('active');
       alert('Erro na busca.');
@@ -344,22 +232,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada
+  // Modal lista ordenada com cores e preço em negrito
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     const modal = document.getElementById('modal');
-    const listEl = document.getElementById('modal-list');
-    listEl.innerHTML = '';
-    const sortedAll = [...currentResults].sort(
-      (a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda
-    );
+    const listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
+    const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     sortedAll.forEach((e, i) => {
       const est   = e.estabelecimento;
       const end   = est.endereco;
-      const when  = e.produto.venda.dataVenda
-        ? new Date(e.produto.venda.dataVenda).toLocaleString()
-        : '—';
+      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
+      // Cor: verde(menor), azul(intermediário), vermelho(maior)
       const color = i === 0
         ? '#28a745'
         : i === sortedAll.length - 1
@@ -393,11 +277,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     modal.classList.add('active');
   });
-  document.getElementById('close-modal').addEventListener('click', () =>
-    document.getElementById('modal').classList.remove('active')
-  );
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal'))
-      document.getElementById('modal').classList.remove('active');
-  });
+  document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
 });
