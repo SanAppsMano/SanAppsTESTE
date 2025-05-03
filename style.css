@@ -395,9 +395,4 @@ body {
   flex: 0 0 auto;
 }
 
-/* Esconde o botão “Buscar Descrição” em qualquer viewport */
-#open-desc-modal {
-  display: none !important;
-}
-
 }
