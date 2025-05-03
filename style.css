@@ -402,3 +402,12 @@ body {
   font-weight: 600;             /* negrito suave */
   color: var(--color-primary);  /* sua cor primária, ex.: #005aaf */
 }
+  
+@media (max-width: 768px) {
+  input#barcode {
+    font-size: 1.25rem !important;
+    line-height: 1.4 !important;
+    font-weight: 600 !important;
+    color: var(--color-primary) !important;
+  }
+}
