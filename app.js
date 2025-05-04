@@ -32,7 +32,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
 
-  // Scan / captura de foto
+  // Botão de scan e captura de foto
   const btnScan    = document.getElementById('btn-scan');
   const photoInput = document.getElementById('photo-input');
   btnScan.addEventListener('click', () => photoInput.click());
@@ -78,6 +78,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     URL.revokeObjectURL(imgUrl);
 
+    // Preenche o campo e dispara a busca
     barcodeInput.value = code;
     btnSearch.click();
   });
@@ -157,6 +158,7 @@ window.addEventListener('DOMContentLoaded', () => {
         : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
+      const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
       const color = i===0? '#28a745':'#dc3545';
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
@@ -181,6 +183,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <p>
               <strong>Valor Declarado:</strong>
               <strong>${declared}</strong>
+              ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
             </p>
             <p class="price-date">Quando: ${when}</p>
           </div>
@@ -271,6 +274,7 @@ window.addEventListener('DOMContentLoaded', () => {
         :'—';
       const price= brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado)+' '+e.produto.unidadeMedida;
+      const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
       const color = i===0? '#28a745': i===sortedAll.length-1? '#dc3545':'#007bff';
       const mapLink=`https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
       const dirLink=`https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
@@ -294,6 +298,7 @@ window.addEventListener('DOMContentLoaded', () => {
               <p>
                 <strong>Valor Declarado:</strong>
                 <strong>${declared}</strong>
+                ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
               </p>
               <p class="price-date">Quando: ${when}</p>
             </div>
