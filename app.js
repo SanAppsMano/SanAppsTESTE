@@ -151,6 +151,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const end   = est.endereco;
       const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
+      const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const color = i === 0 ? '#28a745' : '#dc3545';
       const lat   = end.latitude;
       const lng   = end.longitude;
@@ -175,7 +176,8 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="info-group price-section">
             <h4>Preço</h4>
-            <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
+            <p><strong>Preço de Venda:</strong> ${price}</p>
+            <p><strong>Valor Declarado:</strong> ${declared}</p>
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
@@ -264,7 +266,8 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="info-group price-section">
               <h4>Preço</h4>
-              <p><strong><span class="price-value" style="color:${color}">${price}</span></strong></p>
+              <p><strong>Preço de Venda:</strong> ${price}</p>
+              <p><strong>Valor Declarado:</strong> ${declared}</p>
               <p class="price-date">Quando: ${when}</p>
             </div>
             <div class="action-buttons">
