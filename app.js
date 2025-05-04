@@ -175,8 +175,10 @@ window.addEventListener('DOMContentLoaded', () => {
             <p>📞 ${est.telefone}</p>
           </div>
           <div class="info-group price-section">
-            <h4>Preço</h4>
-            <p><strong>Preço de Venda:</strong> ${price}</p>
+            <p>
+              <strong>Preço de Venda:</strong>
+              <span style="color:${color}">${price}</span>
+            </p>
             <p><strong>Valor Declarado:</strong> ${declared}</p>
             <p class="price-date">Quando: ${when}</p>
           </div>
@@ -234,39 +236,31 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnSearch.addEventListener('click', searchByCode);
 
-  // Modal lista ordenada com cores e preço em negrito
+  // Modal lista ordenada
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
     const modal = document.getElementById('modal');
     const listEl = document.getElementById('modal-list'); listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     sortedAll.forEach((e, i) => {
-      const est   = e.estabelecimento;
-      const end   = est.endereco;
-      const when  = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
-      const price = brl.format(e.produto.venda.valorVenda);
-      // Cor: verde(menor), azul(intermediário), vermelho(maior)
-      const color = i === 0
-        ? '#28a745'
-        : i === sortedAll.length - 1
-          ? '#dc3545'
-          : '#007bff';
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const est      = e.estabelecimento;
+      const end      = est.endereco;
+      const when     = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price    = brl.format(e.produto.venda.valorVenda);
+      const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
+      const color    = i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff';
+      const mapLink  = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
           <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
           <div class="card-body">
-            <div class="info-group">
-              <h4>Localização</h4>
-              <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-              <p>${end.bairro} — ${est.municipio || end.municipio}</p>
-              <p>CEP: ${end.cep}</p>
-            </div>
             <div class="info-group price-section">
-              <h4>Preço</h4>
-              <p><strong>Preço de Venda:</strong> ${price}</p>
+              <p>
+                <strong>Preço de Venda:</strong>
+                <span style="color:${color}">${price}</span>
+              </p>
               <p><strong>Valor Declarado:</strong> ${declared}</p>
               <p class="price-date">Quando: ${when}</p>
             </div>
@@ -281,5 +275,7 @@ window.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('active');
   });
   document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
-  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active');
+  });
 });
