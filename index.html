@@ -145,7 +145,22 @@
 .btn-podcast:hover {
   background: #1aa34a;
 }
+
+.podcast-footer-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: #000;
+  z-index: 999;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+}
+body {
+  padding-bottom: 90px; /* para não cobrir conteúdo */
+}
 </style>
+
 
 </head>
 <body>
@@ -266,7 +281,7 @@
   <h2>🎧 Ouça o podcast direto aqui</h2>
   <iframe style="border-radius:12px" 
     src="https://open.spotify.com/embed/show/2gP86J36BODaksJ9mPaj6m?utm_source=generator" 
-    width="100%" height="152" frameBorder="0" 
+    width="100%" height="232" frameBorder="0" 
     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
     loading="lazy">
   </iframe>
@@ -336,6 +351,15 @@
       document.getElementById("podcast-episodes").innerHTML = "Não foi possível carregar os episódios.";
     });
 </script>
+
+<div class="podcast-footer-player">
+  <iframe style="border:none;width:100%;height:100%;" 
+    src="https://open.spotify.com/embed/show/2gP86J36BODaksJ9mPaj6m?utm_source=generator" 
+    frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+    loading="lazy">
+  </iframe>
+</div>
+
 </body>
 
 </html>
