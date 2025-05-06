@@ -32,6 +32,7 @@
   <style>
     /* Floating share button */
     #share-btn {
+  bottom: 140px !important;
       position: fixed;
       bottom: 1rem;
       right: 1rem;
@@ -206,7 +207,63 @@ body {
   align-items: center !important;
   justify-content: center !important;
 }
+
+#share-btn {
+  bottom: 140px !important;
+  position: fixed !important;
+  bottom: 120px !important;
+  right: 20px !important;
+  z-index: 1000 !important;
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 0.9rem !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background-color: var(--color-accent) !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+#share-btn {
+  bottom: 140px !important;
+  position: fixed !important;
+  bottom: 120px !important;
+  right: 20px !important;
+  z-index: 1000 !important;
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 0.9rem !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background-color: var(--color-accent) !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 0.3s ease, background-color 0.3s ease !important;
+}
+#share-btn:hover {
+  transform: scale(1.1);
+  background-color: #e7830f !important;
+}
+
+/* Modal de compartilhamento com animação */
+#share-modal {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#share-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
 </style>
+
+
 
 
 
@@ -390,8 +447,7 @@ body {
       });
     })
     .catch(() => {
-      document.getElementById("podcast-episodes").innerHTML = "Não foi possível carregar os episódios.";
-    });
+          });
 </script>
 
 <div class="podcast-footer-player">
