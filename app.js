@@ -49,18 +49,11 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    const payload = {
-      descricao: desc,
-      dias:      DEFAULT_DIAS_DESC,
-      raio:      DEFAULT_RAIO_DESC,
-      latitude:  lat,
-      longitude: lng
-    };
-
+    const payload = { descricao: desc, dias: DEFAULT_DIAS_DESC, raio: DEFAULT_RAIO_DESC, latitude: lat, longitude: lng };
     const response = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload)
+      body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error(`Status ${response.status}`);
     const data = await response.json();
@@ -72,16 +65,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const desc = descInput.value.trim();
     if (!desc) return alert('Informe uma descrição.');
 
-    // mostra loading
     loading.classList.add('active');
-    descCatalog.innerHTML    = '';
-    descDatalist.innerHTML   = '';
-    descCountEl.hidden       = true;
+    descCatalog.innerHTML  = '';
+    descDatalist.innerHTML = '';
+    descCountEl.hidden     = true;
 
     try {
       const items = await searchByDescription(desc);
-
-      // popula datalist
       const seen = new Set();
       items.forEach(i => {
         if (i.dscProduto && !seen.has(i.dscProduto)) {
@@ -91,8 +81,6 @@ window.addEventListener('DOMContentLoaded', () => {
           seen.add(i.dscProduto);
         }
       });
-
-      // cria cards
       items.forEach(i => {
         const card = document.createElement('div');
         card.className    = 'card';
@@ -110,13 +98,10 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         descCatalog.appendChild(card);
       });
-
-      descCountEl.textContent =
-        `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
+      descCountEl.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
-      // esconde loading e mostra contagem
       descCountEl.hidden = false;
       loading.classList.remove('active');
     }
@@ -126,14 +111,13 @@ window.addEventListener('DOMContentLoaded', () => {
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
-      card.style.display =
-        card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+      card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
     });
   });
-  // ===== Fim: Busca por Descrição =====
 
-  // ... restante do código original ...
 });
+
+// Fim do app.js
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
