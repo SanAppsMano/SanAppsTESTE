@@ -1,12 +1,12 @@
 // app.js
-// Mantém lógica original e agora adiciona loading overlay para busca por descrição via modal
+// Mantém lógica original e adiciona loading overlay para busca por descrição via modal
 
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
   // Lightbox de imagem (original)...
-  (function() { /* ... */ })();
+  (function() { /* ... lightbox code ... */ })();
 
   // Elementos originais
   const btnSearch        = document.getElementById('btn-search');
@@ -36,8 +36,8 @@ window.addEventListener('DOMContentLoaded', () => {
   openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
 
+  // Função de busca por descrição
   async function searchByDescription(desc) {
-    // calcula latitude e longitude como na busca por código
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
       const pos = await new Promise((res, rej) =>
@@ -48,6 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
+
     const payload = {
       descricao: desc,
       dias:      DEFAULT_DIAS_DESC,
@@ -55,51 +56,68 @@ window.addEventListener('DOMContentLoaded', () => {
       latitude:  lat,
       longitude: lng
     };
-    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method: 'POST',
+
+    const response = await fetch(`${API_PROXY}/api/searchDescricao`, {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body:    JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.content || []);
-  }
-    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.content || []);
-  };
-    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
+    if (!response.ok) throw new Error(`Status ${response.status}`);
+    const data = await response.json();
     return Array.isArray(data) ? data : (data.content || []);
   }
 
+  // Renderiza catálogo no modal
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) return alert('Informe uma descrição.');
 
     // mostra loading
     loading.classList.add('active');
-    descCatalog.innerHTML  = '';
-    descDatalist.innerHTML = '';
-    descCountEl.hidden     = true;
+    descCatalog.innerHTML    = '';
+    descDatalist.innerHTML   = '';
+    descCountEl.hidden       = true;
 
     try {
       const items = await searchByDescription(desc);
-      // ... popula datalist e cria cards ...
-      descCountEl.textContent = `${items.length} item${items.length!==1?'s':''} encontrado${items.length!==1?'s':''}.`;
+
+      // popula datalist
+      const seen = new Set();
+      items.forEach(i => {
+        if (i.dscProduto && !seen.has(i.dscProduto)) {
+          const option = document.createElement('option');
+          option.value = i.dscProduto;
+          descDatalist.appendChild(option);
+          seen.add(i.dscProduto);
+        }
+      });
+
+      // cria cards
+      items.forEach(i => {
+        const card = document.createElement('div');
+        card.className    = 'card';
+        card.dataset.gtin = i.codGetin;
+        card.dataset.desc = i.dscProduto;
+        card.innerHTML    = `
+          <img src="${COSMOS_BASE}/${i.codGetin}" alt="">
+          <div class="gtin">${i.codGetin}</div>
+          <div class="desc">${i.dscProduto}</div>
+        `;
+        card.addEventListener('click', () => {
+          barcodeInput.value = i.codGetin;
+          descModal.classList.remove('active');
+          btnSearch.click();
+        });
+        descCatalog.appendChild(card);
+      });
+
+      descCountEl.textContent =
+        `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
+      // esconde loading e mostra contagem
       descCountEl.hidden = false;
-      // esconde loading
       loading.classList.remove('active');
     }
   }
@@ -108,12 +126,13 @@ window.addEventListener('DOMContentLoaded', () => {
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
-      card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+      card.style.display =
+        card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
     });
   });
   // ===== Fim: Busca por Descrição =====
 
-  // ... restante do código original permanece inalterado ...
+  // ... restante do código original ...
 });
 
   // ===== Botão de scan e captura de foto =====
