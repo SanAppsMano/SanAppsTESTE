@@ -1,42 +1,21 @@
-// app.js
-// Mantém lógica original e adiciona loading overlay para busca por descrição via modal
-
-const API_PROXY = 'https://san-apps-teste.vercel.app';
-const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
-
-window.addEventListener('DOMContentLoaded', () => {
-  // Lightbox de imagem (original)...
-  (function() { /* ... lightbox code ... */ })();
-
-  // Elementos originais
-  const btnSearch        = document.getElementById('btn-search');
-  const barcodeInput     = document.getElementById('barcode');
-  const daysRange        = document.getElementById('daysRange');
-  const daysValue        = document.getElementById('daysValue');
-  const resultContainer  = document.getElementById('result');
-  const summaryContainer = document.getElementById('summary');
-  const loading          = document.getElementById('loading');
-  const radiusButtons    = document.querySelectorAll('.radius-btn');
-  const historyListEl    = document.getElementById('history-list');
-  const clearHistoryBtn  = document.getElementById('clear-history');
-
-  // ===== Busca por Descrição (modal) =====
+  // ===== Busca por Descrição =====
   const DEFAULT_DIAS_DESC = 3;
   const DEFAULT_RAIO_DESC = 15;
 
-  const openDescBtn      = document.getElementById('open-desc-modal');
-  const descModal        = document.getElementById('desc-modal');
-  const closeDescBtn     = document.getElementById('close-desc-modal');
-  const descInput        = document.getElementById('desc-modal-input');
-  const descDatalist     = document.getElementById('desc-modal-list');
-  const descSearchBtn    = document.getElementById('desc-modal-search');
-  const descCountEl      = document.getElementById('desc-modal-count');
-  const descCatalog      = document.getElementById('desc-modal-catalog');
+  const openDescBtn   = document.getElementById('open-desc-modal');
+  const descModal     = document.getElementById('desc-modal');
+  const closeDescBtn  = document.getElementById('close-desc-modal');
+  const descInput     = document.getElementById('desc-modal-input');
+  const descDatalist  = document.getElementById('desc-modal-list');
+  const descSearchBtn = document.getElementById('desc-modal-search');
+  const descCountEl   = document.getElementById('desc-modal-count');
+  const descCatalog   = document.getElementById('desc-modal-catalog');
 
-  openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
+  // Abre/fecha o modal
+  openDescBtn.addEventListener('click', () => descModal.classList.add('active'));
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
 
-  // Função de busca por descrição
+  // Função de busca
   async function searchByDescription(desc) {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
@@ -49,22 +28,29 @@ window.addEventListener('DOMContentLoaded', () => {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
 
-    const payload = { descricao: desc, dias: DEFAULT_DIAS_DESC, raio: DEFAULT_RAIO_DESC, latitude: lat, longitude: lng };
-    const response = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method: 'POST',
+    const payload = {
+      descricao:  desc,
+      dias:       DEFAULT_DIAS_DESC,
+      raio:       DEFAULT_RAIO_DESC,
+      latitude:   lat,
+      longitude:  lng
+    };
+    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body:    JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error(`Status ${response.status}`);
-    const data = await response.json();
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
     return Array.isArray(data) ? data : (data.content || []);
   }
 
-  // Renderiza catálogo no modal
+  // Renderiza resultados no modal
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
-    if (!desc) return alert('Informe uma descrição.');
+    if (!desc) { alert('Informe uma descrição.'); return; }
 
+    // mostra loading (mesmo overlay da busca por código)
     loading.classList.add('active');
     descCatalog.innerHTML  = '';
     descDatalist.innerHTML = '';
@@ -72,15 +58,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       const items = await searchByDescription(desc);
+
+      // popula autocomplete
       const seen = new Set();
       items.forEach(i => {
         if (i.dscProduto && !seen.has(i.dscProduto)) {
-          const option = document.createElement('option');
-          option.value = i.dscProduto;
-          descDatalist.appendChild(option);
+          const opt = document.createElement('option');
+          opt.value = i.dscProduto;
+          descDatalist.appendChild(opt);
           seen.add(i.dscProduto);
         }
       });
+
+      // cria os cards
       items.forEach(i => {
         const card = document.createElement('div');
         card.className    = 'card';
@@ -92,13 +82,15 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="desc">${i.dscProduto}</div>
         `;
         card.addEventListener('click', () => {
-          barcodeInput.value = i.codGetin;
+          document.getElementById('barcode').value = i.codGetin;
           descModal.classList.remove('active');
           btnSearch.click();
         });
         descCatalog.appendChild(card);
       });
-      descCountEl.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
+
+      descCountEl.textContent = 
+        `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
@@ -107,6 +99,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Eventos do modal
   descSearchBtn.addEventListener('click', renderDescriptionCatalog);
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
@@ -114,10 +107,7 @@ window.addEventListener('DOMContentLoaded', () => {
       card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
     });
   });
-
-});
-
-// Fim do app.js
+  // ===== Fim: Busca por Descrição =====
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
