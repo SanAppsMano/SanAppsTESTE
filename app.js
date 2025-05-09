@@ -37,8 +37,33 @@ window.addEventListener('DOMContentLoaded', () => {
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
 
   async function searchByDescription(desc) {
-    // ... lógica de lat/lng ...
-    const payload = { descricao: desc, dias: DEFAULT_DIAS_DESC, raio: DEFAULT_RAIO_DESC, latitude: /*...*/, longitude: /*...*/ };
+    // calcula latitude e longitude como na busca por código
+    let lat, lng;
+    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej)
+      );
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+    const payload = {
+      descricao: desc,
+      dias:      DEFAULT_DIAS_DESC,
+      raio:      DEFAULT_RAIO_DESC,
+      latitude:  lat,
+      longitude: lng
+    };
+    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.content || []);
+  };
     const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
@@ -81,7 +106,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ... restante do código original permanece inalterado ...
 });
-
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
