@@ -32,124 +32,122 @@ window.addEventListener('DOMContentLoaded', () => {
   const historyListEl    = document.getElementById('history-list');
   const clearHistoryBtn  = document.getElementById('clear-history');
 
-    // === Início: Configuração para Busca por Descrição ===
+// ======= Início: Busca por Descrição (modal) =======
+(() => {
+  const DEFAULT_DIAS_DESC = 3;
+  const DEFAULT_RAIO_DESC = 15;
 
-  const DEFAULT_DIAS_DESC  = 3;
-  const DEFAULT_RAIO_DESC  = 15;
+  document.addEventListener('DOMContentLoaded', () => {
+    // Referências ao modal e controles
+    const openBtn       = document.getElementById('open-desc-modal');
+    const modal         = document.getElementById('desc-modal');
+    const closeBtn      = document.getElementById('close-desc-modal');
+    const input         = document.getElementById('desc-modal-input');
+    const datalist      = document.getElementById('desc-modal-list');
+    const searchBtn     = document.getElementById('desc-modal-search');
+    const countEl       = document.getElementById('desc-modal-count');
+    const catalog       = document.getElementById('desc-modal-catalog');
+    const barcodeInput  = document.getElementById('barcode');
+    const mainSearchBtn = document.getElementById('btn-search');
 
-  // Referências do modal (você já incluiu esses IDs no index.html)
-  const openDescModalBtn   = document.getElementById('open-desc-modal');
-  const descModal          = document.getElementById('desc-modal');
-  const closeDescModal     = document.getElementById('close-desc-modal');
-  const descInputModal     = document.getElementById('desc-modal-input');
-  const descListModal      = document.getElementById('desc-modal-list');
-  const descSearchBtn      = document.getElementById('desc-modal-search');
-  const descCount          = document.getElementById('desc-modal-count');
-  const descCatalog        = document.getElementById('desc-modal-catalog');
+    // Abrir / fechar modal
+    openBtn.addEventListener('click',  () => modal.classList.add('active'));
+    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
 
-  // Abrir / fechar modal
-  openDescModalBtn.addEventListener('click', () => descModal.classList.add('active'));
-  closeDescModal.addEventListener('click', ()=> descModal.classList.remove('active'));
+    // Função para chamar o endpoint de descrição
+    async function searchByDescription(desc) {
+      let lat, lng;
+      if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej)
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } else {
+        [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+      }
 
-  // Função de busca por descrição usando API_PROXY
-  async function searchByDescription(desc) {
-    // Reúne latitude/longitude exatamente como no searchByCode
-    let lat, lng;
-    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-      const pos = await new Promise((res, rej) =>
-        navigator.geolocation.getCurrentPosition(res, rej)
-      );
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+      const payload = {
+        descricao: desc,
+        dias:      DEFAULT_DIAS_DESC,
+        raio:      DEFAULT_RAIO_DESC,
+        latitude:  lat,
+        longitude: lng
+      };
+
+      const res = await fetch('/api/searchDescricao', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      // a API já retorna um array de itens
+      return Array.isArray(data) ? data : (data.content || []);
     }
 
-    const payload = {
-      descricao: desc,
-      dias:      DEFAULT_DIAS_DESC,
-      raio:      DEFAULT_RAIO_DESC,
-      latitude:  lat,
-      longitude: lng
-    };
+    // Renderização do catálogo no modal
+    async function renderDescriptionCatalog() {
+      const desc = input.value.trim();
+      if (!desc) return alert('Informe uma descrição.');
 
-    const res = await fetch(`${API_PROXY}/api/searchByDescription`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    return res.json();  // espera um array de objetos { codGetin, dscProduto, ... }
-  }
+      catalog.innerHTML = '';
+      datalist.innerHTML = '';
+      countEl.hidden = true;
 
-  // Renderiza o catálogo de cards dentro do modal
-  async function renderDescriptionCatalog() {
-    const desc = descInputModal.value.trim();
-    if (!desc) return alert('Digite ou selecione uma descrição.');
-
-    // limpa estado anterior
-    descCatalog.innerHTML = '';
-    descListModal.innerHTML = '';
-    descCount.hidden     = true;
-
-    try {
-      const data = await searchByDescription(desc);
-      // deduplica por codGetin
-      const unique = {};
-      data.forEach(item => { unique[item.codGetin] ||= item });
-      const items = Object.values(unique);
-
-      // popula sugestões no datalist
-      const seen = new Set();
-      items.forEach(i => {
-        if (i.dscProduto && !seen.has(i.dscProduto)) {
-          const opt = document.createElement('option');
-          opt.value = i.dscProduto;
-          descListModal.appendChild(opt);
-          seen.add(i.dscProduto);
-        }
-      });
-
-      // cria os cards
-      items.forEach(i => {
-        const card = document.createElement('div');
-        card.className         = 'card';
-        card.dataset.gtin      = i.codGetin;
-        card.dataset.desc      = i.dscProduto;
-        card.innerHTML         = `
-          <img src="${COSMOS_BASE}/${i.codGetin}" alt="">
-          <div class="gtin">${i.codGetin}</div>
-          <div class="desc">${i.dscProduto}</div>
-        `;
-        // clique no card: injeta o GTIN e dispara a busca original
-        card.addEventListener('click', () => {
-          barcodeInput.value = i.codGetin;
-          descModal.classList.remove('active');
-          btnSearch.click();
+      try {
+        const items = await searchByDescription(desc);
+        // preenche o datalist
+        const seen = new Set();
+        items.forEach(i => {
+          if (i.dscProduto && !seen.has(i.dscProduto)) {
+            const opt = document.createElement('option');
+            opt.value = i.dscProduto;
+            datalist.appendChild(opt);
+            seen.add(i.dscProduto);
+          }
         });
-        descCatalog.appendChild(card);
-      });
-
-      // exibe a contagem
-      descCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
-    } catch (err) {
-      alert('Erro na busca por descrição: ' + err.message);
-    } finally {
-      descCount.hidden = false;
+        // cria cards
+        items.forEach(i => {
+          const card = document.createElement('div');
+          card.className      = 'card';
+          card.dataset.gtin   = i.codGetin;
+          card.dataset.desc   = i.dscProduto;
+          card.innerHTML      = `
+            <img src="https://cdn-cosmos.bluesoft.com.br/products/${i.codGetin}" alt="">
+            <div class="gtin">${i.codGetin}</div>
+            <div class="desc">${i.dscProduto}</div>
+          `;
+          // ao clicar, preenche GTIN e dispara busca de código
+          card.addEventListener('click', () => {
+            barcodeInput.value = i.codGetin;
+            modal.classList.remove('active');
+            mainSearchBtn.click();
+          });
+          catalog.appendChild(card);
+        });
+        countEl.textContent = 
+          `${items.length} item${items.length!==1?'s':''} encontrado${items.length!==1?'s':''}.`;
+      } catch (err) {
+        alert('Erro na busca por descrição: ' + err.message);
+      } finally {
+        countEl.hidden = false;
+      }
     }
-  }
 
-  // Event handlers do modal
-  descSearchBtn.addEventListener('click', renderDescriptionCatalog);
-  descInputModal.addEventListener('input', () => {
-    const filter = descInputModal.value.toLowerCase();
-    Array.from(descCatalog.children).forEach(card => {
-      card.style.display =
-        card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+    // Eventos de interação
+    searchBtn.addEventListener('click', renderDescriptionCatalog);
+    input.addEventListener('input', () => {
+      const filter = input.value.toLowerCase();
+      Array.from(catalog.children).forEach(card => {
+        card.style.display =
+          card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+      });
     });
   });
+})();
+// ======= Fim: Busca por Descrição (modal) =======
 
-  // === Fim: Configuração para Busca por Descrição ===
 
 
   // Botão de scan e captura de foto
