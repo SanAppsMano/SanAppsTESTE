@@ -63,6 +63,15 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!res.ok) throw new Error(`Status ${res.status}`);
     const data = await res.json();
     return Array.isArray(data) ? data : (data.content || []);
+  }
+    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.content || []);
   };
     const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
