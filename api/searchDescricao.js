@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Parâmetro "descricao" é obrigatório.' });
     }
 
-    const apiUrl = 'https://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa';
+    const apiUrl = 'http://api.sefaz.al.gov.br/sfz_nfce_api/api/public/consultarPrecosPorDescricao';
     const payload = { descricao, dias, latitude, longitude, raio };
 
     const apiResp = await fetch(apiUrl, {
