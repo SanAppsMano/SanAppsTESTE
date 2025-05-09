@@ -305,6 +305,42 @@ body {
 }
 #modal-list li { list-style: none; }
 
+ /* ======= Modal de Busca por Descrição ======= */
+ .modal.desc {
+   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+   background: rgba(0,0,0,0.5); display: none;
+   align-items: center; justify-content: center; z-index: 1000;
+ }
+ .modal.desc.active { display: flex; }
+ .modal.desc .modal-content {
+   background: #fff; padding: 1rem; border-radius: 8px;
+   max-width: 600px; width: 90%; max-height: 90%; overflow: auto;
+ }
+ .modal.desc .close {
+   float: right; font-size: 1.5rem; cursor: pointer;
+ }
+ .modal.desc .catalog {
+   display: grid;
+   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+   gap: 1rem; margin-top: 1rem;
+ }
+ .modal.desc .card {
+   border: 1px solid #ccc; border-radius: 6px; padding: .5rem;
+   text-align: center; cursor: pointer;
+   transition: transform .2s, box-shadow .2s;
+   display: flex; flex-direction: column; align-items: center;
+ }
+ .modal.desc .card:hover {
+   transform: translateY(-3px);
+   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+ }
+ .modal.desc .card img {
+   width: 80px; height: 80px; object-fit: contain; margin-bottom: .5rem;
+ }
+ .modal.desc .card .gtin { font-size: .85rem; font-weight: bold; }
+ .modal.desc .card .desc { font-size: .8rem; color: #333; }
+
+
 /* ===== Responsividade ===== */
 /* Mobile (até 767px) */
 @media (max-width: 767px) {
