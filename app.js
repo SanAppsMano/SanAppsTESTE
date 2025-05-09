@@ -71,7 +71,7 @@ window.addEventListener('DOMContentLoaded', () => {
       longitude:  lng
     };
 
-    const res = await fetch('/api/searchDescricao', {
+    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload)
