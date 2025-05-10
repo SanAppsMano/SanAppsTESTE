@@ -47,7 +47,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCatalog      = document.getElementById('desc-modal-catalog');
 
   // Abrir / fechar modal
-  openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
+// Abrir modal e limpar campo/resultados
+openDescBtn.addEventListener('click', () => {
+  descInput.value        = '';
+  descDatalist.innerHTML = '';
+  descCatalog.innerHTML  = '';
+  descCountEl.hidden     = true;
+  descModal.classList.add('active');
+});
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
   descModal.addEventListener('click', e => {
     if (e.target === descModal) descModal.classList.remove('active');
