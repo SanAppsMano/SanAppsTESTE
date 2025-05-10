@@ -81,15 +81,23 @@ openDescBtn.addEventListener('click', () => {
       longitude:  lng
     };
 
-    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.content || []);
-  }
+const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+  method:  'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body:    JSON.stringify(payload)
+});
+
+// Tratamento específico para 502
+if (res.status === 502) {
+  throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
+}
+// Tratamento genérico para outros erros HTTP
+if (!res.ok) {
+  throw new Error(`Erro na busca por descrição: Status ${res.status}`);
+}
+
+const data = await res.json();
+
 
   // Renderiza catálogo de cards no modal, agrupando por GTIN único e ignorando sem GTIN
   async function renderDescriptionCatalog() {
