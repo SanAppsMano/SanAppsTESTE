@@ -419,7 +419,18 @@ window.addEventListener('DOMContentLoaded', () => {
       const price = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      const color = brl ? '#28a745' : '#007bff';
+      sortedAll.forEach((e, i) => {
+  // …
+  // defina a cor: primeiro verde, último vermelho, intermediários azuis
+  const color =
+    i === 0
+      ? '#28a745'                     // menor preço
+      : i === sortedAll.length - 1
+        ? '#dc3545'                   // maior preço
+        : '#007bff';                  // preço intermediário (azul)
+  // …
+});
+
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
