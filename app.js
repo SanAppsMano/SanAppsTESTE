@@ -60,40 +60,44 @@ openDescBtn.addEventListener('click', () => {
     if (e.target === descModal) descModal.classList.remove('active');
   });
 
-  // Chama o endpoint serverless de descrição
-  async function searchByDescription(desc) {
-    let lat, lng;
-    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-      const pos = await new Promise((res, rej) =>
-        navigator.geolocation.getCurrentPosition(res, rej)
-      );
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-    } else {
-      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
-    }
+// Chama o endpoint serverless de descrição
+async function searchByDescription(desc) {
+  let lat, lng;
+  if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej)
+    );
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } else {
+    [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+  }
 
-    const payload = {
-      descricao:  desc,
-      dias:       DEFAULT_DIAS_DESC,
-      raio:       DEFAULT_RAIO_DESC,
-      latitude:   lat,
-      longitude:  lng
-    };
+  const payload = {
+    descricao: desc,
+    dias:      DEFAULT_DIAS_DESC,
+    raio:      DEFAULT_RAIO_DESC,
+    latitude:  lat,
+    longitude: lng
+  };
 
-const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-  method:  'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body:    JSON.stringify(payload)
-});
+  const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload)
+  });
 
-// Tratamento específico para 502
-if (res.status === 502) {
-  throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
-}
-// Tratamento genérico para outros erros HTTP
-if (!res.ok) {
-  throw new Error(`Erro na busca por descrição: Status ${res.status}`);
+  // Tratamento específico para 502
+  if (res.status === 502) {
+    throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
+  }
+  // Tratamento genérico para outros erros HTTP
+  if (!res.ok) {
+    throw new Error(`Erro na busca por descrição: Status ${res.status}`);
+  }
+
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.content || []);
 }
 
 const data = await res.json();
