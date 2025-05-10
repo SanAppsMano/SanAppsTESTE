@@ -156,12 +156,15 @@ openDescBtn.addEventListener('click', () => {
 
   // Barra de progresso no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
-    descSearchBtn.disabled = true;
-    descSearchBtn.classList.add('loading');
+  descSearchBtn.disabled = true;
+  descSearchBtn.classList.add('loading');
+  try {
     await renderDescriptionCatalog();
+  } finally {
     descSearchBtn.classList.remove('loading');
     descSearchBtn.disabled = false;
-  });
+  }
+});
 
   // filtro ao digitar na descrição
   descInput.addEventListener('input', () => {
