@@ -419,49 +419,29 @@ window.addEventListener('DOMContentLoaded', () => {
       const price = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      sortedAll.forEach((e, i) => {
-  // …
-  sortedAll.forEach((e, i) => {
-  const est = e.estabelecimento;
-  const end = est.endereco;
-  const when = e.produto.venda.dataVenda
-    ? new Date(e.produto.venda.dataVenda).toLocaleString()
-    : '—';
-  const price = brl.format(e.produto.venda.valorVenda);
-  const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
-  const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-
-  // cor: primeiro verde, último vermelho, intermediários azuis
-  const color =
-    i === 0
-      ? '#28a745'
-      : i === sortedAll.length - 1
-        ? '#dc3545'
-        : '#007bff';
-
-  const li = document.createElement('li');
-  li.innerHTML = `
-    <div class="card">
-      <div class="card-header">${est.nomeFantasia||est.razaoSocial}</div>
-      <div class="card-body">
-        <div class="info-group">
-          <h4>Localização</h4>
-          <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-          <p>${end.bairro} — ${est.municipio||end.municipio}</p>
-          <p>CEP: ${end.cep}</p>
-        </div>
-        <div class="info-group price-section">
-          <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
-          <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>
-            ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
-          </p>
-          <p class="price-date">Quando: ${when}</p>
-        </div>
-      </div>
-    </div>`;
-  listEl.appendChild(li);
-});
-
+      const color = brl ? '#28a745' : '#007bff';
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${est.nomeFantasia||est.razaoSocial}</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h4>Localização</h4>
+              <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+              <p>${end.bairro} — ${est.municipio||end.municipio}</p>
+              <p>CEP: ${end.cep}</p>
+            </div>
+            <div class="info-group price-section">
+              <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
+              <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>
+                ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
+              </p>
+              <p class="price-date">Quando: ${when}</p>
+            </div>
+          </div>
+        </div>`;
+      listEl.appendChild(li);
+    });
     modal.classList.add('active');
   });
   document.getElementById('close-modal').addEventListener('click', () =>
