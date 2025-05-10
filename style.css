@@ -484,24 +484,25 @@ body {
 .btn-podcast:hover {
   background: #1aa34a;
 }
-/* Spinner para botão “Buscar descrição” */
-#desc-modal-search.loading {
-  position: relative;
-  pointer-events: none;
-  opacity: 0.8;
+
+  /* Spinner para botão “Buscar descrição” dentro do modal */
+.modal.desc #desc-modal-search.loading {
+  position: relative !important;
+  pointer-events: none !important;
+  opacity: 0.8 !important;
 }
-#desc-modal-search.loading::after {
+.modal.desc #desc-modal-search.loading::after {
   content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1em;
-  height: 1em;
-  margin: -0.5em 0 0 -0.5em;
-  border: 2px solid var(--color-primary);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 1em !important;
+  height: 1em !important;
+  margin: -0.5em 0 0 -0.5em !important;
+  border: 2px solid var(--color-primary) !important;
+  border-top-color: transparent !important;
+  border-radius: 50% !important;
+  animation: spin 0.6s linear infinite !important;
 }
 
 @keyframes spin {
