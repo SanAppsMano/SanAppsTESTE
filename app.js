@@ -46,8 +46,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCountEl      = document.getElementById('desc-modal-count');
   const descCatalog      = document.getElementById('desc-modal-catalog');
 
-  // Abrir / fechar modal
-  openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
+  // Abrir modal: limpa campo e resultados antes de exibir
+  openDescBtn.addEventListener('click', () => {
+    descInput.value        = '';
+    descDatalist.innerHTML = '';
+    descCatalog.innerHTML  = '';
+    descCountEl.hidden     = true;
+    descModal.classList.add('active');
+  });
+
+  // Fechar modal
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
   descModal.addEventListener('click', e => {
     if (e.target === descModal) descModal.classList.remove('active');
@@ -149,11 +157,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Barra de progresso no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
-    descSearchBtn.disabled = true;
+    descSearchBtn.disabled     = true;
     descSearchBtn.classList.add('loading');
     await renderDescriptionCatalog();
     descSearchBtn.classList.remove('loading');
-    descSearchBtn.disabled = false;
+    descSearchBtn.disabled     = false;
   });
 
   // filtro ao digitar na descrição
