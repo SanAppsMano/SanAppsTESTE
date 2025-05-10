@@ -49,7 +49,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Abrir / fechar modal
   openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
-  // fecha ao clicar fora (backdrop)
   descModal.addEventListener('click', e => {
     if (e.target === descModal) descModal.classList.remove('active');
   });
@@ -85,7 +84,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return Array.isArray(data) ? data : (data.content || []);
   }
 
-  // Renderiza catálogo de cards no modal, agrupando por GTIN único e priorizando imagens
+  // Renderiza catálogo de cards no modal, agrupando por GTIN único e ignorando sem GTIN
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) return alert('Informe uma descrição.');
@@ -97,9 +96,12 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const items = await searchByDescription(desc);
 
-      // sugestões (únicas por descrição)
+      // filtra só os que têm GTIN (codGetin)
+      const validItems = items.filter(i => i.codGetin);
+
+      // popula sugestões únicas por descrição
       const seenDesc = new Set();
-      items.forEach(i => {
+      validItems.forEach(i => {
         if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
           const opt = document.createElement('option');
           opt.value = i.dscProduto;
@@ -108,22 +110,14 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // agrupar por GTIN único, ignorando sem GTIN
+      // agrupar por GTIN único
       const mapUnicos = new Map();
-      items.forEach(i => {
-        const gtin = i.codGetin;
-        if (gtin && !mapUnicos.has(gtin)) {
-          mapUnicos.set(gtin, i);
+      validItems.forEach(i => {
+        if (!mapUnicos.has(i.codGetin)) {
+          mapUnicos.set(i.codGetin, i);
         }
       });
-      let uniItems = Array.from(mapUnicos.values());
-      // ordenar: quem tem imagem primeiro
-      uniItems = uniItems.sort((a, b) => {
-        const aHas = Boolean(a.imageUrl);
-        const bHas = Boolean(b.imageUrl);
-        if (aHas === bHas) return 0;
-        return aHas ? -1 : 1;
-      });
+      const uniItems = Array.from(mapUnicos.values());
 
       // criar cards
       uniItems.forEach(i => {
@@ -132,10 +126,7 @@ window.addEventListener('DOMContentLoaded', () => {
         card.dataset.gtin = i.codGetin;
         card.dataset.desc = i.dscProduto;
         card.innerHTML    = `
-          ${i.imageUrl
-            ? `<img src="${COSMOS_BASE}/${i.codGetin}" alt="">`
-            : ''
-          }
+          <img src="${COSMOS_BASE}/${i.codGetin}" alt="${i.dscProduto}">
           <div class="gtin">${i.codGetin}</div>
           <div class="desc">${i.dscProduto}</div>
         `;
@@ -149,7 +140,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       descCountEl.textContent =
         `${uniItems.length} item${uniItems.length !== 1 ? 's' : ''} encontrado${uniItems.length !== 1 ? 's' : ''}.`;
-
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
@@ -157,7 +147,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // adicionar barra de progresso no botão de busca por descrição
+  // Barra de progresso no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
     descSearchBtn.disabled = true;
     descSearchBtn.classList.add('loading');
