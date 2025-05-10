@@ -508,11 +508,11 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-/* Spinner genérico para qualquer .btn-primary.loading */
+/* Spinner para qualquer btn-primary.loading */
 .btn-primary.loading {
   position: relative !important;
   pointer-events: none !important;
-  opacity: 0.8 !important;
+  color: transparent !important;       /* esconde o texto */
 }
 .btn-primary.loading::after {
   content: '';
@@ -526,8 +526,8 @@ body {
   border-top-color: transparent !important;
   border-radius: 50% !important;
   animation: spin 0.6s linear infinite !important;
+  z-index: 2 !important;
 }
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
