@@ -6,7 +6,7 @@ const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 window.addEventListener('DOMContentLoaded', () => {
   // ===== Lightbox de imagem =====
-  (function() {
+  ;(function() {
     const lb = document.createElement('div'); lb.id = 'lightbox';
     Object.assign(lb.style, {
       position:'fixed', top:0, left:0, width:'100%', height:'100%',
@@ -49,6 +49,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // Abrir / fechar modal
   openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
+  // fecha ao clicar fora (backdrop)
+  descModal.addEventListener('click', e => {
+    if (e.target === descModal) descModal.classList.remove('active');
+  });
 
   // Chama o endpoint serverless de descrição
   async function searchByDescription(desc) {
@@ -78,41 +82,60 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     if (!res.ok) throw new Error(`Status ${res.status}`);
     const data = await res.json();
-    // normalize para array
     return Array.isArray(data) ? data : (data.content || []);
   }
 
-  // Renderiza catálogo de cards no modal
+  // Renderiza catálogo de cards no modal, agrupando por GTIN único e priorizando imagens
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) return alert('Informe uma descrição.');
 
-    descCatalog.innerHTML    = '';
-    descDatalist.innerHTML   = '';
-    descCountEl.hidden       = true;
+    descCatalog.innerHTML  = '';
+    descDatalist.innerHTML = '';
+    descCountEl.hidden     = true;
 
     try {
       const items = await searchByDescription(desc);
 
-      // popula sugestões
-      const seen = new Set();
+      // sugestões (únicas por descrição)
+      const seenDesc = new Set();
       items.forEach(i => {
-        if (i.dscProduto && !seen.has(i.dscProduto)) {
+        if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
           const opt = document.createElement('option');
           opt.value = i.dscProduto;
           descDatalist.appendChild(opt);
-          seen.add(i.dscProduto);
+          seenDesc.add(i.dscProduto);
         }
       });
 
-      // cria cards clicáveis
+      // agrupar por GTIN único, ignorando sem GTIN
+      const mapUnicos = new Map();
       items.forEach(i => {
+        const gtin = i.codGetin;
+        if (gtin && !mapUnicos.has(gtin)) {
+          mapUnicos.set(gtin, i);
+        }
+      });
+      let uniItems = Array.from(mapUnicos.values());
+      // ordenar: quem tem imagem primeiro
+      uniItems = uniItems.sort((a, b) => {
+        const aHas = Boolean(a.imageUrl);
+        const bHas = Boolean(b.imageUrl);
+        if (aHas === bHas) return 0;
+        return aHas ? -1 : 1;
+      });
+
+      // criar cards
+      uniItems.forEach(i => {
         const card = document.createElement('div');
         card.className    = 'card';
         card.dataset.gtin = i.codGetin;
         card.dataset.desc = i.dscProduto;
         card.innerHTML    = `
-          <img src="${COSMOS_BASE}/${i.codGetin}" alt="">
+          ${i.imageUrl
+            ? `<img src="${COSMOS_BASE}/${i.codGetin}" alt="">`
+            : ''
+          }
           <div class="gtin">${i.codGetin}</div>
           <div class="desc">${i.dscProduto}</div>
         `;
@@ -125,7 +148,8 @@ window.addEventListener('DOMContentLoaded', () => {
       });
 
       descCountEl.textContent =
-        `${items.length} item${items.length !== 1 ? 's' : ''} encontrado${items.length !== 1 ? 's' : ''}.`;
+        `${uniItems.length} item${uniItems.length !== 1 ? 's' : ''} encontrado${uniItems.length !== 1 ? 's' : ''}.`;
+
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
@@ -133,8 +157,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Eventos do modal
-  descSearchBtn.addEventListener('click', renderDescriptionCatalog);
+  // adicionar barra de progresso no botão de busca por descrição
+  descSearchBtn.addEventListener('click', async () => {
+    descSearchBtn.disabled = true;
+    descSearchBtn.classList.add('loading');
+    await renderDescriptionCatalog();
+    descSearchBtn.classList.remove('loading');
+    descSearchBtn.disabled = false;
+  });
+
+  // filtro ao digitar na descrição
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
