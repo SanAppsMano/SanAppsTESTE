@@ -46,16 +46,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCountEl      = document.getElementById('desc-modal-count');
   const descCatalog      = document.getElementById('desc-modal-catalog');
 
-  // Abrir modal: limpar campo de busca do modal
-  openDescBtn.addEventListener('click', () => {
-    descInput.value        = '';
-    descDatalist.innerHTML = '';
-    descCatalog.innerHTML  = '';
-    descCountEl.hidden     = true;
-    descModal.classList.add('active');
-  });
-
-  // Fechar modal
+  // Abrir / fechar modal
+  openDescBtn.addEventListener('click',  () => descModal.classList.add('active'));
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
   descModal.addEventListener('click', e => {
     if (e.target === descModal) descModal.classList.remove('active');
@@ -157,11 +149,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Barra de progresso no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
-    descSearchBtn.disabled     = true;
+    descSearchBtn.disabled = true;
     descSearchBtn.classList.add('loading');
     await renderDescriptionCatalog();
     descSearchBtn.classList.remove('loading');
-    descSearchBtn.disabled     = false;
+    descSearchBtn.disabled = false;
   });
 
   // filtro ao digitar na descrição
@@ -359,10 +351,10 @@ window.addEventListener('DOMContentLoaded', () => {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
       try {
-        const pos = new Promise((res, rej) =>
+        const pos = await new Promise((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej)
         );
-        ({ coords: { latitude: lat, longitude: lng } } = await pos);
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
       } catch {
         loading.classList.remove('active');
         return alert('Não foi possível obter localização.');
@@ -386,14 +378,14 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const data = await resp.json();
       loading.classList.remove('active');
-      const list = Array.isArray(data.conteudo) ? data.conteúdo : [];
+      const list = Array.isArray(data.conteudo) ? data.conteudo : [];
       if (!list.length) {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
       historyArr.unshift({
         code,
-        name: data.dscProduto || list[0].produto.descrição,
+        name: data.dscProduto || list[0].produto.descricao,
         image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
         dados: list
       });
