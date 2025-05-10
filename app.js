@@ -155,14 +155,22 @@ openDescBtn.addEventListener('click', () => {
   }
 
   // Barra de progresso no botão de busca por descrição
-  descSearchBtn.addEventListener('click', async () => {
+descSearchBtn.addEventListener('click', async () => {
+  // guarda o HTML original (ícone + texto)
+  const originalHTML = descSearchBtn.innerHTML;
+
+  // desativa e mostra spinner de FontAwesome
   descSearchBtn.disabled = true;
-  descSearchBtn.classList.add('loading');
+  descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
   try {
     await renderDescriptionCatalog();
   } finally {
-    descSearchBtn.classList.remove('loading');
+    // restaura botão
     descSearchBtn.disabled = false;
+    descSearchBtn.innerHTML = originalHTML;
+    // opcional: limpa o campo
+    descInput.value = '';
   }
 });
 
