@@ -46,7 +46,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCountEl      = document.getElementById('desc-modal-count');
   const descCatalog      = document.getElementById('desc-modal-catalog');
 
-  // Abrir modal: limpa campo e resultados antes de exibir
+  // Abrir modal: limpar campo de busca do modal
   openDescBtn.addEventListener('click', () => {
     descInput.value        = '';
     descDatalist.innerHTML = '';
@@ -359,10 +359,10 @@ window.addEventListener('DOMContentLoaded', () => {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
       try {
-        const pos = await new Promise((res, rej) =>
+        const pos = new Promise((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej)
         );
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
+        ({ coords: { latitude: lat, longitude: lng } } = await pos);
       } catch {
         loading.classList.remove('active');
         return alert('Não foi possível obter localização.');
@@ -386,14 +386,14 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const data = await resp.json();
       loading.classList.remove('active');
-      const list = Array.isArray(data.conteudo) ? data.conteudo : [];
+      const list = Array.isArray(data.conteudo) ? data.conteúdo : [];
       if (!list.length) {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
       historyArr.unshift({
         code,
-        name: data.dscProduto || list[0].produto.descricao,
+        name: data.dscProduto || list[0].produto.descrição,
         image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
         dados: list
       });
