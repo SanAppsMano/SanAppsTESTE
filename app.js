@@ -100,9 +100,6 @@ async function searchByDescription(desc) {
   return Array.isArray(data) ? data : (data.content || []);
 }
 
-const data = await res.json();
-
-
   // Renderiza catálogo de cards no modal, agrupando por GTIN único e ignorando sem GTIN
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
