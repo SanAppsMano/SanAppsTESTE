@@ -440,8 +440,7 @@ descSearchBtn.addEventListener('click', async () => {
     listEl.innerHTML = '';
     const sortedAll = [...currentResults].sort((a,b) =>
       a.produto.venda.valorVenda - b.produto.venda.valorVenda
-    );
-    sortedAll.forEach((e, i) => {
+    );sortedAll.forEach((e, i) => {
   const est = e.estabelecimento;
   const end = est.endereco;
   const when = e.produto.venda.dataVenda
@@ -451,13 +450,9 @@ descSearchBtn.addEventListener('click', async () => {
   const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
   const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
 
-  // cor: primeiro verde, intermediários azul, último vermelho
-  const color = 
-    i === 0
-      ? '#28a745'
-      : i === sortedAll.length - 1
-        ? '#dc3545'
-        : '#007bff';
+  // links para mapa e rota:
+  const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+  const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
 
   const li = document.createElement('li');
   li.innerHTML = `
@@ -471,17 +466,20 @@ descSearchBtn.addEventListener('click', async () => {
           <p>CEP: ${end.cep}</p>
         </div>
         <div class="info-group price-section">
-          <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
+          <p><strong>Preço de Venda:</strong> <strong style="color:${i===0?'#28a745':i===sortedAll.length-1?'#dc3545':'#007bff'}">${price}</strong></p>
           <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>
             ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
           </p>
           <p class="price-date">Quando: ${when}</p>
         </div>
+        <div class="action-buttons">
+          <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+          <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
+        </div>
       </div>
     </div>`;
   listEl.appendChild(li);
 });
-
     modal.classList.add('active');
   });
   document.getElementById('close-modal').addEventListener('click', () =>
