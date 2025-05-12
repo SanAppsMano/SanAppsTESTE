@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       descricao,
       latitude = -9.6432331,
       longitude = -35.7190686,
-      dias = 7,
+      dias = 3,
       raio = 15
     } = req.body;
 
