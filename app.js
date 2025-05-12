@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const clearHistoryBtn  = document.getElementById('clear-history');
 
   // ===== Busca por Descrição (modal) =====
-  const DEFAULT_DIAS_DESC = 3;
+  const DEFAULT_DIAS_DESC = 7;
   const DEFAULT_RAIO_DESC = 15;
 
   // Referências ao modal e seus controles
