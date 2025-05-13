@@ -310,7 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
       lb.querySelector('img').src = imgEl.src;
       lb.style.display = 'flex';
     });
-    const overlay = imgEl	parentElement.querySelector('.product-name-overlay');
+    const overlay = imgEl.parentElement.querySelector('.product-name-overlay');
     if (overlay) overlay.style.fontSize = '0.6rem';
   }
 
