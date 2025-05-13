@@ -4,6 +4,64 @@
 const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
+// URL do seu Apps Script Web App
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNfQNATH6Q710W6_HAy1RRKg6o6LFzqTB7F3dJLqYREXwc-2tk0P6X4-XH24hM67D0/exec';
+
+// Gera ou recupera o ID anônimo do usuário
+function getAnonymousUserId() {
+  let id = localStorage.getItem('anonUserId');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('anonUserId', id);
+  }
+  return id;
+}
+
+// Formata os dados para enviar ao Google Sheets, incluindo timestamp
+function formatForSheet(list) {
+  const userId = getAnonymousUserId();
+  const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Maceio' });
+
+  return list.map(e => {
+    const est = e.estabelecimento;
+    const prod = e.produto;
+    const end = est.endereco;
+    return [
+      prod.gtin || '',
+      prod.descricaoSefaz || prod.descricao || '',
+      prod.venda.valorVenda,
+      prod.venda.valorDeclarado,
+      prod.venda.dataVenda,
+      est.nomeFantasia || est.razaoSocial,
+      end.nomeLogradouro,
+      end.bairro,
+      end.cep,
+      end.latitude,
+      end.longitude,
+      userId,
+      timestamp
+    ];
+  });
+}
+
+// Envia os dados ao Apps Script Web App
+async function saveResultsToSheet(list) {
+  const rows = formatForSheet(list);
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: rows })
+    });
+    const json = await resp.json();
+    if (json.status !== 'ok') {
+      console.error('Erro ao salvar na planilha:', json.message);
+    }
+  } catch (err) {
+    console.error('Falha na requisição ao Apps Script:', err);
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   // ===== Lightbox de imagem =====
   ;(function() {
@@ -47,64 +105,58 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCatalog      = document.getElementById('desc-modal-catalog');
 
   // Abrir / fechar modal
-openDescBtn.addEventListener('click', () => {
-  // limpa tudo
-  descInput.value        = '';
-  descDatalist.innerHTML = '';
-  descCatalog.innerHTML  = '';
-  descCountEl.hidden     = true;
-  // abre modal
-  descModal.classList.add('active');
-  // dá foco automático ao input de descrição
-  descInput.focus();
-});
-
+  openDescBtn.addEventListener('click', () => {
+    descInput.value        = '';
+    descDatalist.innerHTML = '';
+    descCatalog.innerHTML  = '';
+    descCountEl.hidden     = true;
+    descModal.classList.add('active');
+    descInput.focus();
+  });
   closeDescBtn.addEventListener('click', () => descModal.classList.remove('active'));
   descModal.addEventListener('click', e => {
     if (e.target === descModal) descModal.classList.remove('active');
   });
 
-// Chama o endpoint serverless de descrição
-async function searchByDescription(desc) {
-  let lat, lng;
-  if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej)
-    );
-    lat = pos.coords.latitude;
-    lng = pos.coords.longitude;
-  } else {
-    [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+  // Chama o endpoint serverless de descrição
+  async function searchByDescription(desc) {
+    let lat, lng;
+    if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej)
+      );
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } else {
+      [lat, lng] = document.getElementById('city').value.split(',').map(Number);
+    }
+
+    const payload = {
+      descricao: desc,
+      dias:      DEFAULT_DIAS_DESC,
+      raio:      DEFAULT_RAIO_DESC,
+      latitude:  lat,
+      longitude: lng
+    };
+
+    const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    });
+
+    if (res.status === 502) {
+      throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
+    }
+    if (!res.ok) {
+      throw new Error(`Erro na busca por descrição: Status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.content || []);
   }
 
-  const payload = {
-    descricao: desc,
-    dias:      DEFAULT_DIAS_DESC,
-    raio:      DEFAULT_RAIO_DESC,
-    latitude:  lat,
-    longitude: lng
-  };
-
-  const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(payload)
-  });
-
-  // Tratamento específico para 502
-  if (res.status === 502) {
-    throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
-  }
-  // Tratamento genérico para outros erros HTTP
-  if (!res.ok) {
-    throw new Error(`Erro na busca por descrição: Status ${res.status}`);
-  }
-
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.content || []);
-}
-
-  // Renderiza catálogo de cards no modal, agrupando por GTIN único e ignorando sem GTIN
+  // Renderiza catálogo de cards no modal
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) return alert('Informe uma descrição.');
@@ -115,31 +167,20 @@ async function searchByDescription(desc) {
 
     try {
       const items = await searchByDescription(desc);
-
-      // filtra só os que têm GTIN (codGetin)
       const validItems = items.filter(i => i.codGetin);
-
-      // popula sugestões únicas por descrição
       const seenDesc = new Set();
       validItems.forEach(i => {
         if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
-          const opt = document.createElement('option');
-          opt.value = i.dscProduto;
+          const opt = document.createElement('option'); opt.value = i.dscProduto;
           descDatalist.appendChild(opt);
           seenDesc.add(i.dscProduto);
         }
       });
-
-      // agrupar por GTIN único
       const mapUnicos = new Map();
       validItems.forEach(i => {
-        if (!mapUnicos.has(i.codGetin)) {
-          mapUnicos.set(i.codGetin, i);
-        }
+        if (!mapUnicos.has(i.codGetin)) mapUnicos.set(i.codGetin, i);
       });
       const uniItems = Array.from(mapUnicos.values());
-
-      // criar cards
       uniItems.forEach(i => {
         const card = document.createElement('div');
         card.className    = 'card';
@@ -157,9 +198,7 @@ async function searchByDescription(desc) {
         });
         descCatalog.appendChild(card);
       });
-
-      descCountEl.textContent =
-        `${uniItems.length} item${uniItems.length !== 1 ? 's' : ''} encontrado${uniItems.length !== 1 ? 's' : ''}.`;
+      descCountEl.textContent = `${uniItems.length} item${uniItems.length !== 1 ? 's' : ''} encontrado${uniItems.length !== 1 ? 's' : ''}.`;
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
     } finally {
@@ -167,35 +206,19 @@ async function searchByDescription(desc) {
     }
   }
 
-  // Barra de progresso no botão de busca por descrição
-descSearchBtn.addEventListener('click', async () => {
-  // guarda o HTML original (ícone + texto)
-  const originalHTML = descSearchBtn.innerHTML;
-
-  // desativa e mostra spinner de FontAwesome
-  descSearchBtn.disabled = true;
-  descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-  try {
-    await renderDescriptionCatalog();
-  } finally {
-    // restaura botão
-    descSearchBtn.disabled = false;
-    descSearchBtn.innerHTML = originalHTML;
-    // opcional: limpa o campo
-    descInput.value = '';
-  }
-});
-
-  // filtro ao digitar na descrição
+  descSearchBtn.addEventListener('click', async () => {
+    const originalHTML = descSearchBtn.innerHTML;
+    descSearchBtn.disabled = true;
+    descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try { await renderDescriptionCatalog(); }
+    finally { descSearchBtn.disabled = false; descSearchBtn.innerHTML = originalHTML; descInput.value = ''; }
+  });
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
       card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
     });
   });
-
-  // ===== Fim: Busca por Descrição =====
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
@@ -206,37 +229,28 @@ descSearchBtn.addEventListener('click', async () => {
     const file = photoInput.files[0];
     const imgUrl = URL.createObjectURL(file);
     let code = '';
-
-    // BarcodeDetector nativo
     if ('BarcodeDetector' in window) {
       try {
         const detector = new BarcodeDetector({ formats:['ean_13','ean_8'] });
         const bitmap  = await createImageBitmap(file);
         const [c]     = await detector.detect(bitmap);
         code = c?.rawValue || '';
-      } catch(e){ console.warn('BarcodeDetector falhou:', e) }
+      } catch(e){ console.warn('BarcodeDetector falhou:', e); }
     }
-    // QuaggaJS fallback
     if (!code) {
       await new Promise(res => {
-        Quagga.decodeSingle({
-          src: imgUrl, numOfWorkers:0, locate:true,
-          decoder:{ readers:['ean_reader'] }
-        }, result => {
+        Quagga.decodeSingle({ src: imgUrl, numOfWorkers:0, locate:true, decoder:{ readers:['ean_reader'] } }, result => {
           code = result?.codeResult?.code || '';
           res();
         });
       });
     }
-    // ZXing.js fallback
     if (!code) {
       await new Promise(res => {
         const img = new Image(); img.src = imgUrl;
         img.onload = () => {
-          try {
-            const reader = new ZXing.BrowserMultiFormatReader();
-            code = reader.decodeFromImageElement(img).getText();
-          } catch(err){ console.warn('ZXing falhou:', err) }
+          try { code = new ZXing.BrowserMultiFormatReader().decodeFromImageElement(img).getText(); }
+          catch(err){ console.warn('ZXing falhou:', err); }
           res();
         };
       });
@@ -296,7 +310,7 @@ descSearchBtn.addEventListener('click', async () => {
       lb.querySelector('img').src = imgEl.src;
       lb.style.display = 'flex';
     });
-    const overlay = imgEl.parentElement.querySelector('.product-name-overlay');
+    const overlay = imgEl	parentElement.querySelector('.product-name-overlay');
     if (overlay) overlay.style.fontSize = '0.6rem';
   }
 
@@ -318,19 +332,14 @@ descSearchBtn.addEventListener('click', async () => {
 
   function renderCards(list) {
     resultContainer.innerHTML = '';
-    const sortedAll = [...list].sort((a,b) =>
-      a.produto.venda.valorVenda - b.produto.venda.valorVenda
-    );
+    const sortedAll = [...list].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     const [menor, maior] = [sortedAll[0], sortedAll[sortedAll.length-1]];
     [menor, maior].forEach((e, i) => {
       const est = e.estabelecimento;
       const end = est.endereco;
-      const when = e.produto.venda.dataVenda
-        ? new Date(e.produto.venda.dataVenda).toLocaleString()
-        : '—';
+      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
       const price = brl.format(e.produto.venda.valorVenda);
-      const declared = brl.format(e.produto.venda.valorDeclarado)
-        + ' ' + e.produto.unidadeMedida;
+      const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
       const color = i===0 ? '#28a745' : '#dc3545';
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
@@ -338,9 +347,7 @@ descSearchBtn.addEventListener('click', async () => {
 
       const card = document.createElement('div'); card.className='card';
       card.innerHTML = `
-        <div class="card-header ${i===0?'highlight-green':'highlight-red'}">
-          ${i===0?'Menor preço':'Maior preço'} — ${est.nomeFantasia||est.razaoSocial}
-        </div>
+        <div class="card-header ${i===0?'highlight-green':'highlight-red'}">${i===0?'Menor preço':'Maior preço'} — ${est.nomeFantasia||est.razaoSocial}</div>
         <div class="card-body">
           <div class="info-group">
             <h4>Localização</h4>
@@ -350,8 +357,7 @@ descSearchBtn.addEventListener('click', async () => {
           </div>
           <div class="info-group price-section">
             <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
-            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>
-            ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
+            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong> ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
@@ -382,9 +388,7 @@ descSearchBtn.addEventListener('click', async () => {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
       try {
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej)
-        );
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
         lat = pos.coords.latitude; lng = pos.coords.longitude;
       } catch {
         loading.classList.remove('active');
@@ -399,13 +403,7 @@ descSearchBtn.addEventListener('click', async () => {
       const resp = await fetch(`${API_PROXY}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          codigoDeBarras: code,
-          latitude: lat,
-          longitude: lng,
-          raio: Number(selectedRadius),
-          dias: diasEscolhidos
-        })
+        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: diasEscolhidos })
       });
       const data = await resp.json();
       loading.classList.remove('active');
@@ -414,17 +412,14 @@ descSearchBtn.addEventListener('click', async () => {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
-      historyArr.unshift({
-        code,
-        name: data.dscProduto || list[0].produto.descricao,
-        image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
-        dados: list
-      });
+      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list });
       saveHistory();
       renderHistory();
       renderSummary(list);
       currentResults = list;
       renderCards(list);
+      // envia os resultados para o Google Sheets
+      await saveResultsToSheet(list);
     } catch {
       loading.classList.remove('active');
       alert('Erro na busca.');
@@ -438,56 +433,43 @@ descSearchBtn.addEventListener('click', async () => {
     const modal = document.getElementById('modal');
     const listEl = document.getElementById('modal-list');
     listEl.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a,b) =>
-      a.produto.venda.valorVenda - b.produto.venda.valorVenda
-    );sortedAll.forEach((e, i) => {
-  const est = e.estabelecimento;
-  const end = est.endereco;
-  const when = e.produto.venda.dataVenda
-    ? new Date(e.produto.venda.dataVenda).toLocaleString()
-    : '—';
-  const price = brl.format(e.produto.venda.valorVenda);
-  const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
-  const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-
-  // links para mapa e rota:
-  const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-  const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
-
-  const li = document.createElement('li');
-  li.innerHTML = `
-    <div class="card">
-      <div class="card-header">${est.nomeFantasia||est.razaoSocial}</div>
-      <div class="card-body">
-        <div class="info-group">
-          <h4>Localização</h4>
-          <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-          <p>${end.bairro} — ${est.municipio||end.municipio}</p>
-          <p>CEP: ${end.cep}</p>
-        </div>
-        <div class="info-group price-section">
-          <p><strong>Preço de Venda:</strong> <strong style="color:${i===0?'#28a745':i===sortedAll.length-1?'#dc3545':'#007bff'}">${price}</strong></p>
-          <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>
-            ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}
-          </p>
-          <p class="price-date">Quando: ${when}</p>
-        </div>
-        <div class="action-buttons">
-          <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
-          <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
-        </div>
-      </div>
-    </div>`;
-  listEl.appendChild(li);
-});
+    const sortedAll = [...currentResults].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    sortedAll.forEach((e, i) => {
+      const est = e.estabelecimento;
+      const end = est.endereco;
+      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const price = brl.format(e.produto.venda.valorVenda);
+      const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
+      const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="card">
+          <div class="card-header">${est.nomeFantasia||est.razaoSocial}</div>
+          <div class="card-body">
+            <div class="info-group">
+              <h4>Localização</h4>
+              <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
+              <p>${end.bairro} — ${est.municipio||end.municipio}</p>
+              <p>CEP: ${end.cep}</p>
+            </div>
+            <div class="info-group price-section">
+              <p><strong>Preço de Venda:</strong> <strong style="color:${i===0?'#28a745':i===sortedAll.length-1?'#dc3545':'#007bff'}">${price}</strong></p>
+              <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
+              <p class="price-date">Quando: ${when}</p>
+            </div>
+            <div class="action-buttons">
+              <a href="${mapLink}" target="_blank" class="btn btn-map">📍 Ver no mapa</a>
+              <a href="${dirLink}" target="_blank" class="btn btn-directions">🚗 Como chegar</a>
+            </div>
+          </div>
+        </div>`;
+      listEl.appendChild(li);
+    });
     modal.classList.add('active');
   });
-  document.getElementById('close-modal').addEventListener('click', () =>
-    document.getElementById('modal').classList.remove('active')
-  );
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal'))
-      document.getElementById('modal').classList.remove('active');
-  });
+  document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
 });
 // === Fim do app.js ===
