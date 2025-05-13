@@ -5,8 +5,7 @@ const API_PROXY = 'https://san-apps-teste.vercel.app';
 const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
 
 // URL do seu Apps Script Web App
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNfQNATH6Q710W6_HAy1RRKg6o6LFzqTB7F3dJLqYREXwc-2tk0P6X4-XH24hM67D0/exec';
-
+const APPS_SCRIPT_URL = '/api/proxy';
 // Gera ou recupera o ID anônimo do usuário
 function getAnonymousUserId() {
   let id = localStorage.getItem('anonUserId');
