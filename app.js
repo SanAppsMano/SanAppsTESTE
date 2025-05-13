@@ -30,7 +30,10 @@ function formatForSheet(list) {
       prod.descricaoSefaz || prod.descricao || '',
       prod.venda.valorVenda,
       prod.venda.valorDeclarado,
-      prod.venda.dataVenda,
+      prod.venda.dataVenda
+        ? new Date(prod.venda.dataVenda)
+        .toLocaleString('pt-BR', { timeZone: 'America/Maceio' })
+        : '',
       est.nomeFantasia || est.razaoSocial,
       end.nomeLogradouro,
       end.bairro,
