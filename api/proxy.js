@@ -15,11 +15,12 @@ export default async function handler(req, res) {
 
   try {
     // 3) Repassa a requisição para o Apps Script
-    const fetchRes = await fetch(APP_SCRIPT_URL, {
+     const fetchRes = await fetch(APP_SCRIPT_URL, {
       method: req.method,
       headers: { 'Content-Type': 'application/json' },
-      body: req.method === 'POST' ? req.body : undefined
+      body: req.method === 'POST' ? JSON.stringify(req.body) : undefined
     });
+
     const text = await fetchRes.text();
 
     // 4) Retorna a resposta ao navegador com cabeçalhos CORS
