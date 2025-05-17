@@ -210,38 +210,48 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
- descSearchBtn.addEventListener('click', async () => {
-  // guarda o HTML original do botão
+ // referências aos elementos do modal de descrição
+const descSearchBtn = document.getElementById('desc-modal-search');
+const descInput     = document.getElementById('desc-modal-input');
+const descCatalog   = document.getElementById('desc-modal-catalog');
+
+// listener de clique no botão de busca por descrição
+descSearchBtn.addEventListener('click', async () => {
+  // salva o HTML original do botão pra restaurar depois
   const originalHTML = descSearchBtn.innerHTML;
 
-  // botão fica desabilitado e mostra spinner
+  // desabilita o botão e mostra spinner
   descSearchBtn.disabled  = true;
   descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
+  let uniItems = [];
   try {
-    // executa a busca e recebe a lista de itens
-    const uniItems = await renderDescriptionCatalog();
-    // limpa o input SÓ se retornou resultados
-    if (uniItems?.length) descInput.value = '';
+    // executa a busca e obtém itens únicos
+    uniItems = await renderDescriptionCatalog();
+  } catch (err) {
+    console.error('Erro na busca por descrição:', err);
   } finally {
-    // mesmo em caso de erro, restaura o botão
+    // restaura o botão
     descSearchBtn.disabled  = false;
     descSearchBtn.innerHTML = originalHTML;
+    // limpa o input apenas se retornou algum item
+    if (uniItems.length > 0) {
+      descInput.value = '';
+    }
   }
-});
+}); // fecha addEventListener do click
 
+// listener para filtrar o catálogo enquanto digita
 descInput.addEventListener('input', () => {
   const filter = descInput.value.toLowerCase();
-  // spread children em array para usar forEach
-  [...descCatalog.children].forEach(card => {
+  Array.from(descCatalog.children).forEach(card => {
     card.style.display = card.dataset.desc
       .toLowerCase()
       .includes(filter)
         ? 'flex'
         : 'none';
   });
-});
-
+}); // fecha addEventListener do input
 
 
 // filtro em tempo real no catálogo
