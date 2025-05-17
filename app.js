@@ -210,29 +210,48 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
+// referências aos elementos
+const descSearchBtn = document.getElementById('desc-modal-search');
+const descInput     = document.getElementById('desc-modal-input');
+const descCatalog   = document.getElementById('desc-modal-catalog');
+
 descSearchBtn.addEventListener('click', async () => {
-  // Guarda o HTML original do botão para restaurar depois
+  // pega o HTML original do botão
   const originalHTML = descSearchBtn.innerHTML;
-  // Desabilita o botão para evitar cliques duplicados
-  descSearchBtn.disabled = true;
-  // Exibe um spinner para indicar carregamento
-  descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-  
+
+  // desabilita e mostra spinner
+  descSearchBtn.disabled      = true;
+  descSearchBtn.innerHTML     = '<i class="fas fa-spinner fa-spin"></i>';
+
   let uniItems = [];
   try {
-    // Chama a função de busca e armazena o resultado
+    // executa a busca e guarda o resultado
     uniItems = await renderDescriptionCatalog();
-  } finally {
-    // Reabilita o botão após a busca (com ou sem sucesso)
-    descSearchBtn.disabled = false;
-    // Restaura o conteúdo original do botão
-    descSearchBtn.innerHTML = originalHTML;
-    // Se retornou ao menos um item, limpa o campo de input
-    if (uniItems.length > 0) {
+    // se retornou algo, limpa o input
+    if (uniItems && uniItems.length) {
       descInput.value = '';
     }
+  } catch (err) {
+    console.error('Erro na busca por descrição:', err);
+  } finally {
+    // restaura botão
+    descSearchBtn.disabled  = false;
+    descSearchBtn.innerHTML = originalHTML;
   }
-});
+});  // fecha addEventListener do click
+
+// listener para filtrar cards enquanto digita
+descInput.addEventListener('input', () => {
+  const filter = descInput.value.toLowerCase();
+  Array.from(descCatalog.children).forEach(card => {
+    card.style.display = card.dataset.desc
+      .toLowerCase()
+      .includes(filter)
+        ? 'flex'
+        : 'none';
+  });
+});  // fecha addEventListener do input
+
 
 descInput.addEventListener('input', () => {
   // Converte o valor digitado para lowercase para filtro case-insensitive
