@@ -210,17 +210,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
-    descSearchBtn.disabled = true;
-    descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    try { await renderDescriptionCatalog(); }
-    finally { descSearchBtn.disabled = false; descSearchBtn.innerHTML = originalHTML; descInput.value = ''; }
+    descSearchBtn.addEventListener('click', async () => {
+  const originalHTML = descSearchBtn.innerHTML;
+  descSearchBtn.disabled = true;
+  descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  let uniItems;
+  try {
+    uniItems = await renderDescriptionCatalog();
+  } finally {
+    descSearchBtn.disabled = false;
+    descSearchBtn.innerHTML = originalHTML;
+    if (uniItems && uniItems.length) {
+      descInput.value = '';
+    }
+  }
+});
+
+descInput.addEventListener('input', () => {
+  const filter = descInput.value.toLowerCase();
+  Array.from(descCatalog.children).forEach(card => {
+    card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
   });
-  descInput.addEventListener('input', () => {
-    const filter = descInput.value.toLowerCase();
-    Array.from(descCatalog.children).forEach(card => {
-      card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
-    });
-  });
+});
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
