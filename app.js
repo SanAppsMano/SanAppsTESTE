@@ -1,8 +1,8 @@
 // app.js
 // Mantém lógica original, com captura de foto, busca por barcode e busca por descrição via modal
 
-const API_PROXY      = 'https://san-apps-teste.vercel.app';
-const COSMOS_BASE    = 'https://cdn-cosmos.bluesoft.com.br/products';
+const API_PROXY       = 'https://san-apps-teste.vercel.app';
+const COSMOS_BASE     = 'https://cdn-cosmos.bluesoft.com.br/products';
 const APPS_SCRIPT_URL = 'https://san-apps-teste.vercel.app/api/proxy';
 
 // Gera ou recupera o ID anônimo do usuário
@@ -30,8 +30,7 @@ function formatForSheet(list) {
       prod.venda.valorVenda,
       prod.venda.valorDeclarado,
       prod.venda.dataVenda
-        ? new Date(prod.venda.dataVenda)
-            .toLocaleString('pt-BR', { timeZone: 'America/Maceio' })
+        ? new Date(prod.venda.dataVenda).toLocaleString('pt-BR', { timeZone: 'America/Maceio' })
         : '',
       est.nomeFantasia || est.razaoSocial,
       end.nomeLogradouro,
@@ -66,19 +65,14 @@ async function saveResultsToSheet(list) {
 window.addEventListener('DOMContentLoaded', () => {
   // ===== Lightbox de imagem =====
   ;(function() {
-    const lb = document.createElement('div');
-    lb.id = 'lightbox';
+    const lb = document.createElement('div'); lb.id = 'lightbox';
     Object.assign(lb.style, {
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.8)', display: 'none',
-      alignItems: 'center', justifyContent: 'center',
-      zIndex: 10000, cursor: 'zoom-out'
+      position:'fixed', top:0, left:0, width:'100%', height:'100%',
+      background:'rgba(0,0,0,0.8)', display:'none',
+      alignItems:'center', justifyContent:'center', zIndex:10000, cursor:'zoom-out'
     });
-    const img = document.createElement('img');
-    img.id = 'lightbox-img';
-    Object.assign(img.style, {
-      maxWidth: '90%', maxHeight: '90%', boxShadow: '0 0 8px #fff'
-    });
+    const img = document.createElement('img'); img.id = 'lightbox-img';
+    Object.assign(img.style, { maxWidth:'90%', maxHeight:'90%', boxShadow:'0 0 8px #fff' });
     lb.appendChild(img);
     lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
@@ -161,7 +155,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return Array.isArray(data) ? data : (data.content || []);
   }
 
-  // Renderiza catálogo de cards no modal
+  // Renderiza catálogo de cards no modal, já com intervalo de preços
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) {
@@ -176,7 +170,9 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const items      = await searchByDescription(desc);
       const validItems = items.filter(i => i.codGetin);
-      const seenDesc   = new Set();
+
+      // preenche a datalist
+      const seenDesc = new Set();
       validItems.forEach(i => {
         if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
           const opt = document.createElement('option');
@@ -186,13 +182,29 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      // dedupe por GTIN
       const mapUnicos = new Map();
       validItems.forEach(i => {
         if (!mapUnicos.has(i.codGetin)) mapUnicos.set(i.codGetin, i);
       });
       const uniItems = Array.from(mapUnicos.values());
 
+      // calcula lista de preços por GTIN
+      const pricesByGtin = {};
+      validItems.forEach(i => {
+        const price = parseFloat(i.produto?.venda?.valorVenda ?? 0);
+        if (!pricesByGtin[i.codGetin]) pricesByGtin[i.codGetin] = [];
+        pricesByGtin[i.codGetin].push(price);
+      });
+
+      // monta os cards com intervalo de preço
       uniItems.forEach(i => {
+        const arr  = pricesByGtin[i.codGetin] || [];
+        const minP = arr.length ? Math.min(...arr) : 0;
+        const maxP = arr.length ? Math.max(...arr) : 0;
+        const fmt  = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
+        const priceRange = `${fmt.format(minP)} – ${fmt.format(maxP)}`;
+
         const card = document.createElement('div');
         card.className    = 'card';
         card.dataset.gtin = i.codGetin;
@@ -201,6 +213,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <img src="${COSMOS_BASE}/${i.codGetin}" alt="${i.dscProduto}">
           <div class="gtin">${i.codGetin}</div>
           <div class="desc">${i.dscProduto}</div>
+          <div class="price-range">${priceRange}</div>
         `;
         card.addEventListener('click', () => {
           barcodeInput.value = i.codGetin;
@@ -257,7 +270,7 @@ window.addEventListener('DOMContentLoaded', () => {
   btnScan.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', async () => {
     if (!photoInput.files?.length) return;
-    const file = photoInput.files[0];
+    const file  = photoInput.files[0];
     const imgUrl = URL.createObjectURL(file);
     let code = '';
 
@@ -271,7 +284,6 @@ window.addEventListener('DOMContentLoaded', () => {
         console.warn('BarcodeDetector falhou:', e);
       }
     }
-
     if (!code) {
       await new Promise(res => {
         Quagga.decodeSingle({
@@ -285,11 +297,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
       });
     }
-
     if (!code) {
       await new Promise(res => {
-        const img = new Image();
-        img.src = imgUrl;
+        const img = new Image(); img.src = imgUrl;
         img.onload = () => {
           try {
             code = new ZXing.BrowserMultiFormatReader().decodeFromImageElement(img).getText();
@@ -311,10 +321,10 @@ window.addEventListener('DOMContentLoaded', () => {
   daysRange.addEventListener('input', () => daysValue.textContent = daysRange.value);
 
   // ===== Histórico =====
-  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  let currentResults = [];
-  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
+  const brl = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
+  let historyArr      = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let currentResults  = [];
+  let selectedRadius  = document.querySelector('.radius-btn.active').dataset.value;
 
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
@@ -326,9 +336,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const btn = document.createElement('button'); btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = item.name;
+        const img = document.createElement('img'); img.src = item.image; img.alt = item.name;
         btn.appendChild(img);
       } else {
         btn.textContent = item.name;
@@ -366,7 +374,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function renderSummary(list) {
     const first = list[0];
-    const name = first.produto.descricaoSefaz || first.produto.descricao;
+    const name  = first.produto.descricaoSefaz || first.produto.descricao;
     const imgUrl = first.produto.gtin ? `${COSMOS_BASE}/${first.produto.gtin}` : '';
     summaryContainer.innerHTML = `
       <div class="product-header">
@@ -382,36 +390,36 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function renderCards(list) {
     resultContainer.innerHTML = '';
-    const sortedAll = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    const sortedAll = [...list].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
     const [menor, maior] = [sortedAll[0], sortedAll[sortedAll.length - 1]];
     [menor, maior].forEach((e, i) => {
-      const est = e.estabelecimento;
-      const end = est.endereco;
-      const when = e.produto.venda.dataVenda
-        ? new Date(e.produto.venda.dataVenda).toLocaleString()
-        : '—';
-      const price = brl.format(e.produto.venda.valorVenda);
+      const est    = e.estabelecimento;
+      const end    = est.endereco;
+      const when   = e.produto.venda.dataVenda
+                      ? new Date(e.produto.venda.dataVenda).toLocaleString()
+                      : '—';
+      const price  = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      const color = i === 0 ? '#28a745' : '#dc3545';
+      const color  = i === 0 ? '#28a745' : '#dc3545';
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
-      const card = document.createElement('div');
-      card.className = 'card';
+
+      const card = document.createElement('div'); card.className = 'card';
       card.innerHTML = `
-        <div class="card-header ${i === 0 ? 'highlight-green' : 'highlight-red'}">
-          ${i === 0 ? 'Menor preço' : 'Maior preço'} — ${est.nomeFantasia || est.razaoSocial}
+        <div class="card-header ${i===0?'highlight-green':'highlight-red'}">
+          ${i===0?'Menor preço':'Maior preço'} — ${est.nomeFantasia||est.razaoSocial}
         </div>
         <div class="card-body">
           <div class="info-group">
             <h4>Localização</h4>
             <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-            <p>${end.bairro} — ${est.municipio || end.municipio}</p>
+            <p>${end.bairro} — ${est.municipio||end.municipio}</p>
             <p>CEP: ${end.cep}</p>
           </div>
           <div class="info-group price-section">
             <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
-            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong> ${isPromo ? '<span role="img" aria-label="Promoção">🏷️</span>' : ''}</p>
+            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong> ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
@@ -445,8 +453,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const pos = await new Promise((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej)
         );
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
       } catch {
         loading.classList.remove('active');
         return alert('Não foi possível obter localização.');
@@ -504,16 +511,16 @@ window.addEventListener('DOMContentLoaded', () => {
       a.produto.venda.valorVenda - b.produto.venda.valorVenda
     );
     sortedAll.forEach((e, i) => {
-      const est = e.estabelecimento;
-      const end = est.endereco;
+      const est  = e.estabelecimento;
+      const end  = est.endereco;
       const when = e.produto.venda.dataVenda
         ? new Date(e.produto.venda.dataVenda).toLocaleString()
         : '—';
-      const price = brl.format(e.produto.venda.valorVenda);
+      const price    = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
-      const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const isPromo  = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
+      const mapLink  = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
