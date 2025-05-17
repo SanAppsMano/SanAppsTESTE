@@ -65,20 +65,22 @@ async function saveResultsToSheet(list) {
 window.addEventListener('DOMContentLoaded', () => {
   // ===== Lightbox de imagem =====
   ;(function() {
-    const lb = document.createElement('div'); lb.id = 'lightbox';
+    const lb = document.createElement('div');
+    lb.id = 'lightbox';
     Object.assign(lb.style, {
       position:'fixed', top:0, left:0, width:'100%', height:'100%',
       background:'rgba(0,0,0,0.8)', display:'none',
       alignItems:'center', justifyContent:'center', zIndex:10000, cursor:'zoom-out'
     });
-    const img = document.createElement('img'); img.id = 'lightbox-img';
+    const img = document.createElement('img');
+    img.id = 'lightbox-img';
     Object.assign(img.style, { maxWidth:'90%', maxHeight:'90%', boxShadow:'0 0 8px #fff' });
     lb.appendChild(img);
     lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
   })();
 
-  // ===== DOM elements originais =====
+  // ===== Elementos do DOM =====
   const btnSearch        = document.getElementById('btn-search');
   const barcodeInput     = document.getElementById('barcode');
   const daysRange        = document.getElementById('daysRange');
@@ -103,7 +105,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const descCountEl   = document.getElementById('desc-modal-count');
   const descCatalog   = document.getElementById('desc-modal-catalog');
 
-  // Abrir / fechar modal
   openDescBtn.addEventListener('click', () => {
     descInput.value        = '';
     descDatalist.innerHTML = '';
@@ -117,7 +118,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.target === descModal) descModal.classList.remove('active');
   });
 
-  // Chama o endpoint serverless de descrição
   async function searchByDescription(desc) {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
@@ -129,40 +129,24 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
       [lat, lng] = document.getElementById('city').value.split(',').map(Number);
     }
-
-    const payload = {
-      descricao: desc,
-      dias:      DEFAULT_DIAS_DESC,
-      raio:      DEFAULT_RAIO_DESC,
-      latitude:  lat,
-      longitude: lng
-    };
-
+    const payload = { descricao: desc, dias: DEFAULT_DIAS_DESC, raio: DEFAULT_RAIO_DESC, latitude: lat, longitude: lng };
     const res = await fetch(`${API_PROXY}/api/searchDescricao`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload)
     });
-
-    if (res.status === 502) {
-      throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
-    }
-    if (!res.ok) {
-      throw new Error(`Erro na busca por descrição: Status ${res.status}`);
-    }
-
+    if (res.status === 502) throw new Error('Serviço temporariamente indisponível.');
+    if (!res.ok) throw new Error(`Erro na busca por descrição: ${res.status}`);
     const data = await res.json();
-    return Array.isArray(data) ? data : (data.content || []);
+    return Array.isArray(data) ? data : (data.content || data.lista || []);
   }
 
-  // Renderiza catálogo de cards no modal, já com intervalo de preços
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
     if (!desc) {
       alert('Informe uma descrição.');
       return [];
     }
-
     descCatalog.innerHTML  = '';
     descDatalist.innerHTML = '';
     descCountEl.hidden     = true;
@@ -171,14 +155,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const items      = await searchByDescription(desc);
       const validItems = items.filter(i => i.codGetin);
 
-      // preenche a datalist
-      const seenDesc = new Set();
+      // popula datalist
+      const seen = new Set();
       validItems.forEach(i => {
-        if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
+        if (i.dscProduto && !seen.has(i.dscProduto)) {
           const opt = document.createElement('option');
           opt.value = i.dscProduto;
           descDatalist.appendChild(opt);
-          seenDesc.add(i.dscProduto);
+          seen.add(i.dscProduto);
         }
       });
 
@@ -189,21 +173,25 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       const uniItems = Array.from(mapUnicos.values());
 
-      // calcula lista de preços por GTIN
+      // agrupa preços por GTIN usando produto.venda.valorVenda
       const pricesByGtin = {};
       validItems.forEach(i => {
-        const price = parseFloat(i.produto?.venda?.valorVenda ?? 0);
-        if (!pricesByGtin[i.codGetin]) pricesByGtin[i.codGetin] = [];
-        pricesByGtin[i.codGetin].push(price);
+        const p = parseFloat(i.produto.venda.valorVenda);
+        if (!isNaN(p)) {
+          pricesByGtin[i.codGetin] = pricesByGtin[i.codGetin] || [];
+          pricesByGtin[i.codGetin].push(p);
+        }
       });
 
-      // monta os cards com intervalo de preço
+      // monta cards com intervalo de preço
+      const fmt = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
       uniItems.forEach(i => {
-        const arr  = pricesByGtin[i.codGetin] || [];
-        const minP = arr.length ? Math.min(...arr) : 0;
-        const maxP = arr.length ? Math.max(...arr) : 0;
-        const fmt  = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
-        const priceRange = `${fmt.format(minP)} – ${fmt.format(maxP)}`;
+        const arr     = pricesByGtin[i.codGetin] || [];
+        const minP    = arr.length ? Math.min(...arr) : 0;
+        const maxP    = arr.length ? Math.max(...arr) : 0;
+        const rangeText = arr.length
+          ? `${fmt.format(minP)} – ${fmt.format(maxP)}`
+          : '—';
 
         const card = document.createElement('div');
         card.className    = 'card';
@@ -213,7 +201,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <img src="${COSMOS_BASE}/${i.codGetin}" alt="${i.dscProduto}">
           <div class="gtin">${i.codGetin}</div>
           <div class="desc">${i.dscProduto}</div>
-          <div class="price-range">${priceRange}</div>
+          <div class="price-range">${rangeText}</div>
         `;
         card.addEventListener('click', () => {
           barcodeInput.value = i.codGetin;
@@ -233,34 +221,25 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Listener de clique no botão de busca por descrição
+  // listener de clique no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
-    const originalHTML = descSearchBtn.innerHTML;
+    const original = descSearchBtn.innerHTML;
     descSearchBtn.disabled  = true;
     descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
     try {
-      const uniItems = await renderDescriptionCatalog();
-      if (uniItems.length > 0) {
-        descInput.value = '';
-      }
-    } catch (err) {
-      console.error('Erro na busca por descrição:', err);
+      const uni = await renderDescriptionCatalog();
+      if (uni.length) descInput.value = '';
     } finally {
       descSearchBtn.disabled  = false;
-      descSearchBtn.innerHTML = originalHTML;
+      descSearchBtn.innerHTML = original;
     }
   });
 
-  // Listener para filtrar os cards enquanto digita
+  // listener para filtrar os cards enquanto digita
   descInput.addEventListener('input', () => {
-    const filter = descInput.value.toLowerCase();
+    const f = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
-      card.style.display = card.dataset.desc
-        .toLowerCase()
-        .includes(filter)
-          ? 'flex'
-          : 'none';
+      card.style.display = card.dataset.desc.toLowerCase().includes(f) ? 'flex' : 'none';
     });
   });
 
@@ -276,21 +255,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if ('BarcodeDetector' in window) {
       try {
-        const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8'] });
+        const detector = new BarcodeDetector({ formats: ['ean_13','ean_8'] });
         const bitmap   = await createImageBitmap(file);
         const [c]      = await detector.detect(bitmap);
         code = c?.rawValue || '';
-      } catch (e) {
-        console.warn('BarcodeDetector falhou:', e);
-      }
+      } catch {}
     }
     if (!code) {
       await new Promise(res => {
         Quagga.decodeSingle({
-          src: imgUrl,
-          numOfWorkers: 0,
-          locate: true,
-          decoder: { readers: ['ean_reader'] }
+          src: imgUrl, numOfWorkers:0, locate:true,
+          decoder:{ readers:['ean_reader'] }
         }, result => {
           code = result?.codeResult?.code || '';
           res();
@@ -303,14 +278,11 @@ window.addEventListener('DOMContentLoaded', () => {
         img.onload = () => {
           try {
             code = new ZXing.BrowserMultiFormatReader().decodeFromImageElement(img).getText();
-          } catch (err) {
-            console.warn('ZXing falhou:', err);
-          }
+          } catch {}
           res();
         };
       });
     }
-
     URL.revokeObjectURL(imgUrl);
     barcodeInput.value = code;
     btnSearch.click();
@@ -322,9 +294,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ===== Histórico =====
   const brl = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
-  let historyArr      = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  let currentResults  = [];
-  let selectedRadius  = document.querySelector('.radius-btn.active').dataset.value;
+  let historyArr     = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  let currentResults = [];
+  let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
 
   function saveHistory() {
     localStorage.setItem('searchHistory', JSON.stringify(historyArr));
@@ -332,7 +304,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li = document.createElement('li'); li.className = 'history-item';
+      const li  = document.createElement('li'); li.className = 'history-item';
       const btn = document.createElement('button'); btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
@@ -405,7 +377,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
 
-      const card = document.createElement('div'); card.className = 'card';
+      const card = document.createElement('div');
+      card.className = 'card';
       card.innerHTML = `
         <div class="card-header ${i===0?'highlight-green':'highlight-red'}">
           ${i===0?'Menor preço':'Maior preço'} — ${est.nomeFantasia||est.razaoSocial}
@@ -439,7 +412,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCards(list);
   }
 
-  // ===== Busca por código de barras original =====
+  // ===== Busca por código de barras =====
   async function searchByCode() {
     const code = barcodeInput.value.trim();
     if (!code) return alert('Digite um código de barras.');
@@ -511,16 +484,16 @@ window.addEventListener('DOMContentLoaded', () => {
       a.produto.venda.valorVenda - b.produto.venda.valorVenda
     );
     sortedAll.forEach((e, i) => {
-      const est  = e.estabelecimento;
-      const end  = est.endereco;
-      const when = e.produto.venda.dataVenda
-        ? new Date(e.produto.venda.dataVenda).toLocaleString()
-        : '—';
-      const price    = brl.format(e.produto.venda.valorVenda);
+      const est    = e.estabelecimento;
+      const end    = est.endereco;
+      const when   = e.produto.venda.dataVenda
+                      ? new Date(e.produto.venda.dataVenda).toLocaleString()
+                      : '—';
+      const price  = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
-      const isPromo  = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      const mapLink  = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
-      const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
+      const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
+      const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
