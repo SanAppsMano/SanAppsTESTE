@@ -210,26 +210,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
-   // handler de clique no botão de busca por descrição
 descSearchBtn.addEventListener('click', async () => {
+  // Guarda o HTML original do botão para restaurar depois
   const originalHTML = descSearchBtn.innerHTML;
+  // Desabilita o botão para evitar cliques duplicados
   descSearchBtn.disabled = true;
+  // Exibe um spinner para indicar carregamento
   descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
+  
   let uniItems = [];
   try {
+    // Chama a função de busca e armazena o resultado
     uniItems = await renderDescriptionCatalog();
-  } catch (err) {
-    console.error('Erro na busca por descrição:', err);
   } finally {
+    // Reabilita o botão após a busca (com ou sem sucesso)
     descSearchBtn.disabled = false;
+    // Restaura o conteúdo original do botão
     descSearchBtn.innerHTML = originalHTML;
-    // limpa o input apenas se retornou ao menos um item
+    // Se retornou ao menos um item, limpa o campo de input
     if (uniItems.length > 0) {
       descInput.value = '';
     }
   }
 });
+
+descInput.addEventListener('input', () => {
+  // Converte o valor digitado para lowercase para filtro case-insensitive
+  const filter = descInput.value.toLowerCase();
+  // Para cada card no catálogo...
+  Array.from(descCatalog.children).forEach(card => {
+    // ...mostra ou oculta conforme o texto do dataset corresponder ao filtro
+    card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+  });
+});
+
 
 // filtro em tempo real no catálogo
 descInput.addEventListener('input', () => {
