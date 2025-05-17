@@ -210,27 +210,38 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
- descSearchBtn.disabled = true;
-    descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    try { await renderDescriptionCatalog(); }
-    finally { descSearchBtn.disabled = false; descSearchBtn.innerHTML = originalHTML; descInput.value = ''; }
-  });
-  descInput.addEventListener('input', () => {
-    const filter = descInput.value.toLowerCase();
-    Array.from(descCatalog.children).forEach(card => {
-      card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
-    });
-  });
+ descSearchBtn.addEventListener('click', async () => {
+  // guarda o HTML original do botão
+  const originalHTML = descSearchBtn.innerHTML;
+
+  // botão fica desabilitado e mostra spinner
+  descSearchBtn.disabled  = true;
+  descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  try {
+    // executa a busca e recebe a lista de itens
+    const uniItems = await renderDescriptionCatalog();
+    // limpa o input SÓ se retornou resultados
+    if (uniItems?.length) descInput.value = '';
+  } finally {
+    // mesmo em caso de erro, restaura o botão
+    descSearchBtn.disabled  = false;
+    descSearchBtn.innerHTML = originalHTML;
+  }
+});
 
 descInput.addEventListener('input', () => {
-  // Converte o valor digitado para lowercase para filtro case-insensitive
   const filter = descInput.value.toLowerCase();
-  // Para cada card no catálogo...
-  Array.from(descCatalog.children).forEach(card => {
-    // ...mostra ou oculta conforme o texto do dataset corresponder ao filtro
-    card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+  // spread children em array para usar forEach
+  [...descCatalog.children].forEach(card => {
+    card.style.display = card.dataset.desc
+      .toLowerCase()
+      .includes(filter)
+        ? 'flex'
+        : 'none';
   });
 });
+
 
 
 // filtro em tempo real no catálogo
