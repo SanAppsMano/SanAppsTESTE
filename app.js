@@ -210,48 +210,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
-// referências aos elementos
-const descSearchBtn = document.getElementById('desc-modal-search');
-const descInput     = document.getElementById('desc-modal-input');
-const descCatalog   = document.getElementById('desc-modal-catalog');
-
-descSearchBtn.addEventListener('click', async () => {
-  // pega o HTML original do botão
-  const originalHTML = descSearchBtn.innerHTML;
-
-  // desabilita e mostra spinner
-  descSearchBtn.disabled      = true;
-  descSearchBtn.innerHTML     = '<i class="fas fa-spinner fa-spin"></i>';
-
-  let uniItems = [];
-  try {
-    // executa a busca e guarda o resultado
-    uniItems = await renderDescriptionCatalog();
-    // se retornou algo, limpa o input
-    if (uniItems && uniItems.length) {
-      descInput.value = '';
-    }
-  } catch (err) {
-    console.error('Erro na busca por descrição:', err);
-  } finally {
-    // restaura botão
-    descSearchBtn.disabled  = false;
-    descSearchBtn.innerHTML = originalHTML;
-  }
-});  // fecha addEventListener do click
-
-// listener para filtrar cards enquanto digita
-descInput.addEventListener('input', () => {
-  const filter = descInput.value.toLowerCase();
-  Array.from(descCatalog.children).forEach(card => {
-    card.style.display = card.dataset.desc
-      .toLowerCase()
-      .includes(filter)
-        ? 'flex'
-        : 'none';
+ descSearchBtn.disabled = true;
+    descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try { await renderDescriptionCatalog(); }
+    finally { descSearchBtn.disabled = false; descSearchBtn.innerHTML = originalHTML; descInput.value = ''; }
   });
-});  // fecha addEventListener do input
-
+  descInput.addEventListener('input', () => {
+    const filter = descInput.value.toLowerCase();
+    Array.from(descCatalog.children).forEach(card => {
+      card.style.display = card.dataset.desc.toLowerCase().includes(filter) ? 'flex' : 'none';
+    });
+  });
 
 descInput.addEventListener('input', () => {
   // Converte o valor digitado para lowercase para filtro case-insensitive
