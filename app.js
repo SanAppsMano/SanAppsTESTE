@@ -210,17 +210,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
-    descSearchBtn.addEventListener('click', async () => {
+    
+   // Mantendo a estrutura original, com a limpeza do input só se houver resultados
+descSearchBtn.addEventListener('click', async () => {
   const originalHTML = descSearchBtn.innerHTML;
   descSearchBtn.disabled = true;
   descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-  let uniItems;
+  
+  let uniItems = [];
   try {
     uniItems = await renderDescriptionCatalog();
+  } catch (err) {
+    console.error('Erro na busca por descrição:', err);
   } finally {
     descSearchBtn.disabled = false;
     descSearchBtn.innerHTML = originalHTML;
-    if (uniItems && uniItems.length) {
+    // limpa o input apenas quando retornar ao menos um item
+    if (uniItems.length) {
       descInput.value = '';
     }
   }
