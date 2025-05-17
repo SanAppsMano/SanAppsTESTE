@@ -1,11 +1,10 @@
 // app.js
-// Mantém lógica original, com captura de foto, busca por barcode e agora busca por descrição via modal
+// Mantém lógica original, com captura de foto, busca por barcode e busca por descrição via modal
 
-const API_PROXY = 'https://san-apps-teste.vercel.app';
-const COSMOS_BASE = 'https://cdn-cosmos.bluesoft.com.br/products';
-
-// URL do seu Apps Script Web App
+const API_PROXY      = 'https://san-apps-teste.vercel.app';
+const COSMOS_BASE    = 'https://cdn-cosmos.bluesoft.com.br/products';
 const APPS_SCRIPT_URL = 'https://san-apps-teste.vercel.app/api/proxy';
+
 // Gera ou recupera o ID anônimo do usuário
 function getAnonymousUserId() {
   let id = localStorage.getItem('anonUserId');
@@ -18,13 +17,13 @@ function getAnonymousUserId() {
 
 // Formata os dados para enviar ao Google Sheets, incluindo timestamp
 function formatForSheet(list) {
-  const userId = getAnonymousUserId();
+  const userId    = getAnonymousUserId();
   const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Maceio' });
 
   return list.map(e => {
-    const est = e.estabelecimento;
+    const est  = e.estabelecimento;
     const prod = e.produto;
-    const end = est.endereco;
+    const end  = est.endereco;
     return [
       prod.gtin || '',
       prod.descricaoSefaz || prod.descricao || '',
@@ -32,7 +31,7 @@ function formatForSheet(list) {
       prod.venda.valorDeclarado,
       prod.venda.dataVenda
         ? new Date(prod.venda.dataVenda)
-        .toLocaleString('pt-BR', { timeZone: 'America/Maceio' })
+            .toLocaleString('pt-BR', { timeZone: 'America/Maceio' })
         : '',
       est.nomeFantasia || est.razaoSocial,
       end.nomeLogradouro,
@@ -67,14 +66,19 @@ async function saveResultsToSheet(list) {
 window.addEventListener('DOMContentLoaded', () => {
   // ===== Lightbox de imagem =====
   ;(function() {
-    const lb = document.createElement('div'); lb.id = 'lightbox';
+    const lb = document.createElement('div');
+    lb.id = 'lightbox';
     Object.assign(lb.style, {
-      position:'fixed', top:0, left:0, width:'100%', height:'100%',
-      background:'rgba(0,0,0,0.8)', display:'none',
-      alignItems:'center', justifyContent:'center', zIndex:10000, cursor:'zoom-out'
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      background: 'rgba(0,0,0,0.8)', display: 'none',
+      alignItems: 'center', justifyContent: 'center',
+      zIndex: 10000, cursor: 'zoom-out'
     });
-    const img = document.createElement('img'); img.id = 'lightbox-img';
-    Object.assign(img.style, { maxWidth:'90%', maxHeight:'90%', boxShadow:'0 0 8px #fff' });
+    const img = document.createElement('img');
+    img.id = 'lightbox-img';
+    Object.assign(img.style, {
+      maxWidth: '90%', maxHeight: '90%', boxShadow: '0 0 8px #fff'
+    });
     lb.appendChild(img);
     lb.addEventListener('click', () => lb.style.display = 'none');
     document.body.appendChild(lb);
@@ -96,15 +100,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_DIAS_DESC = 3;
   const DEFAULT_RAIO_DESC = 15;
 
-  // Referências ao modal e seus controles
-  const openDescBtn      = document.getElementById('open-desc-modal');
-  const descModal        = document.getElementById('desc-modal');
-  const closeDescBtn     = document.getElementById('close-desc-modal');
-  const descInput        = document.getElementById('desc-modal-input');
-  const descDatalist     = document.getElementById('desc-modal-list');
-  const descSearchBtn    = document.getElementById('desc-modal-search');
-  const descCountEl      = document.getElementById('desc-modal-count');
-  const descCatalog      = document.getElementById('desc-modal-catalog');
+  const openDescBtn   = document.getElementById('open-desc-modal');
+  const descModal     = document.getElementById('desc-modal');
+  const closeDescBtn  = document.getElementById('close-desc-modal');
+  const descInput     = document.getElementById('desc-modal-input');
+  const descDatalist  = document.getElementById('desc-modal-list');
+  const descSearchBtn = document.getElementById('desc-modal-search');
+  const descCountEl   = document.getElementById('desc-modal-count');
+  const descCatalog   = document.getElementById('desc-modal-catalog');
 
   // Abrir / fechar modal
   openDescBtn.addEventListener('click', () => {
@@ -161,28 +164,34 @@ window.addEventListener('DOMContentLoaded', () => {
   // Renderiza catálogo de cards no modal
   async function renderDescriptionCatalog() {
     const desc = descInput.value.trim();
-    if (!desc) return alert('Informe uma descrição.');
+    if (!desc) {
+      alert('Informe uma descrição.');
+      return [];
+    }
 
     descCatalog.innerHTML  = '';
     descDatalist.innerHTML = '';
     descCountEl.hidden     = true;
 
     try {
-      const items = await searchByDescription(desc);
+      const items      = await searchByDescription(desc);
       const validItems = items.filter(i => i.codGetin);
-      const seenDesc = new Set();
+      const seenDesc   = new Set();
       validItems.forEach(i => {
         if (i.dscProduto && !seenDesc.has(i.dscProduto)) {
-          const opt = document.createElement('option'); opt.value = i.dscProduto;
+          const opt = document.createElement('option');
+          opt.value = i.dscProduto;
           descDatalist.appendChild(opt);
           seenDesc.add(i.dscProduto);
         }
       });
+
       const mapUnicos = new Map();
       validItems.forEach(i => {
         if (!mapUnicos.has(i.codGetin)) mapUnicos.set(i.codGetin, i);
       });
       const uniItems = Array.from(mapUnicos.values());
+
       uniItems.forEach(i => {
         const card = document.createElement('div');
         card.className    = 'card';
@@ -200,49 +209,37 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         descCatalog.appendChild(card);
       });
+
       descCountEl.textContent = `${uniItems.length} item${uniItems.length !== 1 ? 's' : ''} encontrado${uniItems.length !== 1 ? 's' : ''}.`;
+      return uniItems;
     } catch (err) {
       alert('Erro na busca por descrição: ' + err.message);
+      return [];
     } finally {
       descCountEl.hidden = false;
     }
   }
 
+  // Listener de clique no botão de busca por descrição
   descSearchBtn.addEventListener('click', async () => {
     const originalHTML = descSearchBtn.innerHTML;
-// referências aos elementos do modal de busca por descrição
-const descSearchBtn = document.getElementById('desc-modal-search');
-const descInput     = document.getElementById('desc-modal-input');
-const descCatalog   = document.getElementById('desc-modal-catalog');
-
-// só adiciona os listeners se os elementos existirem no DOM
-if (descSearchBtn && descInput && descCatalog) {
-  // listener de clique no botão de busca
-  descSearchBtn.addEventListener('click', async () => {
-    // guarda o HTML original para restaurar depois
-    const originalHTML = descSearchBtn.innerHTML;
-    // desabilita o botão e mostra spinner
     descSearchBtn.disabled  = true;
     descSearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-    let uniItems = [];
     try {
-      // executa a busca e obtém o array de itens únicos
-      uniItems = await renderDescriptionCatalog();
-      // limpa o campo apenas se retornou ao menos um item
-      if (Array.isArray(uniItems) && uniItems.length > 0) {
+      const uniItems = await renderDescriptionCatalog();
+      if (uniItems.length > 0) {
         descInput.value = '';
       }
     } catch (err) {
       console.error('Erro na busca por descrição:', err);
     } finally {
-      // restaura o botão
       descSearchBtn.disabled  = false;
       descSearchBtn.innerHTML = originalHTML;
     }
   });
 
-  // listener para filtrar os cards enquanto o usuário digita
+  // Listener para filtrar os cards enquanto digita
   descInput.addEventListener('input', () => {
     const filter = descInput.value.toLowerCase();
     Array.from(descCatalog.children).forEach(card => {
@@ -253,20 +250,6 @@ if (descSearchBtn && descInput && descCatalog) {
           : 'none';
     });
   });
-} else {
-  console.error('Elementos de busca por descrição não encontrados no DOM.');
-}
-
-
-// filtro em tempo real no catálogo
-descInput.addEventListener('input', () => {
-  const filter = descInput.value.toLowerCase();
-  Array.from(descCatalog.children).forEach(card => {
-    card.style.display = card.dataset.desc.toLowerCase().includes(filter)
-      ? 'flex'
-      : 'none';
-  });
-});
 
   // ===== Botão de scan e captura de foto =====
   const btnScan    = document.getElementById('btn-scan');
@@ -277,32 +260,47 @@ descInput.addEventListener('input', () => {
     const file = photoInput.files[0];
     const imgUrl = URL.createObjectURL(file);
     let code = '';
+
     if ('BarcodeDetector' in window) {
       try {
-        const detector = new BarcodeDetector({ formats:['ean_13','ean_8'] });
-        const bitmap  = await createImageBitmap(file);
-        const [c]     = await detector.detect(bitmap);
+        const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8'] });
+        const bitmap   = await createImageBitmap(file);
+        const [c]      = await detector.detect(bitmap);
         code = c?.rawValue || '';
-      } catch(e){ console.warn('BarcodeDetector falhou:', e); }
+      } catch (e) {
+        console.warn('BarcodeDetector falhou:', e);
+      }
     }
+
     if (!code) {
       await new Promise(res => {
-        Quagga.decodeSingle({ src: imgUrl, numOfWorkers:0, locate:true, decoder:{ readers:['ean_reader'] } }, result => {
+        Quagga.decodeSingle({
+          src: imgUrl,
+          numOfWorkers: 0,
+          locate: true,
+          decoder: { readers: ['ean_reader'] }
+        }, result => {
           code = result?.codeResult?.code || '';
           res();
         });
       });
     }
+
     if (!code) {
       await new Promise(res => {
-        const img = new Image(); img.src = imgUrl;
+        const img = new Image();
+        img.src = imgUrl;
         img.onload = () => {
-          try { code = new ZXing.BrowserMultiFormatReader().decodeFromImageElement(img).getText(); }
-          catch(err){ console.warn('ZXing falhou:', err); }
+          try {
+            code = new ZXing.BrowserMultiFormatReader().decodeFromImageElement(img).getText();
+          } catch (err) {
+            console.warn('ZXing falhou:', err);
+          }
           res();
         };
       });
     }
+
     URL.revokeObjectURL(imgUrl);
     barcodeInput.value = code;
     btnSearch.click();
@@ -313,7 +311,7 @@ descInput.addEventListener('input', () => {
   daysRange.addEventListener('input', () => daysValue.textContent = daysRange.value);
 
   // ===== Histórico =====
-  const brl = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   let historyArr = JSON.parse(localStorage.getItem('searchHistory') || '[]');
   let currentResults = [];
   let selectedRadius = document.querySelector('.radius-btn.active').dataset.value;
@@ -324,13 +322,17 @@ descInput.addEventListener('input', () => {
   function renderHistory() {
     historyListEl.innerHTML = '';
     historyArr.forEach(item => {
-      const li = document.createElement('li'); li.className='history-item';
+      const li = document.createElement('li'); li.className = 'history-item';
       const btn = document.createElement('button'); btn.title = item.name;
       btn.addEventListener('click', () => loadFromCache(item));
       if (item.image) {
-        const img = document.createElement('img'); img.src = item.image; img.alt = item.name;
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.alt = item.name;
         btn.appendChild(img);
-      } else btn.textContent = item.name;
+      } else {
+        btn.textContent = item.name;
+      }
       li.appendChild(btn);
       historyListEl.appendChild(li);
     });
@@ -380,32 +382,36 @@ descInput.addEventListener('input', () => {
 
   function renderCards(list) {
     resultContainer.innerHTML = '';
-    const sortedAll = [...list].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
-    const [menor, maior] = [sortedAll[0], sortedAll[sortedAll.length-1]];
+    const sortedAll = [...list].sort((a, b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    const [menor, maior] = [sortedAll[0], sortedAll[sortedAll.length - 1]];
     [menor, maior].forEach((e, i) => {
       const est = e.estabelecimento;
       const end = est.endereco;
-      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const when = e.produto.venda.dataVenda
+        ? new Date(e.produto.venda.dataVenda).toLocaleString()
+        : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
-      const color = i===0 ? '#28a745' : '#dc3545';
+      const color = i === 0 ? '#28a745' : '#dc3545';
       const mapLink = `https://www.google.com/maps/search/?api=1&query=${end.latitude},${end.longitude}`;
       const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${end.latitude},${end.longitude}`;
-
-      const card = document.createElement('div'); card.className='card';
+      const card = document.createElement('div');
+      card.className = 'card';
       card.innerHTML = `
-        <div class="card-header ${i===0?'highlight-green':'highlight-red'}">${i===0?'Menor preço':'Maior preço'} — ${est.nomeFantasia||est.razaoSocial}</div>
+        <div class="card-header ${i === 0 ? 'highlight-green' : 'highlight-red'}">
+          ${i === 0 ? 'Menor preço' : 'Maior preço'} — ${est.nomeFantasia || est.razaoSocial}
+        </div>
         <div class="card-body">
           <div class="info-group">
             <h4>Localização</h4>
             <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-            <p>${end.bairro} — ${est.municipio||end.municipio}</p>
+            <p>${end.bairro} — ${est.municipio || end.municipio}</p>
             <p>CEP: ${end.cep}</p>
           </div>
           <div class="info-group price-section">
             <p><strong>Preço de Venda:</strong> <strong style="color:${color}">${price}</strong></p>
-            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong> ${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
+            <p><strong>Valor Declarado:</strong> <strong>${declared}</strong> ${isPromo ? '<span role="img" aria-label="Promoção">🏷️</span>' : ''}</p>
             <p class="price-date">Quando: ${when}</p>
           </div>
           <div class="action-buttons">
@@ -436,8 +442,11 @@ descInput.addEventListener('input', () => {
     let lat, lng;
     if (document.querySelector('input[name="loc"]:checked').value === 'gps') {
       try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej)
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
       } catch {
         loading.classList.remove('active');
         return alert('Não foi possível obter localização.');
@@ -450,8 +459,14 @@ descInput.addEventListener('input', () => {
       const diasEscolhidos = Number(daysRange.value);
       const resp = await fetch(`${API_PROXY}/api/search`, {
         method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify({ codigoDeBarras: code, latitude: lat, longitude: lng, raio: Number(selectedRadius), dias: diasEscolhidos })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigoDeBarras: code,
+          latitude: lat,
+          longitude: lng,
+          raio: Number(selectedRadius),
+          dias: diasEscolhidos
+        })
       });
       const data = await resp.json();
       loading.classList.remove('active');
@@ -460,13 +475,17 @@ descInput.addEventListener('input', () => {
         summaryContainer.innerHTML = `<p>Nenhum estabelecimento encontrado.</p>`;
         return;
       }
-      historyArr.unshift({ code, name: data.dscProduto || list[0].produto.descricao, image: `${COSMOS_BASE}/${list[0].produto.gtin}`, dados: list });
+      historyArr.unshift({
+        code,
+        name: data.dscProduto || list[0].produto.descricao,
+        image: `${COSMOS_BASE}/${list[0].produto.gtin}`,
+        dados: list
+      });
       saveHistory();
       renderHistory();
       renderSummary(list);
       currentResults = list;
       renderCards(list);
-      // envia os resultados para o Google Sheets
       await saveResultsToSheet(list);
     } catch {
       loading.classList.remove('active');
@@ -478,14 +497,18 @@ descInput.addEventListener('input', () => {
   // ===== Modal lista ordenada =====
   document.getElementById('open-modal').addEventListener('click', () => {
     if (!currentResults.length) return alert('Faça uma busca primeiro.');
-    const modal = document.getElementById('modal');
+    const modal  = document.getElementById('modal');
     const listEl = document.getElementById('modal-list');
     listEl.innerHTML = '';
-    const sortedAll = [...currentResults].sort((a,b) => a.produto.venda.valorVenda - b.produto.venda.valorVenda);
+    const sortedAll = [...currentResults].sort((a, b) =>
+      a.produto.venda.valorVenda - b.produto.venda.valorVenda
+    );
     sortedAll.forEach((e, i) => {
       const est = e.estabelecimento;
       const end = est.endereco;
-      const when = e.produto.venda.dataVenda ? new Date(e.produto.venda.dataVenda).toLocaleString() : '—';
+      const when = e.produto.venda.dataVenda
+        ? new Date(e.produto.venda.dataVenda).toLocaleString()
+        : '—';
       const price = brl.format(e.produto.venda.valorVenda);
       const declared = brl.format(e.produto.venda.valorDeclarado) + ' ' + e.produto.unidadeMedida;
       const isPromo = e.produto.venda.valorDeclarado !== e.produto.venda.valorVenda;
@@ -494,17 +517,21 @@ descInput.addEventListener('input', () => {
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="card">
-          <div class="card-header">${est.nomeFantasia||est.razaoSocial}</div>
+          <div class="card-header">${est.nomeFantasia || est.razaoSocial}</div>
           <div class="card-body">
             <div class="info-group">
               <h4>Localização</h4>
               <p>${end.nomeLogradouro}, ${end.numeroImovel}</p>
-              <p>${end.bairro} — ${est.municipio||end.municipio}</p>
+              <p>${end.bairro} — ${est.municipio || end.municipio}</p>
               <p>CEP: ${end.cep}</p>
             </div>
             <div class="info-group price-section">
-              <p><strong>Preço de Venda:</strong> <strong style="color:${i===0?'#28a745':i===sortedAll.length-1?'#dc3545':'#007bff'}">${price}</strong></p>
-              <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>${isPromo?'<span role="img" aria-label="Promoção">🏷️</span>':''}</p>
+              <p><strong>Preço de Venda:</strong> <strong style="color:${
+                i === 0 ? '#28a745' : i === sortedAll.length - 1 ? '#dc3545' : '#007bff'
+              }">${price}</strong></p>
+              <p><strong>Valor Declarado:</strong> <strong>${declared}</strong>${
+                isPromo ? '<span role="img" aria-label="Promoção">🏷️</span>' : ''
+              }</p>
               <p class="price-date">Quando: ${when}</p>
             </div>
             <div class="action-buttons">
@@ -517,7 +544,12 @@ descInput.addEventListener('input', () => {
     });
     modal.classList.add('active');
   });
-  document.getElementById('close-modal').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
-  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('active'); });
-});
-// === Fim do app.js ===
+  document.getElementById('close-modal').addEventListener('click', () =>
+    document.getElementById('modal').classList.remove('active')
+  );
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) {
+      document.getElementById('modal').classList.remove('active');
+    }
+  });
+}); // fim do DOMContentLoaded
